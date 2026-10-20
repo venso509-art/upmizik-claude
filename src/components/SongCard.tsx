@@ -63,7 +63,7 @@ export function SongCard({
         {song.genre ? ` · ${song.genre}` : ""}
       </p>
       <div className="-mx-2 mt-2">
-        <SongActions songId={song.id} title={song.title} artistName={song.artistName} extras={extras} currentUserId={currentUserId} />
+        <SongActions songId={song.id} title={song.title} artistId={song.artistId} artistName={song.artistName} extras={extras} currentUserId={currentUserId} />
       </div>
     </div>
   );

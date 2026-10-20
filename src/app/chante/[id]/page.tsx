@@ -94,6 +94,7 @@ export default async function SongPage({ params }: Props) {
             <SongActions
               songId={song.id}
               title={track.title}
+              artistId={track.artistId}
               artistName={track.artistName}
               extras={extras[song.id]}
               currentUserId={user?.id ?? null}

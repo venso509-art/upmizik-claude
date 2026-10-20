@@ -7,7 +7,7 @@ import { normalizeUrl } from "@/lib/links";
 export type ProfileState = { error?: string; message?: string } | undefined;
 
 const LIMITS = { display_name: 80, location: 100, bio: 1000, influences: 500, vision: 1000 } as const;
-const LINKS = { youtube_url: "YouTube", instagram_url: "Instagram", donation_url: "Don" } as const;
+const LINKS = { youtube_url: "YouTube", instagram_url: "Instagram" } as const;
 
 export async function updateProfile(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
   const supabase = createClient();

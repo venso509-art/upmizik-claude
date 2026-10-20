@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 import { PlayAllButton, TrackList } from "@/components/TrackList";
+import { DonateButton } from "@/components/donate/DonateButton";
 
 type Props = { params: { id: string } };
 
@@ -20,11 +21,10 @@ type Artist = {
   vision?: string | null;
   youtube_url?: string | null;
   instagram_url?: string | null;
-  donation_url?: string | null;
 };
 
 const BASE_COLUMNS = "id, display_name, bio, avatar_url, created_at";
-const EXTRA_COLUMNS = "location, influences, vision, youtube_url, instagram_url, donation_url";
+const EXTRA_COLUMNS = "location, influences, vision, youtube_url, instagram_url";
 
 async function getArtist(id: string): Promise<Artist | null> {
   if (!UUID_RE.test(id)) return null;
@@ -120,16 +120,12 @@ export default async function ArtistPage({ params }: Props) {
             <div className="mt-5 flex flex-wrap justify-center gap-2 sm:justify-start">
               {artist.youtube_url && <LinkButton href={artist.youtube_url}>▶ YouTube</LinkButton>}
               {artist.instagram_url && <LinkButton href={artist.instagram_url}>📸 Instagram</LinkButton>}
-              {artist.donation_url && (
-                <a
-                  href={artist.donation_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                >
-                  💝 Sipòte {artist.display_name}
-                </a>
-              )}
+              <DonateButton
+                artistId={artist.id}
+                artistName={artist.display_name}
+                label={`Sipòte ${artist.display_name}`}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+              />
               {isOwner && (
                 <Link href="/pwofil" className="rounded-full border border-dashed border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition hover:text-white">
                   ✏️ Modifye pwofil

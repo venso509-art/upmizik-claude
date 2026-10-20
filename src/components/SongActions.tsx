@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { SongExtras } from "@/lib/songs";
+import { DonateButton } from "@/components/donate/DonateButton";
 
 function YouTubeIcon() {
   return (
@@ -23,6 +24,7 @@ const btn =
 export function SongActions({
   songId,
   title,
+  artistId,
   artistName,
   extras,
   currentUserId,
@@ -30,6 +32,7 @@ export function SongActions({
 }: {
   songId: string;
   title: string;
+  artistId: string;
   artistName: string;
   extras: SongExtras;
   currentUserId: string | null;
@@ -88,11 +91,14 @@ export function SongActions({
       <button type="button" onClick={share} className={cls} aria-label="Pataje">
         🔗 {copied ? "Kopye!" : size === "lg" ? "Pataje" : ""}
       </button>
-      {extras.donationUrl && (
-        <a href={extras.donationUrl} target="_blank" rel="noopener noreferrer" className={cls} aria-label={`Fè yon don bay ${artistName}`}>
-          💝 {size === "lg" && "Don"}
-        </a>
-      )}
+      <DonateButton
+        artistId={artistId}
+        artistName={artistName}
+        songId={songId}
+        songTitle={title}
+        className={`${cls} hover:text-fuchsia-300`}
+        label={size === "lg" ? "Don" : undefined}
+      />
       {extras.youtubeUrl && (
         <a
           href={extras.youtubeUrl}

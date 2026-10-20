@@ -19,7 +19,6 @@ export type EditableProfile = {
   vision: string | null;
   youtube_url: string | null;
   instagram_url: string | null;
-  donation_url: string | null;
 };
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
@@ -181,12 +180,6 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
               <Field label="📸 Instagram">
                 <input name="instagram_url" defaultValue={profile.instagram_url ?? ""} placeholder="instagram.com/non-ou" className={inputClass} />
               </Field>
-              <Field label="💝 Lyen pou resevwa don">
-                <input name="donation_url" defaultValue={profile.donation_url ?? ""} placeholder="paypal.me/non-ou, cash.app/$non-ou..." className={inputClass} />
-              </Field>
-              <p className="text-xs text-zinc-500">
-                Si w mete yon lyen don, yon bouton 💝 ap parèt sou chante ou yo pou fanatik ou yo ka sipòte w.
-              </p>
             </Section>
           </>
         )}

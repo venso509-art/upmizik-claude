@@ -40,10 +40,9 @@ export type SongExtras = {
   commentCount: number;
   songYoutubeUrl: string | null; // lyen chante a li menm
   youtubeUrl: string | null; // lyen chante a, oswa chanèl atis la
-  donationUrl: string | null;
 };
 
-type ProfileLinks = { youtube_url: string | null; donation_url: string | null };
+type ProfileLinks = { youtube_url: string | null };
 
 // Chaje likes, kòmantè ak lyen yo pou yon lis chante.
 // Chak demann endepandan: si youn echwe (pa egzanp yon migration ki poko kouri),
@@ -54,14 +53,14 @@ export async function getSongExtras(
   userId: string | null,
 ): Promise<Record<string, SongExtras>> {
   const result: Record<string, SongExtras> = Object.fromEntries(
-    songIds.map((id) => [id, { likeCount: 0, liked: false, commentCount: 0, songYoutubeUrl: null, youtubeUrl: null, donationUrl: null }]),
+    songIds.map((id) => [id, { likeCount: 0, liked: false, commentCount: 0, songYoutubeUrl: null, youtubeUrl: null }]),
   );
   if (songIds.length === 0) return result;
 
   const [likes, comments, links, mine] = await Promise.all([
     supabase.from("songs").select("id, song_likes(count)").in("id", songIds),
     supabase.from("songs").select("id, comments(count)").in("id", songIds),
-    supabase.from("songs").select("id, youtube_url, profiles!songs_artist_id_fkey(youtube_url, donation_url)").in("id", songIds),
+    supabase.from("songs").select("id, youtube_url, profiles!songs_artist_id_fkey(youtube_url)").in("id", songIds),
     userId
       ? supabase.from("song_likes").select("song_id").eq("user_id", userId).in("song_id", songIds)
       : Promise.resolve({ data: [] as { song_id: string }[] }),
@@ -77,7 +76,6 @@ export async function getSongExtras(
     const p = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
     result[row.id].songYoutubeUrl = row.youtube_url;
     result[row.id].youtubeUrl = row.youtube_url ?? p?.youtube_url ?? null;
-    result[row.id].donationUrl = p?.donation_url ?? null;
   }
   for (const row of mine.data ?? []) {
     if (result[row.song_id]) result[row.song_id].liked = true;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/auth/actions";
+import { isAdmin } from "@/lib/admin";
 
 export async function Header() {
   const supabase = createClient();
@@ -9,6 +10,7 @@ export async function Header() {
   const { data: profile } = user
     ? await supabase.from("profiles").select("display_name, role").eq("id", user.id).single()
     : { data: null };
+  const admin = await isAdmin(supabase, user?.id);
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur">
@@ -20,6 +22,11 @@ export async function Header() {
 
         {user ? (
           <div className="flex items-center gap-3">
+            {admin && (
+              <Link href="/admin/don" className="rounded-lg px-3 py-1.5 text-sm font-medium text-amber-300 transition hover:bg-zinc-800">
+                🛡️ <span className="hidden sm:inline">Admin</span>
+              </Link>
+            )}
             {profile?.role === "artist" && (
               <Link href="/dashboard" className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800 hover:text-white">
                 📊 <span className="hidden sm:inline">Dashboard</span>

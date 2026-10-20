@@ -13,7 +13,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, display_name, role, avatar_url, location, bio, influences, vision, youtube_url, instagram_url, donation_url")
+    .select("id, display_name, role, avatar_url, location, bio, influences, vision, youtube_url, instagram_url")
     .eq("id", user.id)
     .single<EditableProfile>();
   if (!profile) redirect("/");
