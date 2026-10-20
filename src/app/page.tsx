@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SongCard, type SongCardData } from "@/components/SongCard";
-
-const genres = ["Konpa", "Rasin", "Rap Kreyòl", "Twoubadou", "Gospel", "Rabòday", "Zouk", "Kanaval"];
+import { GENRES } from "@/lib/genres";
 
 // Wotè ak reta chak ba nan egalizè a (pou yo pa danse ansanm)
 const bars = [
@@ -84,7 +83,7 @@ export default async function Home() {
       {/* ===== JAN MIZIK ===== */}
       <section className="mx-auto max-w-6xl px-4">
         <div className="flex flex-wrap gap-2">
-          {genres.map((g) => (
+          {GENRES.map((g) => (
             <span
               key={g}
               className="rounded-full border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300"
