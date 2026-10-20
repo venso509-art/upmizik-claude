@@ -9,16 +9,57 @@ type Props = { params: { id: string } };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function getArtist(id: string) {
+type Artist = {
+  id: string;
+  display_name: string;
+  bio: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  location?: string | null;
+  influences?: string | null;
+  vision?: string | null;
+  youtube_url?: string | null;
+  instagram_url?: string | null;
+  donation_url?: string | null;
+};
+
+const BASE_COLUMNS = "id, display_name, bio, avatar_url, created_at";
+const EXTRA_COLUMNS = "location, influences, vision, youtube_url, instagram_url, donation_url";
+
+async function getArtist(id: string): Promise<Artist | null> {
   if (!UUID_RE.test(id)) return null;
   const supabase = createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, display_name, bio, avatar_url, role, created_at")
-    .eq("id", id)
-    .eq("role", "artist")
-    .maybeSingle();
-  return data;
+  const query = (columns: string) =>
+    supabase.from("profiles").select(columns).eq("id", id).eq("role", "artist").maybeSingle<Artist>();
+
+  const full = await query(`${BASE_COLUMNS}, ${EXTRA_COLUMNS}`);
+  if (!full.error) return full.data;
+  // Si nouvo kolòn yo poko egziste (migration poko kouri), chaje sa ki baz yo
+  return (await query(BASE_COLUMNS)).data;
+}
+
+function LinkButton({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="rounded-full border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:text-white"
+    >
+      {children}
+    </a>
+  );
+}
+
+function AboutCard({ icon, title, text }: { icon: string; title: string; text: string }) {
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+      <h2 className="flex items-center gap-2 font-bold text-white">
+        <span>{icon}</span> {title}
+      </h2>
+      <p className="mt-3 whitespace-pre-line break-words text-zinc-300">{text}</p>
+    </div>
+  );
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -74,13 +115,39 @@ export default async function ArtistPage({ params }: Props) {
             <p className="mt-3 text-sm text-zinc-300">
               <span className="font-semibold text-white">{songs.length}</span> chante ·{" "}
               <span className="font-semibold text-white">{totalPlays.toLocaleString("fr-HT")}</span> koute · Sou UpMizik depi {since}
+              {artist.location && <> · 📍 {artist.location}</>}
             </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2 sm:justify-start">
+              {artist.youtube_url && <LinkButton href={artist.youtube_url}>▶ YouTube</LinkButton>}
+              {artist.instagram_url && <LinkButton href={artist.instagram_url}>📸 Instagram</LinkButton>}
+              {artist.donation_url && (
+                <a
+                  href={artist.donation_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                >
+                  💝 Sipòte {artist.display_name}
+                </a>
+              )}
+              {isOwner && (
+                <Link href="/pwofil" className="rounded-full border border-dashed border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition hover:text-white">
+                  ✏️ Modifye pwofil
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
       <div className="mx-auto max-w-6xl px-4">
-        {artist.bio && <p className="mb-8 max-w-2xl whitespace-pre-line text-zinc-300">{artist.bio}</p>}
+        {(artist.bio || artist.influences || artist.vision) && (
+          <div className="mb-10 grid gap-4 md:grid-cols-3">
+            {artist.bio && <AboutCard icon="📖" title="Biyografi" text={artist.bio} />}
+            {artist.influences && <AboutCard icon="🌟" title="Atis ki enspire m" text={artist.influences} />}
+            {artist.vision && <AboutCard icon="🎯" title="Vizyon mwen pou mizik" text={artist.vision} />}
+          </div>
+        )}
 
         {tracks.length > 0 ? (
           <>

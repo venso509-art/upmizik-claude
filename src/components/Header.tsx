@@ -38,7 +38,9 @@ export async function Header() {
                 🎤 {profile.display_name}
               </Link>
             ) : (
-              <span className="hidden text-sm text-zinc-300 sm:inline">🎧 {profile?.display_name ?? user.email}</span>
+              <Link href="/pwofil" className="hidden text-sm text-zinc-300 transition hover:text-white sm:inline">
+                🎧 {profile?.display_name ?? user.email}
+              </Link>
             )}
             <form action={logout}>
               <button className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 transition hover:border-zinc-500 hover:text-white">

@@ -15,6 +15,9 @@ import {
   uploadResumable,
 } from "@/lib/upload";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
+import { SplitsEditor } from "@/components/splits/SplitsEditor";
+import { normalizeUrl } from "@/lib/links";
+import { validateSplits, type Split } from "@/lib/splits";
 
 type Status = "idle" | "uploading" | "done";
 
@@ -48,6 +51,7 @@ export function UploadForm({ userId }: { userId: string }) {
   const [audioProgress, setAudioProgress] = useState(0);
   const [coverProgress, setCoverProgress] = useState(0);
   const [error, setError] = useState<string>();
+  const [splits, setSplits] = useState<Split[]>([]);
 
   // Montre yon apèsi imaj kouvèti a, epi libere memwa a apre
   useEffect(() => {
@@ -78,9 +82,13 @@ export function UploadForm({ userId }: { userId: string }) {
     const form = new FormData(e.currentTarget);
     const title = String(form.get("title") ?? "").trim();
     const genre = String(form.get("genre") ?? "") || null;
+    const youtubeUrl = normalizeUrl(String(form.get("youtube_url") ?? ""));
 
     if (!title) return setError("Mete tit chante a.");
     if (!audio) return setError("Chwazi fichye odyo a.");
+    if (youtubeUrl === undefined) return setError("Lyen YouTube la pa valid.");
+    const splitsError = validateSplits(splits);
+    if (splitsError) return setError(splitsError);
 
     setError(undefined);
     setStatus("uploading");
@@ -121,15 +129,29 @@ export function UploadForm({ userId }: { userId: string }) {
       });
       uploaded.push({ bucket: "audio", path: audioPath });
 
-      const { error: insertError } = await supabase.from("songs").insert({
-        artist_id: userId,
-        title,
-        genre,
-        audio_path: audioPath,
-        cover_path: coverPath,
-        duration_seconds: duration,
-      });
+      const { data: song, error: insertError } = await supabase
+        .from("songs")
+        .insert({
+          artist_id: userId,
+          title,
+          genre,
+          youtube_url: youtubeUrl,
+          audio_path: audioPath,
+          cover_path: coverPath,
+          duration_seconds: duration,
+        })
+        .select("id")
+        .single();
       if (insertError) throw new Error(insertError.message);
+
+      if (splits.length > 0) {
+        const { error: splitsError } = await supabase.rpc("set_song_splits", { p_song_id: song.id, p_splits: splits });
+        if (splitsError) {
+          // Pa kite yon chante pibliye san akò royalties li
+          await supabase.from("songs").delete().eq("id", song.id);
+          throw new Error(`Pataj royalties la pa sove: ${splitsError.message}`);
+        }
+      }
 
       setStatus("done");
       router.refresh();
@@ -155,6 +177,7 @@ export function UploadForm({ userId }: { userId: string }) {
               setStatus("idle");
               setAudio(null);
               setCover(null);
+              setSplits([]);
             }}
             className="rounded-lg border border-zinc-700 px-4 py-2.5 text-zinc-200 hover:border-zinc-500"
           >
@@ -226,6 +249,12 @@ export function UploadForm({ userId }: { userId: string }) {
           </p>
         </div>
       )}
+
+      <Field label="▶ Lyen YouTube (opsyonèl)">
+        <input name="youtube_url" disabled={busy} placeholder="Egz: lyen videyo klip la sou YouTube" className={inputClass} />
+      </Field>
+
+      <SplitsEditor splits={splits} onChange={setSplits} disabled={busy} />
 
       <FormMessage error={error} />
 

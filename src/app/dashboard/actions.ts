@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { GENRES } from "@/lib/genres";
+import { normalizeUrl } from "@/lib/links";
+import { validateSplits, type Split } from "@/lib/splits";
 
 export type SongActionResult = { error?: string };
 
@@ -28,10 +30,17 @@ function refresh(artistId: string) {
   revalidatePath(`/atis/${artistId}`);
 }
 
-export async function updateSong(songId: string, title: string, genre: string): Promise<SongActionResult> {
-  const cleanTitle = title.trim();
+export async function updateSong(
+  songId: string,
+  input: { title: string; genre: string; youtubeUrl: string; splits: Split[] },
+): Promise<SongActionResult> {
+  const cleanTitle = input.title.trim();
   if (!cleanTitle || cleanTitle.length > 200) return { error: "Tit la dwe gen ant 1 ak 200 karaktè." };
-  if (genre && !GENRES.includes(genre)) return { error: "Jan mizik sa a pa valid." };
+  if (input.genre && !GENRES.includes(input.genre)) return { error: "Jan mizik sa a pa valid." };
+  const youtubeUrl = normalizeUrl(input.youtubeUrl);
+  if (youtubeUrl === undefined) return { error: "Lyen YouTube la pa valid." };
+  const splitsError = validateSplits(input.splits);
+  if (splitsError) return { error: splitsError };
 
   const { supabase, user, song } = await getOwnSong(songId);
   if (!user) return { error: "Ou dwe konekte." };
@@ -39,12 +48,30 @@ export async function updateSong(songId: string, title: string, genre: string): 
 
   const { error } = await supabase
     .from("songs")
-    .update({ title: cleanTitle, genre: genre || null })
+    .update({ title: cleanTitle, genre: input.genre || null, youtube_url: youtubeUrl })
     .eq("id", songId);
   if (error) return { error: `Modifikasyon an echwe: ${error.message}` };
 
+  const { error: rpcError } = await supabase.rpc("set_song_splits", { p_song_id: songId, p_splits: input.splits });
+  if (rpcError) return { error: `Pataj royalties la pa sove: ${rpcError.message}` };
+
   refresh(user.id);
   return {};
+}
+
+export async function getSongSplits(songId: string): Promise<Split[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("song_splits")
+    .select("collaborator_name, collaborator_role, collaborator_email, percentage")
+    .eq("song_id", songId)
+    .order("created_at");
+  return (data ?? []).map((s) => ({
+    name: s.collaborator_name,
+    role: s.collaborator_role,
+    email: s.collaborator_email ?? "",
+    percentage: Number(s.percentage),
+  }));
 }
 
 export async function deleteSong(songId: string): Promise<SongActionResult> {

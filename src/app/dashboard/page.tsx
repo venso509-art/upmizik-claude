@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
+import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
+import { AuthCard } from "@/components/auth/ui";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
 import { SongManager, type ManagedSong } from "@/components/dashboard/SongManager";
 
@@ -44,7 +45,19 @@ export default async function DashboardPage() {
   if (!user) redirect("/konekte");
 
   const { data: profile } = await supabase.from("profiles").select("display_name, role").eq("id", user.id).single();
-  if (profile?.role !== "artist") redirect("/");
+  if (profile?.role !== "artist") {
+    return (
+      <AuthCard title="Dashboard la se pou atis" subtitle="Kont ou se yon kont koutè.">
+        <p className="text-zinc-300">
+          Se sèlman atis ki gen yon dashboard. Ou ka kontinye koute tout chante yo sou{" "}
+          <Link href="/" className="text-fuchsia-400 hover:text-fuchsia-300">
+            paj akèy la
+          </Link>
+          .
+        </p>
+      </AuthCard>
+    );
+  }
 
   type DashboardSong = SongRow & { created_at: string; comments?: { count: number }[] };
   const query = (columns: string) =>
@@ -62,6 +75,8 @@ export default async function DashboardPage() {
   const totalComments = songs.reduce((sum, s) => sum + commentCount(s), 0);
   const top = [...songs].sort((a, b) => b.play_count - a.play_count)[0];
 
+  const extras = await getSongExtras(supabase, songs.map((s) => s.id), user.id);
+
   const managed: ManagedSong[] = songs.map((s) => ({
     id: s.id,
     title: s.title,
@@ -70,6 +85,7 @@ export default async function DashboardPage() {
     plays: s.play_count,
     comments: commentCount(s),
     durationSeconds: s.duration_seconds,
+    youtubeUrl: extras[s.id]?.songYoutubeUrl ?? null,
     createdAt: s.created_at,
   }));
 
@@ -116,6 +132,12 @@ export default async function DashboardPage() {
               className="rounded-2xl border border-zinc-700 px-8 py-3 text-center font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-white"
             >
               Wè paj piblik mwen →
+            </Link>
+            <Link
+              href="/pwofil"
+              className="rounded-2xl border border-zinc-700 px-8 py-3 text-center font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-white"
+            >
+              ✏️ Modifye pwofil
             </Link>
           </div>
         </div>

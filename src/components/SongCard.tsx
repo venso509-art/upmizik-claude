@@ -2,8 +2,20 @@
 
 import Link from "next/link";
 import { usePlayer, type Track } from "@/components/player/PlayerProvider";
+import { SongActions } from "@/components/SongActions";
+import type { SongExtras } from "@/lib/songs";
 
-export function SongCard({ song, queue }: { song: Track; queue: Track[] }) {
+export function SongCard({
+  song,
+  queue,
+  extras,
+  currentUserId,
+}: {
+  song: Track;
+  queue: Track[];
+  extras: SongExtras;
+  currentUserId: string | null;
+}) {
   const { current, isPlaying, playTrack } = usePlayer();
   const isCurrent = current?.id === song.id;
 
@@ -50,6 +62,9 @@ export function SongCard({ song, queue }: { song: Track; queue: Track[] }) {
         </Link>
         {song.genre ? ` · ${song.genre}` : ""}
       </p>
+      <div className="-mx-2 mt-2">
+        <SongActions songId={song.id} title={song.title} artistName={song.artistName} extras={extras} currentUserId={currentUserId} />
+      </div>
     </div>
   );
 }

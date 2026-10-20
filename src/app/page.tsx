@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SongCard } from "@/components/SongCard";
 import { GENRES } from "@/lib/genres";
-import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
+import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 
 // Wotè ak reta chak ba nan egalizè a (pou yo pa danse ansanm)
 const bars = [
@@ -25,6 +25,8 @@ export default async function Home() {
     .returns<SongRow[]>();
 
   const songs = (rows ?? []).map((s) => toTrack(supabase, s));
+  const { data: { user } } = await supabase.auth.getUser();
+  const extras = await getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null);
 
   return (
     <>
@@ -97,7 +99,7 @@ export default async function Home() {
         {songs.length > 0 ? (
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {songs.map((song) => (
-              <SongCard key={song.id} song={song} queue={songs} />
+              <SongCard key={song.id} song={song} queue={songs} extras={extras[song.id]} currentUserId={user?.id ?? null} />
             ))}
           </div>
         ) : (

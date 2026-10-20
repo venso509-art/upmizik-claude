@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { SONG_SELECT, formatDuration, toTrack, type SongRow } from "@/lib/songs";
+import { SONG_SELECT, formatDuration, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 import { PlayAllButton } from "@/components/TrackList";
+import { SongActions } from "@/components/SongActions";
 import { Comments, type CommentItem } from "@/components/Comments";
 
 type Props = { params: { id: string } };
@@ -53,6 +54,7 @@ export default async function SongPage({ params }: Props) {
       .returns<CommentRow[]>(),
     supabase.auth.getUser(),
   ]);
+  const extras = await getSongExtras(supabase, [song.id], user?.id ?? null);
 
   const comments: CommentItem[] = (commentRows ?? []).map((c) => {
     const p = Array.isArray(c.profiles) ? c.profiles[0] : c.profiles;
@@ -87,13 +89,21 @@ export default async function SongPage({ params }: Props) {
             {track.genre && <> · {track.genre}</>} · {formatDuration(track.durationSeconds)} ·{" "}
             {song.play_count.toLocaleString("fr-HT")} koute
           </p>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
             <PlayAllButton tracks={[track]} label="▶ Jwe" />
+            <SongActions
+              songId={song.id}
+              title={track.title}
+              artistName={track.artistName}
+              extras={extras[song.id]}
+              currentUserId={user?.id ?? null}
+              size="lg"
+            />
           </div>
         </div>
       </section>
 
-      <div className="mt-14 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+      <div id="komante" className="mt-14 scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
         <Comments
           songId={song.id}
           comments={comments}

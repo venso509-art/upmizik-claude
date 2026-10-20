@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { deleteSong, updateSong } from "@/app/dashboard/actions";
+import { deleteSong, getSongSplits, updateSong } from "@/app/dashboard/actions";
 import { GENRES } from "@/lib/genres";
+import { validateSplits, type Split } from "@/lib/splits";
+import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { formatDuration } from "@/lib/songs";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
 
@@ -15,6 +17,7 @@ export type ManagedSong = {
   plays: number;
   comments: number;
   durationSeconds: number | null;
+  youtubeUrl: string | null;
   createdAt: string;
 };
 
@@ -24,7 +27,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -50,20 +53,35 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
   const [editing, setEditing] = useState<ManagedSong | null>(null);
   const [deleting, setDeleting] = useState<ManagedSong | null>(null);
   const [error, setError] = useState<string>();
+  const [splits, setSplits] = useState<Split[] | null>(null);
   const [pending, startTransition] = useTransition();
 
   function close() {
     setEditing(null);
     setDeleting(null);
+    setSplits(null);
     setError(undefined);
+  }
+
+  function openEdit(song: ManagedSong) {
+    setEditing(song);
+    setSplits(null);
+    getSongSplits(song.id).then(setSplits);
   }
 
   function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!editing) return;
+    if (!editing || !splits) return;
     const form = new FormData(e.currentTarget);
+    const splitsError = validateSplits(splits);
+    if (splitsError) return setError(splitsError);
     startTransition(async () => {
-      const res = await updateSong(editing.id, String(form.get("title") ?? ""), String(form.get("genre") ?? ""));
+      const res = await updateSong(editing.id, {
+        title: String(form.get("title") ?? ""),
+        genre: String(form.get("genre") ?? ""),
+        youtubeUrl: String(form.get("youtube_url") ?? ""),
+        splits,
+      });
       if (res.error) setError(res.error);
       else close();
     });
@@ -103,7 +121,7 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
             </div>
             <div className="flex gap-1">
               <button
-                onClick={() => setEditing(s)}
+                onClick={() => openEdit(s)}
                 className="rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
                 aria-label={`Modifye ${s.title}`}
               >
@@ -138,6 +156,14 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
                 ))}
               </select>
             </Field>
+            <Field label="▶ Lyen YouTube (opsyonèl)">
+              <input name="youtube_url" defaultValue={editing.youtubeUrl ?? ""} placeholder="Lyen videyo klip la" className={inputClass} />
+            </Field>
+            {splits ? (
+              <SplitsEditor splits={splits} onChange={setSplits} disabled={pending} />
+            ) : (
+              <p className="rounded-xl border border-zinc-800 p-4 text-sm text-zinc-500">Ap chaje pataj royalties yo...</p>
+            )}
             <FormMessage error={error} />
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={close} className="rounded-lg px-4 py-2.5 text-zinc-300 hover:text-white">
@@ -145,7 +171,7 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
               </button>
               <button
                 type="submit"
-                disabled={pending}
+                disabled={pending || !splits}
                 className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-2.5 font-semibold text-white disabled:opacity-60"
               >
                 {pending ? "Ap sove..." : "Sove"}
