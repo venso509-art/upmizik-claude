@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 import { AuthCard } from "@/components/auth/ui";
 import { AccountStatusNotice } from "@/components/AccountStatusNotice";
+import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { formatHTG } from "@/lib/donations";
+import { toBalance, type BalanceRow } from "@/lib/finance";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
 import { SongManager, type ManagedSong } from "@/components/dashboard/SongManager";
 
@@ -78,7 +81,11 @@ export default async function DashboardPage() {
   const totalComments = songs.reduce((sum, s) => sum + commentCount(s), 0);
   const top = [...songs].sort((a, b) => b.play_count - a.play_count)[0];
 
-  const extras = await getSongExtras(supabase, songs.map((s) => s.id), user.id);
+  const [extras, balanceRes] = await Promise.all([
+    getSongExtras(supabase, songs.map((s) => s.id), user.id),
+    supabase.rpc("artist_balance", { p_artist_id: user.id }),
+  ]);
+  const balance = toBalance((balanceRes.data as BalanceRow[] | null)?.[0]);
 
   const managed: ManagedSong[] = songs.map((s) => ({
     id: s.id,
@@ -111,6 +118,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
+      <DashboardTabs />
+
       {/* ===== AKÈY ===== */}
       <section className="relative overflow-hidden rounded-3xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-900/50 via-violet-950/60 to-zinc-950 p-8 sm:p-10">
         <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
@@ -162,7 +171,7 @@ export default async function DashboardPage() {
       )}
 
       {/* ===== REZIME ===== */}
-      <section className="mt-6 grid gap-4 sm:grid-cols-3">
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile icon="🎵" label="Total Chante" value={songs.length} />
         <StatTile
           icon="🎧"
@@ -171,6 +180,17 @@ export default async function DashboardPage() {
           hint={top && top.play_count > 0 ? `🏆 Pi popilè: ${top.title}` : undefined}
         />
         <StatTile icon="💬" label="Total Kòmantè" value={totalComments} />
+        <Link
+          href="/dashboard/finans"
+          className="group rounded-2xl border border-fuchsia-500/30 bg-gradient-to-br from-fuchsia-900/30 to-violet-950/30 p-6 transition hover:border-fuchsia-500/60"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">💵</span>
+            <p className="text-sm font-medium text-zinc-400">Balans disponib</p>
+          </div>
+          <p className="mt-4 text-3xl font-extrabold tracking-tight text-white">{formatHTG(balance.availableHtg)}</p>
+          <p className="mt-1 text-xs text-fuchsia-300 group-hover:underline">Mande retrè →</p>
+        </Link>
       </section>
 
       {songs.length === 0 ? (

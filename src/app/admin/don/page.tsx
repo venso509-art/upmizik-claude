@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/admin";
 import { countDonations, loadAdminDonations, type DonationStatus } from "@/lib/adminDonations";
 import { formatHTG, formatUSD } from "@/lib/donations";
 import { DonationReview } from "@/components/admin/DonationReview";
+import { AdminTabs } from "@/components/admin/AdminTabs";
 
 export const metadata: Metadata = { title: "Admin: Don | UpMizik" };
 
@@ -28,23 +29,22 @@ export default async function AdminDonationsPage({ searchParams }: { searchParam
   ]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <Link href="/admin" className="text-sm text-zinc-400 hover:text-white">
-        ← Retounen nan admin
-      </Link>
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-white">Tout don yo</h1>
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <AdminTabs />
+
+      <h1 className="text-3xl font-extrabold tracking-tight text-white">Tout don yo</h1>
       <p className="mt-1 text-zinc-400">Verifye prèv yo anvan w apwouve yon don.</p>
 
-      <nav className="mt-8 flex gap-2 overflow-x-auto border-b border-zinc-800">
+      <nav className="mt-6 flex flex-wrap gap-2">
         {TABS.map((t, i) => (
           <Link
             key={t.status}
             href={`/admin/don?status=${t.status}`}
-            className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition ${
-              status === t.status ? "border-fuchsia-500 text-white" : "border-transparent text-zinc-400 hover:text-white"
+            className={`rounded-full px-3 py-1.5 text-sm transition ${
+              status === t.status ? "bg-fuchsia-500 font-semibold text-white" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
             }`}
           >
-            {t.label} <span className="ml-1 rounded-full bg-zinc-800 px-2 py-0.5 text-xs">{counts[i]}</span>
+            {t.label} <span className="opacity-70">({counts[i]})</span>
           </Link>
         ))}
       </nav>
