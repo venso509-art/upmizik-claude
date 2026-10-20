@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/footer/Footer";
 import { PlayerProvider } from "@/components/player/PlayerProvider";
 import { PlayerBar } from "@/components/player/PlayerBar";
 import { ServiceWorkerRegister } from "@/components/offline/ServiceWorkerRegister";
@@ -38,7 +39,8 @@ export default function RootLayout({
       >
         <PlayerProvider>
           <Header />
-          <main className="pb-24">{children}</main>
+          <main>{children}</main>
+          <Footer />
           <PlayerBar />
           <ServiceWorkerRegister />
         </PlayerProvider>

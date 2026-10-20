@@ -52,7 +52,7 @@ export default async function ArtistStatsPage({ searchParams }: { searchParams: 
       </div>
 
       <section className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Metric icon="▶" label="Ekout reyèl" value={daily.realPlays.toLocaleString("fr-HT")} hint="Omwen 5 segonn koute" />
+        <Metric icon="▶" label="Ekout reyèl" value={daily.realPlays.toLocaleString("fr-HT")} hint="1 pa moun konekte, pa mizik" />
         <Metric icon="👆" label="Kòmansman" value={daily.starts.toLocaleString("fr-HT")} hint="Fwa moun peze ▶" />
         <Metric
           icon="✅"
@@ -102,7 +102,7 @@ export default async function ArtistStatsPage({ searchParams }: { searchParams: 
       </section>
 
       <p className="mt-6 text-xs text-zinc-500">
-        ℹ️ Yon <span className="text-zinc-300">ekout reyèl</span> se lè yon moun koute omwen 5 segonn. Se sa ki konte nan total ekout ou.
+        ℹ️ Yon <span className="text-zinc-300">ekout reyèl</span> se lè yon moun ki konekte koute yon mizik omwen 5 segonn. Chak moun konte yon sèl fwa pa mizik, menm si l koute l plizyè fwa. Se sa ki konte nan total ekout ou.
         Estatistik pa jou yo kòmanse depi jou sistèm sa a te aktive: ekout ki te fèt anvan yo konte nan total la, men yo pa nan graf la.
       </p>
     </div>

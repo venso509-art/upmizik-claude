@@ -18,6 +18,7 @@ import {
 } from "@/lib/donations";
 import { FormMessage, inputClass } from "@/components/auth/ui";
 import { DonateIcon } from "./DonateButton";
+import { Portal } from "@/components/Portal";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -138,6 +139,7 @@ export function DonateModal({
   ) : null;
 
   return (
+    <Portal>
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => !busy && onClose()}>
       <div
         role="dialog"
@@ -396,5 +398,6 @@ export function DonateModal({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

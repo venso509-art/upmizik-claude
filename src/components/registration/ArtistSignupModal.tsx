@@ -8,6 +8,7 @@ import { IMAGE_TYPES, MAX_IMAGE_BYTES, fileExtension } from "@/lib/upload";
 import { REGISTRATION_FEE_HTG, REGISTRATION_FEE_USD } from "@/lib/registration";
 import { FormMessage, inputClass } from "@/components/auth/ui";
 import { ArtistRules } from "./ArtistRules";
+import { Portal } from "@/components/Portal";
 
 type Step = "rules" | "payment" | "done";
 
@@ -81,6 +82,7 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
   const stepIndex = steps.findIndex((s) => s.key === step);
 
   return (
+    <Portal>
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center sm:p-4">
       <div role="dialog" aria-modal="true" aria-labelledby="artist-signup-title" className="max-h-[94vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-zinc-800 bg-zinc-900 shadow-2xl sm:rounded-3xl">
         {/* ===== TÈT ===== */}
@@ -253,5 +255,6 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

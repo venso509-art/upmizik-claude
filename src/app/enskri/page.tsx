@@ -12,7 +12,7 @@ export default async function SignupPage() {
   if (user) redirect("/");
 
   return (
-    <AuthCard title="Kreye kont ou" subtitle="Rantre nan kominote UpMizik la.">
+    <AuthCard title="Kreye kont ou" subtitle="Rantre nan kominote UpMizik la." closable>
       <SignupForm />
     </AuthCard>
   );

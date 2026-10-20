@@ -190,16 +190,6 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
           </Link>
         </div>
       </Reveal>
-
-      {/* ===== FOOTER ===== */}
-      <footer className="border-t border-zinc-800">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-8 text-sm text-zinc-500 sm:flex-row">
-          <p>
-            <span className="font-bold text-zinc-300">UpMizik</span> © {new Date().getFullYear()}
-          </p>
-          <p>Fèt ak ❤️ pou mizik ayisyen</p>
-        </div>
-      </footer>
     </>
   );
 }

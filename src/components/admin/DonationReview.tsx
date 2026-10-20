@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { markThanked, reviewDonation } from "@/app/admin/don/actions";
 import { DONATION_METHODS, formatHTG, formatUSD, thankYouMessage, whatsappLink, type DonationMethod } from "@/lib/donations";
 import { FormMessage } from "@/components/auth/ui";
+import { Portal } from "@/components/Portal";
 
 export type AdminDonation = {
   id: string;
@@ -139,10 +140,12 @@ function DonationCard({ d }: { d: AdminDonation }) {
       </div>
 
       {zoom && d.proofUrl && (
+        <Portal>
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4" onClick={() => setZoom(false)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={d.proofUrl} alt="Prèv tranzaksyon" className="max-h-full max-w-full rounded-lg" />
         </div>
+        </Portal>
       )}
     </li>
   );

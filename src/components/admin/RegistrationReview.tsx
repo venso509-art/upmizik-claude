@@ -7,6 +7,7 @@ import { DONATION_METHODS, formatHTG, formatUSD, type DonationMethod } from "@/l
 import { formatDate } from "@/lib/finance";
 import { FormMessage, inputClass } from "@/components/auth/ui";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Portal } from "@/components/Portal";
 
 export type AdminRegistration = {
   id: string;
@@ -133,10 +134,12 @@ function RegistrationCard({ r }: { r: AdminRegistration }) {
       </div>
 
       {zoom && r.proofUrl && (
+        <Portal>
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4" onClick={() => setZoom(false)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={r.proofUrl} alt="Prèv peman" className="max-h-full max-w-full rounded-lg" />
         </div>
+        </Portal>
       )}
     </li>
   );

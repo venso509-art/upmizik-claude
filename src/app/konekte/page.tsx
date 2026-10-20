@@ -14,7 +14,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { konf
   const notice = searchParams.konfime ? "Imèl ou konfime! Konekte kounye a." : undefined;
 
   return (
-    <AuthCard title="Byenvini ankò" subtitle="Konekte pou w kontinye koute.">
+    <AuthCard title="Byenvini ankò" subtitle="Konekte pou w kontinye koute." closable>
       <LoginForm notice={notice} />
     </AuthCard>
   );

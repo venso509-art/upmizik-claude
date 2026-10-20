@@ -8,6 +8,7 @@ import { validateSplits, type Split } from "@/lib/splits";
 import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { formatDuration } from "@/lib/songs";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
+import { Portal } from "@/components/Portal";
 
 export type ManagedSong = {
   id: string;
@@ -23,6 +24,7 @@ export type ManagedSong = {
 
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
+    <Portal>
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
       <div
         role="dialog"
@@ -33,6 +35,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
         {children}
       </div>
     </div>
+    </Portal>
   );
 }
 
