@@ -5,6 +5,8 @@ import { GENRES } from "@/lib/genres";
 import { getTop10, getTop3 } from "@/lib/top";
 import { Top10Section } from "@/components/Top10Section";
 import { AdBanner, type PublicAd } from "@/components/ads/AdBanner";
+import { PromoSection } from "@/components/promos/PromoSection";
+import { getActivePromos } from "@/lib/promos";
 import { Top3Section } from "@/components/Top3Section";
 import { ArtistBubbles, type BubbleArtist } from "@/components/ArtistBubbles";
 import { Reveal } from "@/components/Reveal";
@@ -31,12 +33,13 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
 
   const songs = (rows ?? []).map((s) => toTrack(supabase, s));
   const { data: { user } } = await supabase.auth.getUser();
-  const [extras, top3, myArtists, { data: adRows }] = await Promise.all([
+  const [extras, top3, myArtists, { data: adRows }, promos] = await Promise.all([
     getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null),
     getTop3(supabase),
     user ? supabase.rpc("my_top_artists", { p_limit: 15 }) : Promise.resolve({ data: [] }),
     // RLS la bay sèlman piblisite ki aktif e ki poko ekspire (admin wè tout, kidonk nou refiltre)
     supabase.from("ads").select("id, title, image_path, is_active, starts_at, expires_at").order("created_at", { ascending: false }).limit(20),
+    getActivePromos(supabase),
   ]);
   const now = Date.now();
   const ads: PublicAd[] = (adRows ?? [])
@@ -114,6 +117,11 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
       {/* ===== SÈK ATIS YO (tankou estati WhatsApp), anba hero a ===== */}
       <Reveal>
         <ArtistBubbles title={bubblesTitle} artists={bubbles} />
+      </Reveal>
+
+      {/* ===== RPA: ATIS POU DEKOUVRI ===== */}
+      <Reveal>
+        <PromoSection promos={promos} />
       </Reveal>
 
       {/* ===== TOP 3 (admin chwazi) + TOP 10 (otomatik) ===== */}
