@@ -8,9 +8,15 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+      keyframes: {
+        // Ba egalizè yo k ap monte desann nan hero a
+        equalizer: {
+          "0%, 100%": { transform: "scaleY(0.3)" },
+          "50%": { transform: "scaleY(1)" },
+        },
+      },
+      animation: {
+        equalizer: "equalizer 1.2s ease-in-out infinite",
       },
     },
   },

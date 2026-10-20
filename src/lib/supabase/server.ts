@@ -21,7 +21,7 @@ export function createClient() {
             );
           } catch {
             // Server Components pa ka ekri cookies. Sa pa grav:
-            // middleware la (n ap ajoute l nan etap otantifikasyon an) ap rafrechi sesyon an.
+            // middleware la (src/middleware.ts) ap rafrechi sesyon an.
           }
         },
       },
