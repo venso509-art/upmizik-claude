@@ -11,6 +11,10 @@ export async function Header() {
     ? await supabase.from("profiles").select("display_name, role, status").eq("id", user.id).single()
     : { data: null };
   const admin = await isAdmin(supabase, user?.id);
+  // Kantite mesaj ki poko li (RLS la limite l a pwòp mesaj itilizatè a)
+  const { count: unread } = user
+    ? await supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null)
+    : { count: 0 };
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur">
@@ -40,6 +44,18 @@ export async function Header() {
                 + Upload
               </Link>
             )}
+            <Link
+              href="/mesaj"
+              className="relative rounded-lg px-2 py-1.5 text-lg transition hover:bg-zinc-800"
+              aria-label={unread ? `Mesaj (${unread} nouvo)` : "Mesaj"}
+            >
+              🔔
+              {unread ? (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              ) : null}
+            </Link>
             {profile?.role === "artist" ? (
               <Link href={`/atis/${user.id}`} className="hidden text-sm text-zinc-300 transition hover:text-white sm:inline">
                 🎤 {profile.display_name}
