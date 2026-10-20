@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Header } from "@/components/Header";
+import { PlayerProvider } from "@/components/player/PlayerProvider";
+import { PlayerBar } from "@/components/player/PlayerBar";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,8 +31,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-950 text-zinc-100 antialiased`}
       >
-        <Header />
-        <main>{children}</main>
+        <PlayerProvider>
+          <Header />
+          <main className="pb-24">{children}</main>
+          <PlayerBar />
+        </PlayerProvider>
       </body>
     </html>
   );

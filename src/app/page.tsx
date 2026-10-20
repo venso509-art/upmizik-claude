@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { SongCard, type SongCardData } from "@/components/SongCard";
+import { SongCard } from "@/components/SongCard";
+import type { Track } from "@/components/player/PlayerProvider";
 import { GENRES } from "@/lib/genres";
 
 // Wotè ak reta chak ba nan egalizè a (pou yo pa danse ansanm)
@@ -18,17 +19,18 @@ export default async function Home() {
   const supabase = createClient();
   const { data: rows } = await supabase
     .from("songs")
-    .select("id, title, genre, cover_path, profiles(display_name)")
+    .select("id, title, genre, audio_path, cover_path, profiles(display_name)")
     .order("created_at", { ascending: false })
     .limit(8);
 
-  const songs: SongCardData[] = (rows ?? []).map((s) => ({
+  const songs: Track[] = (rows ?? []).map((s) => ({
     id: s.id,
     title: s.title,
     genre: s.genre,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     artistName: (s.profiles as any)?.display_name ?? "Atis enkoni",
     coverUrl: s.cover_path ? supabase.storage.from("covers").getPublicUrl(s.cover_path).data.publicUrl : null,
+    audioUrl: supabase.storage.from("audio").getPublicUrl(s.audio_path).data.publicUrl,
   }));
 
   return (
@@ -102,7 +104,7 @@ export default async function Home() {
         {songs.length > 0 ? (
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {songs.map((song) => (
-              <SongCard key={song.id} song={song} />
+              <SongCard key={song.id} song={song} queue={songs} />
             ))}
           </div>
         ) : (
