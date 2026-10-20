@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Track } from "@/components/player/PlayerProvider";
 
-// Kolòn nou chaje pou chak chante (ak non atis la)
+// Kolòn nou chaje pou chak chante (ak non atis la).
+// "!songs_artist_id_fkey" di Supabase pran pwofil ATIS la, pa moun ki like chante a
+// (tablo song_likes la kreye yon dezyèm chemen ant songs ak profiles).
 export const SONG_SELECT =
-  "id, title, genre, artist_id, audio_path, cover_path, duration_seconds, play_count, profiles(display_name)";
+  "id, title, genre, artist_id, audio_path, cover_path, duration_seconds, play_count, profiles!songs_artist_id_fkey(display_name)";
 
 export type SongRow = {
   id: string;
@@ -59,7 +61,7 @@ export async function getSongExtras(
   const [likes, comments, links, mine] = await Promise.all([
     supabase.from("songs").select("id, song_likes(count)").in("id", songIds),
     supabase.from("songs").select("id, comments(count)").in("id", songIds),
-    supabase.from("songs").select("id, youtube_url, profiles(youtube_url, donation_url)").in("id", songIds),
+    supabase.from("songs").select("id, youtube_url, profiles!songs_artist_id_fkey(youtube_url, donation_url)").in("id", songIds),
     userId
       ? supabase.from("song_likes").select("song_id").eq("user_id", userId).in("song_id", songIds)
       : Promise.resolve({ data: [] as { song_id: string }[] }),

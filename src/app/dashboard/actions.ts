@@ -24,6 +24,14 @@ async function getOwnSong(songId: string) {
   return { supabase, user, song };
 }
 
+// Erè sa yo vle di yon migration SQL poko kouri (kolòn oswa tablo ki manke)
+function friendlyDbError(prefix: string, error: { code?: string; message: string }) {
+  if (error.code === "42703" || error.code === "PGRST204" || error.code === "PGRST205" || error.code === "PGRST202") {
+    return `${prefix}: baz done a poko ajou. Kouri dènye fichye SQL ki nan supabase/migrations nan SQL Editor Supabase la.`;
+  }
+  return `${prefix}: ${error.message}`;
+}
+
 function refresh(artistId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/");
@@ -50,10 +58,10 @@ export async function updateSong(
     .from("songs")
     .update({ title: cleanTitle, genre: input.genre || null, youtube_url: youtubeUrl })
     .eq("id", songId);
-  if (error) return { error: `Modifikasyon an echwe: ${error.message}` };
+  if (error) return { error: friendlyDbError("Modifikasyon an echwe", error) };
 
   const { error: rpcError } = await supabase.rpc("set_song_splits", { p_song_id: songId, p_splits: input.splits });
-  if (rpcError) return { error: `Pataj royalties la pa sove: ${rpcError.message}` };
+  if (rpcError) return { error: friendlyDbError("Pataj royalties la pa sove", rpcError) };
 
   refresh(user.id);
   return {};
