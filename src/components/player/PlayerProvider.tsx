@@ -40,9 +40,24 @@ export function usePlayer() {
   return ctx;
 }
 
+// Yon ekout "reyèl" = omwen 5 segonn koute vre
+const REAL_PLAY_SECONDS = 5;
+
+type PlaySession = {
+  trackId: string | null;
+  playId: Promise<string | null> | null; // ID start_play la retounen
+  listened: number; // segonn koute vre
+  lastTime: number;
+  confirmed: boolean;
+};
+
+function newSession(trackId: string | null): PlaySession {
+  return { trackId, playId: null, listened: 0, lastTime: 0, confirmed: false };
+}
+
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const countedRef = useRef<string | null>(null);
+  const playRef = useRef<PlaySession>(newSession(null));
   const [queue, setQueue] = useState<Track[]>([]);
   const [current, setCurrent] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -60,6 +75,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const audio = audioRef.current;
     if (!audio) return;
     setCurrent(track);
+    playRef.current = newSession(track.id);
     setError(null);
     setCurrentTime(0);
     setDuration(0);
@@ -113,14 +129,34 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setVolumeState(v);
   }, []);
 
-  // Konte yon koute (yon sèl fwa chak fwa yon chante kòmanse)
-  useEffect(() => {
-    if (!isPlaying || !current || countedRef.current === current.id) return;
-    countedRef.current = current.id;
-    createClient()
-      .rpc("increment_play_count", { song_id: current.id })
-      .then(() => {});
-  }, [isPlaying, current]);
+  // ===== Anrejistre ekout yo =====
+  // 1) Premye fwa yon chante kòmanse jwe → start_play
+  // 2) Lè moun nan koute 5 segonn vre (sote nan chante a pa konte) → confirm_play
+  function handlePlay() {
+    setIsPlaying(true);
+    // Nou itilize playRef (pa "current"): onPlay ka rive anvan React fin mete current ajou
+    const play = playRef.current;
+    if (!play.trackId || play.playId) return;
+    play.playId = Promise.resolve(createClient().rpc("start_play", { p_song_id: play.trackId })).then(
+      ({ data }) => (data as string | null) ?? null,
+      () => null,
+    );
+  }
+
+  function handleTimeUpdate(audio: HTMLAudioElement) {
+    setCurrentTime(audio.currentTime);
+    const play = playRef.current;
+    const delta = audio.currentTime - play.lastTime;
+    play.lastTime = audio.currentTime;
+    if (audio.paused || delta <= 0 || delta > 1.5) return; // yon "seek" pa konte kòm tan koute
+    play.listened += delta;
+    if (play.listened >= REAL_PLAY_SECONDS && !play.confirmed && play.playId) {
+      play.confirmed = true;
+      play.playId.then((id) => {
+        if (id) createClient().rpc("confirm_play", { p_play_id: id }).then(() => {});
+      });
+    }
+  }
 
   // Kontwòl sou ekran verouye telefòn nan ak bouton ekoutè yo
   useEffect(() => {
@@ -161,12 +197,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       <audio
         ref={audioRef}
         preload="metadata"
-        onPlay={() => setIsPlaying(true)}
+        onPlay={handlePlay}
         onPause={() => setIsPlaying(false)}
         onWaiting={() => setIsLoading(true)}
         onPlaying={() => setIsLoading(false)}
         onCanPlay={() => setIsLoading(false)}
-        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+        onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onEnded={() => (hasNext ? next() : setIsPlaying(false))}
         onError={() => {

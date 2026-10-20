@@ -17,6 +17,7 @@ export async function AdminTabs() {
       <NavTabs
         tabs={[
           { href: "/admin", label: "🛡️ Apèsi" },
+          { href: "/admin/rapo", label: "📈 Rapò" },
           { href: "/admin/enskripsyon", label: "🎤 Enskripsyon", badge: registrations },
           { href: "/admin/don", label: "💝 Don", badge: donations },
           { href: "/admin/retre", label: "💸 Retrè", badge: payouts },
