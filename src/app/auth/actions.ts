@@ -138,6 +138,15 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
   const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
+  // Jounal sekirite: anrejistre chak tantativ (reyisi oswa echwe), ak IP ak navigatè a
+  const h = headers();
+  await supabase.rpc("log_login", {
+    p_email: email,
+    p_success: !error,
+    p_ip: h.get("x-forwarded-for")?.split(",")[0].trim() ?? h.get("x-real-ip") ?? null,
+    p_user_agent: h.get("user-agent"),
+  });
+
   if (error) return { error: translateError(error) };
 
   // Atis yo ateri sou dashboard yo; koutè yo sou paj akèy la
