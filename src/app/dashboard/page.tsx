@@ -6,6 +6,7 @@ import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 import { AuthCard } from "@/components/auth/ui";
 import { AccountStatusNotice } from "@/components/AccountStatusNotice";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
+import { RegistrationPanel } from "@/components/registration/RegistrationPanel";
 import { formatHTG } from "@/lib/donations";
 import { toBalance, type BalanceRow } from "@/lib/finance";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
@@ -166,7 +167,7 @@ export default async function DashboardPage() {
 
       {!canUpload && (
         <div className="mt-6">
-          <AccountStatusNotice status={profile.status === "blocked" ? "blocked" : "pending"} />
+          {profile.status === "blocked" ? <AccountStatusNotice status="blocked" /> : <RegistrationPanel userId={user.id} />}
         </div>
       )}
 

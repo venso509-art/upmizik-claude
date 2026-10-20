@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useFormState } from "react-dom";
 import { signup } from "@/app/auth/actions";
 import { Field, FormMessage, SubmitButton, inputClass } from "./ui";
+import { formatUSD } from "@/lib/donations";
+import { REGISTRATION_FEE_USD } from "@/lib/registration";
 
 const roles = [
   { value: "listener", icon: "🎧", label: "Koutè", hint: "Mwen vle koute mizik" },
@@ -30,6 +32,11 @@ export function SignupForm() {
               <span className="block text-3xl">{r.icon}</span>
               <span className="mt-1 block font-semibold text-white">{r.label}</span>
               <span className="block text-xs text-zinc-400">{r.hint}</span>
+              {r.value === "artist" && (
+                <span className="mt-1.5 block text-[11px] font-medium text-fuchsia-300">
+                  Frè enskripsyon: {formatUSD(REGISTRATION_FEE_USD)}
+                </span>
+              )}
             </label>
           ))}
         </div>

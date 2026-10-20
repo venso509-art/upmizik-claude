@@ -52,14 +52,25 @@ export default async function AdminPage() {
   if (!user) redirect("/konekte");
   if (!(await isAdmin(supabase, user.id))) redirect("/");
 
-  const [{ data: userData }, pendingDonations, pendingDonationCount, { count: pendingPayoutCount }, { data: revenueRows }] = await Promise.all([
+  const [
+    { data: userData },
+    pendingDonations,
+    pendingDonationCount,
+    { count: pendingPayoutCount },
+    { data: revenueRows },
+    { data: feeRows },
+  ] = await Promise.all([
     supabase.rpc("admin_list_users"),
     loadAdminDonations(supabase, "pending", 20),
     countDonations(supabase, "pending"),
     supabase.from("payouts").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("donations").select("platform_share_htg").eq("status", "verified"),
+    supabase.from("artist_registrations").select("amount_htg").eq("status", "verified"),
   ]);
-  const platformRevenue = (revenueRows ?? []).reduce((sum, r) => sum + Number(r.platform_share_htg), 0);
+  // Revni platfòm = 15% don yo + 100% frè enskripsyon atis yo
+  const donationRevenue = (revenueRows ?? []).reduce((sum, r) => sum + Number(r.platform_share_htg), 0);
+  const feeRevenue = (feeRows ?? []).reduce((sum, r) => sum + Number(r.amount_htg), 0);
+  const platformRevenue = donationRevenue + feeRevenue;
 
   const users = (userData ?? []) as UserRow[];
   const artists: AdminArtist[] = users
@@ -82,16 +93,20 @@ export default async function AdminPage() {
 
       <p className="text-sm font-medium uppercase tracking-widest text-amber-300">🛡️ Admin</p>
       <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-white">Panèl administrasyon</h1>
-      <p className="mt-1 text-zinc-400">Valide atis yo ak don yo.</p>
+      <p className="mt-1 text-zinc-400">
+        Valide atis yo ak don yo · {artists.length} atis · {listeners} koutè
+      </p>
 
       <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon="⏳" label="Atis ap tann" value={pendingArtists} highlight />
         <StatCard icon="💝" label="Don ap tann" value={pendingDonationCount} highlight />
         <StatCard icon="💸" label="Retrè an atant" value={pendingPayoutCount ?? 0} highlight />
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
-          <p className="text-sm text-zinc-400">💰 Revni platfòm (15%)</p>
+          <p className="text-sm text-zinc-400">💰 Revni platfòm</p>
           <p className="mt-2 text-2xl font-extrabold text-white">{formatHTG(platformRevenue)}</p>
-          <p className="mt-1 text-xs text-zinc-500">{artists.length} atis · {listeners} koutè</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            Don (15%): {formatHTG(donationRevenue)} · Enskripsyon: {formatHTG(feeRevenue)}
+          </p>
         </div>
       </div>
 

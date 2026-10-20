@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 // Mesaj pou atis ki poko apwouve oswa ki bloke
 export function AccountStatusNotice({ status }: { status: "pending" | "blocked" }) {
   if (status === "blocked") {
@@ -20,9 +22,12 @@ export function AccountStatusNotice({ status }: { status: "pending" | "blocked" 
       <div>
         <p className="font-bold text-amber-200">Kont ou ap tann validasyon admin</p>
         <p className="mt-1 text-sm text-amber-200/80">
-          Ekip UpMizik la ap verifye kont atis ou. Lè l apwouve, w ap ka pibliye mizik ou. Pandan tan sa a, ou ka
-          prepare pwofil ou.
+          Pou aktive kont atis ou, peye frè enskripsyon an epi voye prèv la. Lè ekip UpMizik la apwouve l, w ap ka pibliye
+          mizik ou.
         </p>
+        <Link href="/dashboard" className="mt-3 inline-block text-sm font-semibold text-amber-100 underline hover:text-white">
+          Peye frè enskripsyon an sou dashboard ou →
+        </Link>
       </div>
     </div>
   );
