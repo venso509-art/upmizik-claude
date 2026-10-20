@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { PlayerProvider } from "@/components/player/PlayerProvider";
 import { PlayerBar } from "@/components/player/PlayerBar";
+import { ServiceWorkerRegister } from "@/components/offline/ServiceWorkerRegister";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -19,7 +20,11 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "UpMizik",
   description: "Koute epi pataje mizik.",
+  appleWebApp: { capable: true, title: "UpMizik", statusBarStyle: "black-translucent" },
+  icons: { apple: "/pwa-icon/192" },
 };
+
+export const viewport: Viewport = { themeColor: "#09090b" };
 
 export default function RootLayout({
   children,
@@ -35,6 +40,7 @@ export default function RootLayout({
           <Header />
           <main className="pb-24">{children}</main>
           <PlayerBar />
+          <ServiceWorkerRegister />
         </PlayerProvider>
       </body>
     </html>

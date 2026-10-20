@@ -4,6 +4,7 @@ import { SongCard } from "@/components/SongCard";
 import { GENRES } from "@/lib/genres";
 import { getTop3 } from "@/lib/top";
 import { Top3Section } from "@/components/Top3Section";
+import { ArtistBubbles, type BubbleArtist } from "@/components/ArtistBubbles";
 import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 
 // Wotè ak reta chak ba nan egalizè a (pou yo pa danse ansanm)
@@ -28,13 +29,25 @@ export default async function Home() {
 
   const songs = (rows ?? []).map((s) => toTrack(supabase, s));
   const { data: { user } } = await supabase.auth.getUser();
-  const [extras, top3] = await Promise.all([
+  const [extras, top3, myArtists] = await Promise.all([
     getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null),
     getTop3(supabase),
+    user ? supabase.rpc("my_top_artists", { p_limit: 15 }) : Promise.resolve({ data: [] }),
   ]);
+
+  // Atis moun nan koute plis; si li poko gen istwa, atis ki pi popilè yo
+  let bubbles = (myArtists.data ?? []) as BubbleArtist[];
+  let bubblesTitle = "🎧 Atis ou koute plis yo";
+  if (bubbles.length === 0) {
+    bubbles = ((await supabase.rpc("popular_artists", { p_limit: 15 })).data ?? []) as BubbleArtist[];
+    bubblesTitle = "🔥 Atis popilè yo";
+  }
 
   return (
     <>
+      {/* ===== SÈK ATIS YO (tankou estati WhatsApp) ===== */}
+      <ArtistBubbles title={bubblesTitle} artists={bubbles} />
+
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-fuchsia-600/20 blur-3xl" />

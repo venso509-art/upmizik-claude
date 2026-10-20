@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { OFFLINE_EVENT, listOffline, offlineObjectUrl } from "@/lib/offline";
 
 export type Track = {
   id: string;
@@ -58,6 +59,26 @@ function newSession(trackId: string | null): PlaySession {
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const playRef = useRef<PlaySession>(newSession(null));
+  // URL odyo → URL lokal (blob:) pou mizik ki sove offline. Prepare davans pou play() rele touswit
+  // lè moun nan klike (Safari refize jwe si nou tann yon operasyon async anvan).
+  const offlineUrls = useRef(new Map<string, string>());
+
+  useEffect(() => {
+    async function refresh() {
+      const songs = await listOffline();
+      const next = new Map<string, string>();
+      for (const s of songs) {
+        const url = offlineUrls.current.get(s.audioUrl) ?? (await offlineObjectUrl(s.audioUrl));
+        if (url) next.set(s.audioUrl, url);
+      }
+      // Libere URL mizik ki pa sove ankò yo
+      offlineUrls.current.forEach((url, key) => !next.has(key) && URL.revokeObjectURL(url));
+      offlineUrls.current = next;
+    }
+    refresh();
+    window.addEventListener(OFFLINE_EVENT, refresh);
+    return () => window.removeEventListener(OFFLINE_EVENT, refresh);
+  }, []);
   const [queue, setQueue] = useState<Track[]>([]);
   const [current, setCurrent] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -79,7 +100,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     setCurrentTime(0);
     setDuration(0);
-    audio.src = track.audioUrl;
+    // Si mizik la sove offline, jwe kopi lokal la (mache san entènèt, ekonomize done)
+    audio.src = offlineUrls.current.get(track.audioUrl) ?? track.audioUrl;
     audio.play().catch(() => {
       // Navigatè a ka bloke "autoplay"; itilizatè a ap jis peze ▶
     });

@@ -6,6 +6,8 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { SongExtras } from "@/lib/songs";
 import { DonateButton } from "@/components/donate/DonateButton";
+import { DownloadButton } from "@/components/offline/DownloadButton";
+import type { Track } from "@/components/player/PlayerProvider";
 
 function YouTubeIcon() {
   return (
@@ -29,6 +31,7 @@ export function SongActions({
   extras,
   currentUserId,
   size = "sm",
+  track,
 }: {
   songId: string;
   title: string;
@@ -37,6 +40,7 @@ export function SongActions({
   extras: SongExtras;
   currentUserId: string | null;
   size?: "sm" | "lg";
+  track?: Track; // si li la: bouton 📥 pou sove mizik la offline
 }) {
   const router = useRouter();
   const [liked, setLiked] = useState(extras.liked);
@@ -91,6 +95,7 @@ export function SongActions({
       <button type="button" onClick={share} className={cls} aria-label="Pataje">
         🔗 {copied ? "Kopye!" : size === "lg" ? "Pataje" : ""}
       </button>
+      {track && <DownloadButton track={track} currentUserId={currentUserId} className={cls} showLabel={size === "lg"} />}
       <DonateButton
         artistId={artistId}
         artistName={artistName}

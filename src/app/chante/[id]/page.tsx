@@ -99,6 +99,7 @@ export default async function SongPage({ params }: Props) {
               extras={extras[song.id]}
               currentUserId={user?.id ?? null}
               size="lg"
+              track={track}
             />
           </div>
         </div>

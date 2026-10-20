@@ -44,6 +44,9 @@ export async function Header() {
                 + Upload
               </Link>
             )}
+            <Link href="/telechaje" className="rounded-lg px-2 py-1.5 text-lg transition hover:bg-zinc-800" aria-label="Mizik offline" title="Mizik offline">
+              📥
+            </Link>
             <Link
               href="/mesaj"
               className="relative rounded-lg px-2 py-1.5 text-lg transition hover:bg-zinc-800"
