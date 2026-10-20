@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePlayer, type Track } from "@/components/player/PlayerProvider";
 import { SongActions } from "@/components/SongActions";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import type { SongExtras } from "@/lib/songs";
 
 export function SongCard({
@@ -59,6 +60,7 @@ export function SongCard({
       <p className="truncate text-sm text-zinc-400">
         <Link href={`/atis/${song.artistId}`} className="hover:text-white hover:underline">
           {song.artistName}
+          {song.artistVerified && <VerifiedBadge />}
         </Link>
         {song.genre ? ` · ${song.genre}` : ""}
       </p>

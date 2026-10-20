@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import type { TopEntry } from "@/lib/top";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 const MEDALS: Record<number, { emoji: string; label: string; ring: string; glow: string; badge: string }> = {
   1: { emoji: "🥇", label: "1ye", ring: "ring-amber-400/70", glow: "shadow-amber-500/30", badge: "from-amber-300 to-amber-500 text-amber-950" },
@@ -59,6 +60,7 @@ function PodiumCard({ entry, queue }: { entry: TopEntry; queue: TopEntry[] }) {
         <p className="truncate text-sm text-zinc-400">
           <Link href={`/atis/${track.artistId}`} className="hover:text-white hover:underline">
             {track.artistName}
+            {track.artistVerified && <VerifiedBadge />}
           </Link>
           {track.genre ? ` · ${track.genre}` : ""}
         </p>

@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
-export type BubbleArtist = { artist_id: string; display_name: string; avatar_url: string | null; plays: number };
+export type BubbleArtist = { artist_id: string; display_name: string; avatar_url: string | null; plays: number; is_verified?: boolean };
 
 // Ranje atis an sèk won (tankou estati WhatsApp), ki woule de goch a dwat
 export function ArtistBubbles({ title, artists }: { title: string; artists: BubbleArtist[] }) {
@@ -28,7 +29,10 @@ export function ArtistBubbles({ title, artists }: { title: string; artists: Bubb
                   </span>
                 </span>
               </span>
-              <span className="w-full truncate text-center text-xs text-zinc-300 group-hover:text-white">{a.display_name}</span>
+              <span className="w-full truncate text-center text-xs text-zinc-300 group-hover:text-white">
+                {a.display_name}
+                {a.is_verified && <VerifiedBadge />}
+              </span>
             </Link>
           </li>
         ))}

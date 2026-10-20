@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 import { PlayAllButton, TrackList } from "@/components/TrackList";
 import { DonateButton } from "@/components/donate/DonateButton";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 type Props = { params: { id: string } };
 
@@ -16,6 +17,7 @@ type Artist = {
   bio: string | null;
   avatar_url: string | null;
   created_at: string;
+  is_verified?: boolean;
   location?: string | null;
   influences?: string | null;
   vision?: string | null;
@@ -23,7 +25,7 @@ type Artist = {
   instagram_url?: string | null;
 };
 
-const BASE_COLUMNS = "id, display_name, bio, avatar_url, created_at";
+const BASE_COLUMNS = "id, display_name, bio, avatar_url, created_at, is_verified";
 const EXTRA_COLUMNS = "location, influences, vision, youtube_url, instagram_url";
 
 async function getArtist(id: string): Promise<Artist | null> {
@@ -111,7 +113,10 @@ export default async function ArtistPage({ params }: Props) {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium uppercase tracking-widest text-fuchsia-300">🎤 Atis</p>
-            <h1 className="mt-2 break-words text-4xl font-extrabold tracking-tight text-white sm:text-6xl">{artist.display_name}</h1>
+            <h1 className="mt-2 break-words text-4xl font-extrabold tracking-tight text-white sm:text-6xl">
+              {artist.display_name}
+              {artist.is_verified && <VerifiedBadge size="lg" />}
+            </h1>
             <p className="mt-3 text-sm text-zinc-300">
               <span className="font-semibold text-white">{songs.length}</span> chante ·{" "}
               <span className="font-semibold text-white">{totalPlays.toLocaleString("fr-HT")}</span> koute · Sou UpMizik depi {since}

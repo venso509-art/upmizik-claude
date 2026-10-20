@@ -5,7 +5,9 @@ import type { Track } from "@/components/player/PlayerProvider";
 // "!songs_artist_id_fkey" di Supabase pran pwofil ATIS la, pa moun ki like chante a
 // (tablo song_likes la kreye yon dezyèm chemen ant songs ak profiles).
 export const SONG_SELECT =
-  "id, title, genre, artist_id, audio_path, cover_path, duration_seconds, play_count, profiles!songs_artist_id_fkey(display_name)";
+  "id, title, genre, artist_id, audio_path, cover_path, duration_seconds, play_count, profiles!songs_artist_id_fkey(display_name, is_verified)";
+
+type ArtistRef = { display_name: string; is_verified?: boolean };
 
 export type SongRow = {
   id: string;
@@ -16,7 +18,7 @@ export type SongRow = {
   cover_path: string | null;
   duration_seconds: number | null;
   play_count: number;
-  profiles: { display_name: string } | { display_name: string }[] | null;
+  profiles: ArtistRef | ArtistRef[] | null;
 };
 
 // Konvèti yon liy baz done an Track pou lektè a (ak lyen piblik fichye yo)
@@ -28,6 +30,7 @@ export function toTrack(supabase: SupabaseClient, s: SongRow): Track {
     genre: s.genre,
     artistId: s.artist_id,
     artistName: profile?.display_name ?? "Atis enkoni",
+    artistVerified: profile?.is_verified ?? false,
     coverUrl: s.cover_path ? supabase.storage.from("covers").getPublicUrl(s.cover_path).data.publicUrl : null,
     audioUrl: supabase.storage.from("audio").getPublicUrl(s.audio_path).data.publicUrl,
     durationSeconds: s.duration_seconds,

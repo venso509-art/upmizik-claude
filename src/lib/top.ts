@@ -33,3 +33,26 @@ export async function getTop3(supabase: SupabaseClient): Promise<{ entries: TopE
     entries: (popular ?? []).map((s, i) => ({ position: i + 1, track: toTrack(supabase, s), plays: s.play_count })),
   };
 }
+
+export type Top10Entry = { rank: number; track: Track; plays: number; plays30d: number; donationsUsd30d: number };
+
+// Top 10 otomatik (#4 a #13): lòd la soti nan fonksyon SQL top10_songs (ekout + don 30 jou)
+export async function getTop10(supabase: SupabaseClient, excludeIds: string[]): Promise<Top10Entry[]> {
+  const { data: ranked } = await supabase.rpc("top10_songs", { p_exclude: excludeIds });
+  const order = (ranked ?? []) as { song_id: string; plays_30d: number; donations_usd_30d: number }[];
+  if (order.length === 0) return [];
+
+  const { data: rows } = await supabase
+    .from("songs")
+    .select(SONG_SELECT)
+    .in("id", order.map((r) => r.song_id))
+    .returns<SongRow[]>();
+  const byId = new Map((rows ?? []).map((s) => [s.id, s]));
+
+  return order.flatMap((r, i) => {
+    const s = byId.get(r.song_id);
+    return s
+      ? [{ rank: i + 4, track: toTrack(supabase, s), plays: s.play_count, plays30d: Number(r.plays_30d), donationsUsd30d: Number(r.donations_usd_30d) }]
+      : [];
+  });
+}

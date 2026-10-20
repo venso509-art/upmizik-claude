@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SONG_SELECT, formatDuration, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 import { PlayAllButton } from "@/components/TrackList";
 import { SongActions } from "@/components/SongActions";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Comments, type CommentItem } from "@/components/Comments";
 
 type Props = { params: { id: string } };
@@ -85,6 +86,7 @@ export default async function SongPage({ params }: Props) {
           <p className="mt-3 text-zinc-300">
             <Link href={`/atis/${track.artistId}`} className="font-semibold text-white hover:underline">
               {track.artistName}
+              {track.artistVerified && <VerifiedBadge />}
             </Link>
             {track.genre && <> · {track.genre}</>} · {formatDuration(track.durationSeconds)} ·{" "}
             {song.play_count.toLocaleString("fr-HT")} koute

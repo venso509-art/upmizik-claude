@@ -8,6 +8,7 @@ import { AccountStatusNotice } from "@/components/AccountStatusNotice";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { RegistrationPanel } from "@/components/registration/RegistrationPanel";
 import { WelcomeModal } from "@/components/registration/WelcomeModal";
+import { LevelsCard } from "@/components/dashboard/LevelsCard";
 import { formatHTG } from "@/lib/donations";
 import { toBalance, type BalanceRow } from "@/lib/finance";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
@@ -50,7 +51,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
 
-  const { data: profile } = await supabase.from("profiles").select("display_name, role, status").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("display_name, role, status, is_verified").eq("id", user.id).single();
   if (profile?.role !== "artist") {
     return (
       <AuthCard title="Dashboard la se pou atis" subtitle="Kont ou se yon kont koutè.">
@@ -196,6 +197,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           <p className="mt-1 text-xs text-fuchsia-300 group-hover:underline">Mande retrè →</p>
         </Link>
       </section>
+
+      {/* ===== NIVO YO ===== */}
+      <LevelsCard artistId={user.id} verified={profile.is_verified} />
 
       {songs.length === 0 ? (
         <section className="mt-6 rounded-2xl border border-dashed border-zinc-800 px-6 py-20 text-center">

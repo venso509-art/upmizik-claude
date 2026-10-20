@@ -22,6 +22,7 @@ export async function AdminTabs() {
           { href: "/admin/don", label: "💝 Don", badge: donations },
           { href: "/admin/retre", label: "💸 Retrè", badge: payouts },
           { href: "/admin/top3", label: "🏆 Top 3" },
+          { href: "/admin/nivo", label: "🏅 Nivo" },
           { href: "/admin/mesaj", label: "📣 Mesaj" },
         ]}
       />

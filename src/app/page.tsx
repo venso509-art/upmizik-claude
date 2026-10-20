@@ -2,7 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SongCard } from "@/components/SongCard";
 import { GENRES } from "@/lib/genres";
-import { getTop3 } from "@/lib/top";
+import { getTop10, getTop3 } from "@/lib/top";
+import { Top10Section } from "@/components/Top10Section";
 import { Top3Section } from "@/components/Top3Section";
 import { ArtistBubbles, type BubbleArtist } from "@/components/ArtistBubbles";
 import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
@@ -43,11 +44,18 @@ export default async function Home() {
     bubblesTitle = "🔥 Atis popilè yo";
   }
 
+  // Badj ✓ pou sèk yo, ak Top 10 otomatik la (san mizik ki deja nan Top 3 a)
+  const [{ data: verifiedRows }, top10] = await Promise.all([
+    bubbles.length
+      ? supabase.from("profiles").select("id").eq("is_verified", true).in("id", bubbles.map((b) => b.artist_id))
+      : Promise.resolve({ data: [] as { id: string }[] }),
+    getTop10(supabase, top3.entries.map((e) => e.track.id)),
+  ]);
+  const verified = new Set((verifiedRows ?? []).map((r) => r.id));
+  bubbles = bubbles.map((b) => ({ ...b, is_verified: verified.has(b.artist_id) }));
+
   return (
     <>
-      {/* ===== SÈK ATIS YO (tankou estati WhatsApp) ===== */}
-      <ArtistBubbles title={bubblesTitle} artists={bubbles} />
-
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-fuchsia-600/20 blur-3xl" />
@@ -95,8 +103,12 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ===== TOP 3 ===== */}
+      {/* ===== SÈK ATIS YO (tankou estati WhatsApp), anba hero a ===== */}
+      <ArtistBubbles title={bubblesTitle} artists={bubbles} />
+
+      {/* ===== TOP 3 (admin chwazi) + TOP 10 (otomatik) ===== */}
       <Top3Section entries={top3.entries} auto={top3.auto} />
+      <Top10Section entries={top10} />
 
       {/* ===== JAN MIZIK ===== */}
       <section className="mx-auto max-w-6xl px-4">

@@ -10,6 +10,7 @@ export type Track = {
   genre: string | null;
   artistId: string;
   artistName: string;
+  artistVerified?: boolean;
   coverUrl: string | null;
   audioUrl: string;
   durationSeconds: number | null;
