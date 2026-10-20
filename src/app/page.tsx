@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SongCard } from "@/components/SongCard";
 import { GENRES } from "@/lib/genres";
+import { getTop3 } from "@/lib/top";
+import { Top3Section } from "@/components/Top3Section";
 import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 
 // Wotè ak reta chak ba nan egalizè a (pou yo pa danse ansanm)
@@ -26,7 +28,10 @@ export default async function Home() {
 
   const songs = (rows ?? []).map((s) => toTrack(supabase, s));
   const { data: { user } } = await supabase.auth.getUser();
-  const extras = await getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null);
+  const [extras, top3] = await Promise.all([
+    getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null),
+    getTop3(supabase),
+  ]);
 
   return (
     <>
@@ -76,6 +81,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* ===== TOP 3 ===== */}
+      <Top3Section entries={top3.entries} auto={top3.auto} />
 
       {/* ===== JAN MIZIK ===== */}
       <section className="mx-auto max-w-6xl px-4">
