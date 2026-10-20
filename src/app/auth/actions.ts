@@ -20,8 +20,9 @@ function translateError(error: AuthError): string {
     case "weak_password":
       return "Modpas la twò fèb. Itilize omwen 8 karaktè.";
     case "over_email_send_rate_limit":
+      return "Nou voye twòp imèl konfimasyon nan dènye èdtan an. Eseye ankò pita.";
     case "over_request_rate_limit":
-      return "Twòp tantativ. Tann kèk minit epi eseye ankò.";
+      return "Twòp tantativ soti nan koneksyon ou. Tann kèk minit epi eseye ankò.";
     default:
       return `Gen yon erè ki rive: ${error.message}`;
   }

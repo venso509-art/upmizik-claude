@@ -7,9 +7,11 @@ export type Track = {
   id: string;
   title: string;
   genre: string | null;
+  artistId: string;
   artistName: string;
   coverUrl: string | null;
   audioUrl: string;
+  durationSeconds: number | null;
 };
 
 type PlayerState = {

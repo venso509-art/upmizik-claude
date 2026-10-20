@@ -28,9 +28,13 @@ export async function Header() {
                 + Upload
               </Link>
             )}
-            <span className="hidden text-sm text-zinc-300 sm:inline">
-              {profile?.role === "artist" ? "🎤" : "🎧"} {profile?.display_name ?? user.email}
-            </span>
+            {profile?.role === "artist" ? (
+              <Link href={`/atis/${user.id}`} className="hidden text-sm text-zinc-300 transition hover:text-white sm:inline">
+                🎤 {profile.display_name}
+              </Link>
+            ) : (
+              <span className="hidden text-sm text-zinc-300 sm:inline">🎧 {profile?.display_name ?? user.email}</span>
+            )}
             <form action={logout}>
               <button className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 transition hover:border-zinc-500 hover:text-white">
                 Dekonekte

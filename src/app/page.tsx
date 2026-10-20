@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SongCard } from "@/components/SongCard";
-import type { Track } from "@/components/player/PlayerProvider";
 import { GENRES } from "@/lib/genres";
+import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 
 // Wotè ak reta chak ba nan egalizè a (pou yo pa danse ansanm)
 const bars = [
@@ -19,19 +19,12 @@ export default async function Home() {
   const supabase = createClient();
   const { data: rows } = await supabase
     .from("songs")
-    .select("id, title, genre, audio_path, cover_path, profiles(display_name)")
+    .select(SONG_SELECT)
     .order("created_at", { ascending: false })
-    .limit(8);
+    .limit(8)
+    .returns<SongRow[]>();
 
-  const songs: Track[] = (rows ?? []).map((s) => ({
-    id: s.id,
-    title: s.title,
-    genre: s.genre,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    artistName: (s.profiles as any)?.display_name ?? "Atis enkoni",
-    coverUrl: s.cover_path ? supabase.storage.from("covers").getPublicUrl(s.cover_path).data.publicUrl : null,
-    audioUrl: supabase.storage.from("audio").getPublicUrl(s.audio_path).data.publicUrl,
-  }));
+  const songs = (rows ?? []).map((s) => toTrack(supabase, s));
 
   return (
     <>
