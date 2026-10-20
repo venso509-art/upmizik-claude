@@ -7,6 +7,7 @@ import { formatHTG, type DonationMethod } from "@/lib/donations";
 import type { PayoutStatus } from "@/lib/finance";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { PayoutReview, type AdminPayout } from "@/components/admin/PayoutReview";
+import { CollaboratorDues, type CollaboratorDue } from "@/components/admin/CollaboratorDues";
 
 export const metadata: Metadata = { title: "Admin: Retrè | UpMizik" };
 
@@ -28,6 +29,18 @@ type Row = {
   created_at: string;
   processed_at: string | null;
   artist: { display_name: string } | null;
+};
+
+type DueRow = {
+  artist_id: string;
+  artist_name: string;
+  collaborator_name: string;
+  collaborator_role: string | null;
+  collaborator_phone: string | null;
+  collaborator_method: DonationMethod | null;
+  amount_htg: number;
+  earning_count: number;
+  oldest: string;
 };
 
 export default async function AdminPayoutsPage({ searchParams }: { searchParams: { status?: string } }) {
@@ -65,6 +78,20 @@ export default async function AdminPayoutsPage({ searchParams }: { searchParams:
   }));
   const total = payouts.reduce((sum, p) => sum + p.amountHtg, 0);
 
+  // Sa UpMizik dwe kolaboratè yo (splits), pou mwa ki fini yo
+  const { data: dueRows } = await supabase.rpc("admin_collaborator_dues");
+  const dues: CollaboratorDue[] = ((dueRows ?? []) as DueRow[]).map((r) => ({
+    artistId: r.artist_id,
+    artistName: r.artist_name,
+    name: r.collaborator_name,
+    role: r.collaborator_role,
+    phone: r.collaborator_phone,
+    method: r.collaborator_method,
+    amountHtg: Number(r.amount_htg),
+    count: Number(r.earning_count),
+    oldest: r.oldest,
+  }));
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <AdminTabs />
@@ -95,6 +122,16 @@ export default async function AdminPayoutsPage({ searchParams }: { searchParams:
       <div className="mt-5">
         <PayoutReview payouts={payouts} />
       </div>
+
+      <section className="mt-12">
+        <h2 className="text-2xl font-bold text-white">🤝 Peye kolaboratè yo</h2>
+        <p className="mt-1 text-sm text-zinc-400">
+          Pa kolaboratè yo (splits) sou don mwa ki fini yo. Voye lajan an sou nimewo yo, epi make l kòm peye ak referans lan.
+        </p>
+        <div className="mt-5">
+          <CollaboratorDues dues={dues} />
+        </div>
+      </section>
     </div>
   );
 }

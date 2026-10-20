@@ -2,9 +2,21 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DONATION_METHODS, formatHTG, formatUSD, type DonationMethod } from "@/lib/donations";
-import { ARTIST_SHARE_PERCENT, PAYOUT_BADGE, PLATFORM_FEE_PERCENT, formatDate, toBalance, type BalanceRow, type PayoutStatus } from "@/lib/finance";
+import {
+  ARTIST_SHARE_PERCENT,
+  MONTHLY_FEE_HTG,
+  MONTHLY_FEE_USD,
+  PAYOUT_BADGE,
+  PAYOUT_WAIT_MONTHS,
+  PLATFORM_FEE_PERCENT,
+  formatDate,
+  toBalance,
+  type BalanceRow,
+  type PayoutStatus,
+} from "@/lib/finance";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { PayoutForm } from "@/components/finance/PayoutForm";
+import { PinForm } from "@/components/finance/PinForm";
 import { StatusBadge } from "@/components/StatusBadge";
 
 export const metadata: Metadata = { title: "Revni & Finans | UpMizik" };
@@ -17,7 +29,8 @@ type DonationRow = {
   method: DonationMethod;
   amount_usd: number;
   amount_htg: number;
-  artist_share_htg: number;
+  my_share_htg: number;
+  collab_share_htg: number;
   received_at: string;
 };
 
@@ -30,8 +43,9 @@ type PayoutRow = {
   reference: string | null;
   admin_note: string | null;
   created_at: string;
-  processed_at: string | null;
 };
+
+type PrivateInfo = { phone: string | null; has_pin: boolean; pin_locked_until: string | null };
 
 function MoneyCard({ label, value, hint, highlight }: { label: string; value: number; hint?: string; highlight?: boolean }) {
   return (
@@ -61,20 +75,33 @@ export default async function FinancePage() {
   const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", user.id).single();
   if (profile?.role !== "artist") redirect("/dashboard");
 
-  const [balanceRes, donationsRes, payoutsRes] = await Promise.all([
+  const [balanceRes, donationsRes, payoutsRes, privateRes] = await Promise.all([
     supabase.rpc("artist_balance", { p_artist_id: user.id }),
     supabase.rpc("my_donations"),
     supabase
       .from("payouts")
-      .select("id, method, phone, amount_htg, status, reference, admin_note, created_at, processed_at")
+      .select("id, method, phone, amount_htg, status, reference, admin_note, created_at")
       .eq("artist_id", user.id)
       .order("created_at", { ascending: false })
       .returns<PayoutRow[]>(),
+    supabase.rpc("my_private_info"),
   ]);
 
   const balance = toBalance((balanceRes.data as BalanceRow[] | null)?.[0]);
   const donations = (donationsRes.data ?? []) as DonationRow[];
   const payouts = payoutsRes.data ?? [];
+  const priv = ((privateRes.data as PrivateInfo[] | null) ?? [])[0];
+  const hasPin = Boolean(priv?.has_pin);
+
+  // Poukisa atis la poko ka mande retrè (si se ka a)
+  const eligible = balance.eligibleFrom ? new Date(balance.eligibleFrom) <= new Date() : false;
+  let disabledReason: string | undefined;
+  if (profile.status !== "approved") disabledReason = "Kont ou dwe apwouve pa admin anvan ou ka mande yon retrè.";
+  else if (!eligible)
+    disabledReason = balance.eligibleFrom
+      ? `Ou ka kòmanse mande retrè apati ${formatDate(balance.eligibleFrom)} (${PAYOUT_WAIT_MONTHS} mwa apre kont ou apwouve). Lajan ou ap kontinye ogmante jiska lè sa a.`
+      : `Ou ka mande retrè ${PAYOUT_WAIT_MONTHS} mwa apre kont ou apwouve.`;
+  else if (!hasPin) disabledReason = "Kreye PIN retrè ou anba a anvan ou mande yon retrè.";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -83,7 +110,7 @@ export default async function FinancePage() {
       <h1 className="text-3xl font-extrabold tracking-tight text-white">💰 Revni & Finans</h1>
       <p className="mt-1 text-zinc-400">Swiv lajan fanatik ou yo voye ba ou, epi retire l sou MonCash oswa NatCash.</p>
 
-      {/* ===== EKSPLIKASYON 85/15 ===== */}
+      {/* ===== RÈG YO ===== */}
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <div className="flex h-3 overflow-hidden rounded-full">
           <div className="bg-fuchsia-500" style={{ width: `${ARTIST_SHARE_PERCENT}%` }} />
@@ -92,35 +119,50 @@ export default async function FinancePage() {
         <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
           <span className="text-zinc-300">
             <span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-fuchsia-500" />
-            <span className="font-bold text-white">{ARTIST_SHARE_PERCENT}%</span> pou ou
+            <span className="font-bold text-white">{ARTIST_SHARE_PERCENT}%</span> pou ou ak kolaboratè ou yo
           </span>
           <span className="text-zinc-400">
             <span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full bg-zinc-600" />
-            <span className="font-bold text-zinc-200">{PLATFORM_FEE_PERCENT}%</span> pou platfòm UpMizik la
+            <span className="font-bold text-zinc-200">{PLATFORM_FEE_PERCENT}%</span> pou UpMizik
           </span>
         </div>
-        <p className="mt-3 text-sm text-zinc-500">
-          Chak don yon fanatik voye pa MonCash oswa NatCash, ou resevwa {ARTIST_SHARE_PERCENT}% ladan l depi ekip UpMizik la valide l.
-          Platfòm nan kenbe {PLATFORM_FEE_PERCENT}% pou l kontinye fonksyone.
-        </p>
+        <ul className="mt-4 grid gap-2 text-sm text-zinc-400 sm:grid-cols-2">
+          <li>💝 Chak don valide: {ARTIST_SHARE_PERCENT}% pataje ant ou menm ak moun ou bay royalties sou chante a.</li>
+          <li>
+            📅 Chak mwa ou touche: {formatUSD(MONTHLY_FEE_USD)} ({formatHTG(MONTHLY_FEE_HTG)}) frè platfòm. Mwa ou pa touche, ou pa peye anyen.
+          </li>
+          <li>🗓️ Lajan yon mwa vin disponib depi mwa a fini.</li>
+          <li>⏳ Premye retrè posib {PAYOUT_WAIT_MONTHS} mwa apre kont ou apwouve. Apre sa, nenpòt ki lè.</li>
+        </ul>
       </section>
 
       {/* ===== BALANS ===== */}
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <MoneyCard label="💵 Balans disponib" value={balance.availableHtg} hint="Sa ou ka retire kounye a" highlight />
-        <MoneyCard label="📈 Total touche" value={balance.earnedHtg} hint={`${balance.donationCount} don valide`} />
+        <MoneyCard label="🗓️ Mwa sa a" value={balance.currentMonthHtg} hint="Ap disponib depi mwa a fini" />
+        <MoneyCard label="📈 Total touche" value={balance.earnedHtg} hint={`${balance.donationCount} don valide (pa w apre splits)`} />
+        <MoneyCard label="📅 Frè mansyèl yo" value={balance.feesHtg} hint={`${formatUSD(MONTHLY_FEE_USD)} pou chak mwa ou te touche`} />
         <MoneyCard label="✅ Deja peye" value={balance.paidHtg} />
         <MoneyCard label="⏳ Retrè an atant" value={balance.pendingHtg} />
       </section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        {/* ===== FÒM RETRÈ ===== */}
-        <Panel title="Mande yon retrè" subtitle="Lajan an ap voye sou nimewo MonCash oswa NatCash ou.">
-          <PayoutForm
-            availableHtg={balance.availableHtg}
-            disabledReason={profile.status !== "approved" ? "Kont ou dwe apwouve pa admin anvan ou ka mande yon retrè." : undefined}
-          />
-        </Panel>
+        <div className="space-y-6">
+          {/* ===== PIN ===== */}
+          <Panel title="🔐 PIN retrè" subtitle="Ou bezwen l pou konfime chak retrè.">
+            {priv?.pin_locked_until && new Date(priv.pin_locked_until) > new Date() && (
+              <p className="mb-4 rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-300">
+                Twòp move PIN. Retrè yo bloke jiska {new Date(priv.pin_locked_until).toLocaleTimeString("fr-HT", { hour: "2-digit", minute: "2-digit", timeZone: "America/Port-au-Prince" })}.
+              </p>
+            )}
+            <PinForm hasPin={hasPin} />
+          </Panel>
+
+          {/* ===== FÒM RETRÈ ===== */}
+          <Panel title="Mande yon retrè" subtitle="Lajan an ap voye sou nimewo MonCash oswa NatCash ou.">
+            <PayoutForm availableHtg={balance.availableHtg} disabledReason={disabledReason} defaultPhone={priv?.phone} />
+          </Panel>
+        </div>
 
         {/* ===== ISTWA RETRÈ ===== */}
         <Panel title="Demann retrè ou yo">
@@ -135,9 +177,7 @@ export default async function FinancePage() {
                     <p className="text-xs text-zinc-500">
                       {DONATION_METHODS[p.method].label} · {p.phone} · {formatDate(p.created_at)}
                     </p>
-                    {p.status === "paid" && p.reference && (
-                      <p className="mt-1 text-xs text-emerald-300">Referans: {p.reference}</p>
-                    )}
+                    {p.status === "paid" && p.reference && <p className="mt-1 text-xs text-emerald-300">Referans: {p.reference}</p>}
                     {p.status === "rejected" && p.admin_note && <p className="mt-1 text-xs text-red-300">Rezon: {p.admin_note}</p>}
                   </div>
                   <StatusBadge {...PAYOUT_BADGE[p.status]} />
@@ -158,14 +198,15 @@ export default async function FinancePage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm">
+              <table className="w-full min-w-[720px] text-left text-sm">
                 <thead className="text-xs uppercase tracking-wider text-zinc-500">
                   <tr className="border-b border-zinc-800">
                     <th className="py-2 pr-3 font-medium">Dat</th>
                     <th className="py-2 pr-3 font-medium">Donatè</th>
                     <th className="py-2 pr-3 font-medium">Chante</th>
                     <th className="py-2 pr-3 text-right font-medium">Montan</th>
-                    <th className="py-2 text-right font-medium">Pa w ({ARTIST_SHARE_PERCENT}%)</th>
+                    <th className="py-2 pr-3 text-right font-medium">Kolaboratè</th>
+                    <th className="py-2 text-right font-medium">Pa w</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/70">
@@ -181,7 +222,10 @@ export default async function FinancePage() {
                         {formatUSD(Number(d.amount_usd))}
                         <span className="block text-xs text-zinc-500">{formatHTG(Number(d.amount_htg))}</span>
                       </td>
-                      <td className="py-3 text-right font-semibold tabular-nums text-emerald-300">{formatHTG(Number(d.artist_share_htg))}</td>
+                      <td className="py-3 pr-3 text-right tabular-nums text-zinc-400">
+                        {Number(d.collab_share_htg) > 0 ? formatHTG(Number(d.collab_share_htg)) : "—"}
+                      </td>
+                      <td className="py-3 text-right font-semibold tabular-nums text-emerald-300">{formatHTG(Number(d.my_share_htg))}</td>
                     </tr>
                   ))}
                 </tbody>

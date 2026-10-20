@@ -22,7 +22,7 @@ export async function RegistrationPanel({ userId }: { userId: string }) {
     .maybeSingle<Registration>();
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-amber-800/60 bg-zinc-900/60">
+    <section id="peman" className="scroll-mt-24 overflow-hidden rounded-2xl border border-amber-800/60 bg-zinc-900/60">
       <div className="flex gap-4 border-b border-amber-800/40 bg-amber-950/40 p-5">
         <span className="text-3xl">⏳</span>
         <div>

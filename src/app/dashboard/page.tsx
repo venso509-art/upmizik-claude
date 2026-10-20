@@ -7,6 +7,7 @@ import { AuthCard } from "@/components/auth/ui";
 import { AccountStatusNotice } from "@/components/AccountStatusNotice";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { RegistrationPanel } from "@/components/registration/RegistrationPanel";
+import { WelcomeModal } from "@/components/registration/WelcomeModal";
 import { formatHTG } from "@/lib/donations";
 import { toBalance, type BalanceRow } from "@/lib/finance";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
@@ -44,7 +45,7 @@ function Panel({ title, subtitle, children }: { title: string; subtitle?: string
   );
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: { byenvini?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
@@ -119,6 +120,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
+      {/* Pop-up byenvini: touswit apre yon atis fin enskri */}
+      {searchParams.byenvini && profile.status === "pending" && <WelcomeModal name={profile.display_name} />}
       <DashboardTabs />
 
       {/* ===== AKÈY ===== */}

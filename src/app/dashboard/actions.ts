@@ -71,13 +71,15 @@ export async function getSongSplits(songId: string): Promise<Split[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("song_splits")
-    .select("collaborator_name, collaborator_role, collaborator_email, percentage")
+    .select("collaborator_name, collaborator_role, collaborator_email, collaborator_phone, collaborator_method, percentage")
     .eq("song_id", songId)
     .order("created_at");
   return (data ?? []).map((s) => ({
     name: s.collaborator_name,
     role: s.collaborator_role,
     email: s.collaborator_email ?? "",
+    phone: s.collaborator_phone ?? "",
+    method: (s.collaborator_method ?? "") as Split["method"],
     percentage: Number(s.percentage),
   }));
 }

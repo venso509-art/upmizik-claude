@@ -1,4 +1,14 @@
-export type Split = { name: string; role: string; email: string; percentage: number };
+// phone + method: UpMizik peye kolaboratè a dirèkteman sou MonCash/NatCash li
+export type Split = {
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  method: "moncash" | "natcash" | "";
+  percentage: number;
+};
+
+export const emptySplit = (): Split => ({ name: "", role: "", email: "", phone: "", method: "", percentage: 0 });
 
 export const MAX_SPLITS = 5;
 export const SPLIT_ROLES = ["Featuring", "Pwodiktè", "Konpozitè", "Parolye", "Mizisyen", "Enjenyè son", "Manadjè", "Lòt"];
@@ -17,6 +27,8 @@ export function validateSplits(splits: Split[]): string | null {
     if (s.name.trim().length > 80) return `Kolaboratè #${n}: non an twò long.`;
     if (!s.role.trim()) return `Kolaboratè #${n}: chwazi wòl li.`;
     if (s.email && !/^\S+@\S+\.\S+$/.test(s.email.trim())) return `Kolaboratè #${n}: imèl la pa valid.`;
+    if ((s.phone ?? "").replace(/\D/g, "").length < 8) return `Kolaboratè #${n}: mete nimewo telefòn li (pou UpMizik ka peye l).`;
+    if (!s.method) return `Kolaboratè #${n}: chwazi MonCash oswa NatCash.`;
     if (!(s.percentage > 0) || s.percentage > 100) return `Kolaboratè #${n}: pousantaj la dwe ant 0.01 ak 100.`;
   }
   if (splitsTotal(splits) > 100) return "Total pousantaj kolaboratè yo pa ka depase 100%.";

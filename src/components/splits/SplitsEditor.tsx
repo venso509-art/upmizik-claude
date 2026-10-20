@@ -1,6 +1,6 @@
 "use client";
 
-import { MAX_SPLITS, SPLIT_ROLES, splitsTotal, type Split } from "@/lib/splits";
+import { MAX_SPLITS, SPLIT_ROLES, emptySplit, splitsTotal, type Split } from "@/lib/splits";
 
 const small = "w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-fuchsia-500";
 
@@ -18,7 +18,7 @@ export function SplitsEditor({ splits, onChange, disabled }: { splits: Split[]; 
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-white">🤝 Pataj royalties</p>
-          <p className="text-xs text-zinc-500">Pataje lajan chante a ak jiska {MAX_SPLITS} moun ki te patisipe.</p>
+          <p className="text-xs text-zinc-500">Pataje 85% chante a ak jiska {MAX_SPLITS} moun ki te patisipe. UpMizik peye yo dirèkteman.</p>
         </div>
         <span className="shrink-0 rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
           {splits.length}/{MAX_SPLITS}
@@ -90,13 +90,34 @@ export function SplitsEditor({ splits, onChange, disabled }: { splits: Split[]; 
               >
                 ✕ <span className="sm:hidden">Retire</span>
               </button>
+              {/* Kote UpMizik ap voye pa kolaboratè a */}
+              <select
+                value={s.method}
+                onChange={(e) => update(i, { method: e.target.value as Split["method"] })}
+                disabled={disabled}
+                className={small}
+                aria-label="Metòd peman kolaboratè a"
+              >
+                <option value="">Peye sou...</option>
+                <option value="moncash">MonCash</option>
+                <option value="natcash">NatCash</option>
+              </select>
+              <input
+                type="tel"
+                value={s.phone}
+                onChange={(e) => update(i, { phone: e.target.value })}
+                placeholder="Nimewo telefòn li"
+                disabled={disabled}
+                className={`${small} sm:col-span-2`}
+                aria-label="Nimewo telefòn kolaboratè a"
+              />
               <input
                 type="email"
                 value={s.email}
                 onChange={(e) => update(i, { email: e.target.value })}
                 placeholder="Imèl (opsyonèl)"
                 disabled={disabled}
-                className={`${small} col-span-2 sm:col-span-4`}
+                className={`${small} col-span-2 sm:col-span-1`}
                 aria-label="Imèl"
               />
             </li>
@@ -107,7 +128,7 @@ export function SplitsEditor({ splits, onChange, disabled }: { splits: Split[]; 
       {splits.length < MAX_SPLITS && (
         <button
           type="button"
-          onClick={() => onChange([...splits, { name: "", role: "", email: "", percentage: 0 }])}
+          onClick={() => onChange([...splits, emptySplit()])}
           disabled={disabled}
           className="mt-4 w-full rounded-lg border border-dashed border-zinc-700 py-2.5 text-sm font-medium text-zinc-300 transition hover:border-fuchsia-500 hover:text-white"
         >
@@ -116,7 +137,7 @@ export function SplitsEditor({ splits, onChange, disabled }: { splits: Split[]; 
       )}
 
       <p className="mt-3 text-xs text-zinc-500">
-        ℹ️ Pou kounye a, UpMizik anrejistre akò a. Distribisyon lajan an ap vini ak sistèm Wallet la.
+        ℹ️ Chak don valide pataje otomatikman dapre pousantaj sa yo. UpMizik voye pa kolaboratè yo sou MonCash/NatCash yo chak mwa.
       </p>
     </div>
   );

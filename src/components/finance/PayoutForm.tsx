@@ -7,7 +7,15 @@ import { DONATION_METHODS, formatHTG, type DonationMethod } from "@/lib/donation
 import { MIN_PAYOUT_HTG } from "@/lib/finance";
 import { Field, FormMessage, SubmitButton, inputClass } from "@/components/auth/ui";
 
-export function PayoutForm({ availableHtg, disabledReason }: { availableHtg: number; disabledReason?: string }) {
+export function PayoutForm({
+  availableHtg,
+  disabledReason,
+  defaultPhone,
+}: {
+  availableHtg: number;
+  disabledReason?: string;
+  defaultPhone?: string | null;
+}) {
   const [state, formAction] = useFormState(requestPayout, undefined);
   const [method, setMethod] = useState<DonationMethod>("moncash");
   const [amount, setAmount] = useState("");
@@ -45,7 +53,7 @@ export function PayoutForm({ availableHtg, disabledReason }: { availableHtg: num
       </div>
 
       <Field label={`Nimewo ${DONATION_METHODS[method].label} ou`}>
-        <input name="phone" type="tel" required placeholder="Egz: 3412 3456" className={inputClass} />
+        <input name="phone" type="tel" required defaultValue={defaultPhone ?? ""} placeholder="Egz: 3412 3456" className={inputClass} />
       </Field>
 
       <Field label="Montan (goud)">
@@ -67,6 +75,10 @@ export function PayoutForm({ availableHtg, disabledReason }: { availableHtg: num
             Retire tout
           </button>
         </div>
+      </Field>
+
+      <Field label="🔐 PIN retrè ou">
+        <input name="pin" type="password" inputMode="numeric" autoComplete="off" required pattern="\d{4,6}" maxLength={6} placeholder="••••" className={`${inputClass} tracking-[0.5em]`} />
       </Field>
 
       {tooLow && <FormMessage error={`Montan minimòm lan se ${formatHTG(MIN_PAYOUT_HTG)}.`} />}

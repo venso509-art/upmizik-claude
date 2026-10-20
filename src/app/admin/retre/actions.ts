@@ -37,3 +37,22 @@ export async function rejectPayout(id: string, note: string) {
   if (reason.length > 500) return { error: "Rezon an twò long." };
   return processPayout(id, { status: "rejected", admin_note: reason });
 }
+
+// Make tout sa UpMizik dwe yon kolaboratè (pou yon atis) kòm peye
+export async function markCollaboratorPaid(artistId: string, name: string, phone: string | null, reference: string) {
+  const ref = reference.trim();
+  if (!ref) return { error: "Mete nimewo referans transfè a." };
+
+  const supabase = createClient();
+  // Fonksyon SQL la verifye dwa admin nan
+  const { error } = await supabase.rpc("mark_collaborator_paid", {
+    p_artist_id: artistId,
+    p_name: name,
+    p_phone: phone,
+    p_reference: ref,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/retre");
+  return {};
+}

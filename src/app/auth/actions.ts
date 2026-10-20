@@ -33,9 +33,17 @@ export async function signup(_prev: AuthState, formData: FormData): Promise<Auth
   const password = String(formData.get("password") ?? "");
   const displayName = String(formData.get("display_name") ?? "").trim();
   const role = formData.get("role") === "artist" ? "artist" : "listener";
+  const phone = String(formData.get("phone") ?? "").trim();
+  const pin = String(formData.get("pin") ?? "").trim();
+  const pinConfirm = String(formData.get("pin_confirm") ?? "").trim();
 
   if (!email || !displayName) return { error: "Ranpli tout chan yo." };
   if (password.length < 8) return { error: "Modpas la dwe gen omwen 8 karaktè." };
+  if (role === "artist") {
+    if (phone.replace(/\D/g, "").length < 8) return { error: "Mete yon nimewo telefòn/WhatsApp valid." };
+    if (!/^\d{4,6}$/.test(pin)) return { error: "PIN nan dwe gen 4 a 6 chif." };
+    if (pin !== pinConfirm) return { error: "2 PIN yo pa menm." };
+  }
 
   const origin = headers().get("origin") ?? "";
   const supabase = createClient();
@@ -44,7 +52,8 @@ export async function signup(_prev: AuthState, formData: FormData): Promise<Auth
     password,
     options: {
       // Trigger handle_new_user() nan baz done a li valè sa yo pou kreye profile la
-      data: { display_name: displayName, role },
+      // (telefòn nan ale nan tablo prive artist_private, pa nan profile piblik la)
+      data: { display_name: displayName, role, ...(role === "artist" ? { phone } : {}) },
       emailRedirectTo: `${origin}/auth/callback`,
     },
   });
@@ -53,12 +62,18 @@ export async function signup(_prev: AuthState, formData: FormData): Promise<Auth
 
   // Si konfimasyon imèl dezaktive, itilizatè a konekte touswit
   if (data.session) {
+    if (role === "artist") {
+      // PIN nan chifre nan baz done a; li pa janm sere nan metadata kont lan
+      await supabase.rpc("set_withdrawal_pin", { p_new_pin: pin, p_current_pin: null });
+    }
     revalidatePath("/", "layout");
-    redirect("/");
+    redirect(role === "artist" ? "/dashboard?byenvini=1" : "/");
   }
 
   return {
-    message: `Nou voye yon lyen konfimasyon bay ${email}. Klike sou li pou w aktive kont ou.`,
+    message:
+      `Nou voye yon lyen konfimasyon bay ${email}. Klike sou li pou w aktive kont ou.` +
+      (role === "artist" ? " Apre sa, kreye PIN retrè ou sou paj 💰 Revni & Finans lan." : ""),
   };
 }
 
