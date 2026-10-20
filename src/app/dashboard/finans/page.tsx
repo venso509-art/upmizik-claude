@@ -73,7 +73,8 @@ export default async function FinancePage() {
   if (!user) redirect("/konekte");
 
   const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", user.id).single();
-  if (profile?.role !== "artist") redirect("/dashboard");
+  // Espas atis la (finans enkli) louvri sèlman apre admin nan valide kont lan
+  if (profile?.role !== "artist" || profile.status !== "approved") redirect("/dashboard");
 
   const [balanceRes, donationsRes, payoutsRes, privateRes] = await Promise.all([
     supabase.rpc("artist_balance", { p_artist_id: user.id }),
@@ -96,8 +97,7 @@ export default async function FinancePage() {
   // Poukisa atis la poko ka mande retrè (si se ka a)
   const eligible = balance.eligibleFrom ? new Date(balance.eligibleFrom) <= new Date() : false;
   let disabledReason: string | undefined;
-  if (profile.status !== "approved") disabledReason = "Kont ou dwe apwouve pa admin anvan ou ka mande yon retrè.";
-  else if (!eligible)
+  if (!eligible)
     disabledReason = balance.eligibleFrom
       ? `Ou ka kòmanse mande retrè apati ${formatDate(balance.eligibleFrom)} (${PAYOUT_WAIT_MONTHS} mwa apre kont ou apwouve). Lajan ou ap kontinye ogmante jiska lè sa a.`
       : `Ou ka mande retrè ${PAYOUT_WAIT_MONTHS} mwa apre kont ou apwouve.`;

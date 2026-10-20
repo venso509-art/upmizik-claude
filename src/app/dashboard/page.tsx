@@ -7,7 +7,6 @@ import { AuthCard } from "@/components/auth/ui";
 import { AccountStatusNotice } from "@/components/AccountStatusNotice";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { RegistrationPanel } from "@/components/registration/RegistrationPanel";
-import { WelcomeModal } from "@/components/registration/WelcomeModal";
 import { LevelsCard } from "@/components/dashboard/LevelsCard";
 import { formatHTG } from "@/lib/donations";
 import { toBalance, type BalanceRow } from "@/lib/finance";
@@ -46,7 +45,7 @@ function Panel({ title, subtitle, children }: { title: string; subtitle?: string
   );
 }
 
-export default async function DashboardPage({ searchParams }: { searchParams: { byenvini?: string } }) {
+export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
@@ -66,7 +65,24 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
     );
   }
 
-  const canUpload = profile.status === "approved";
+  // Espas atis la louvri SÈLMAN apre admin nan valide kont lan
+  if (profile.status !== "approved") {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10">
+        <h1 className="text-3xl font-extrabold tracking-tight text-white">🎤 Espas atis</h1>
+        <p className="mt-1 text-zinc-400">
+          Bonjou {profile.display_name}! Espas atis ou ap louvri depi ekip UpMizik la valide kont ou. Pandan tan sa a, ou ka koute mizik sou{" "}
+          <Link href="/" className="text-fuchsia-400 hover:text-fuchsia-300">
+            paj akèy la
+          </Link>
+          .
+        </p>
+        <div className="mt-8">
+          {profile.status === "blocked" ? <AccountStatusNotice status="blocked" /> : <RegistrationPanel userId={user.id} />}
+        </div>
+      </div>
+    );
+  }
 
   type DashboardSong = SongRow & { created_at: string; comments?: { count: number }[] };
   const query = (columns: string) =>
@@ -121,8 +137,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      {/* Pop-up byenvini: touswit apre yon atis fin enskri */}
-      {searchParams.byenvini && profile.status === "pending" && <WelcomeModal name={profile.display_name} />}
       <DashboardTabs />
 
       {/* ===== AKÈY ===== */}
@@ -138,21 +152,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-            {canUpload ? (
-              <Link
-                href="/upload"
-                className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-fuchsia-900/50 transition hover:scale-[1.02] hover:opacity-95"
-              >
-                <span className="text-2xl leading-none">+</span> Pibliye yon nouvo chante
-              </Link>
-            ) : (
-              <span
-                aria-disabled="true"
-                className="flex cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-zinc-800 px-8 py-4 text-lg font-bold text-zinc-500"
-              >
-                🔒 Pibliye yon nouvo chante
-              </span>
-            )}
+            <Link
+              href="/upload"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-fuchsia-900/50 transition hover:scale-[1.02] hover:opacity-95"
+            >
+              <span className="text-2xl leading-none">+</span> Pibliye yon nouvo chante
+            </Link>
             <Link
               href={`/atis/${user.id}`}
               className="rounded-2xl border border-zinc-700 px-8 py-3 text-center font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-white"
@@ -168,12 +173,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           </div>
         </div>
       </section>
-
-      {!canUpload && (
-        <div className="mt-6">
-          {profile.status === "blocked" ? <AccountStatusNotice status="blocked" /> : <RegistrationPanel userId={user.id} />}
-        </div>
-      )}
 
       {/* ===== REZIME ===== */}
       <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -206,14 +205,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           <p className="text-5xl">🎶</p>
           <h2 className="mt-4 text-xl font-bold text-white">Ou poko pibliye okenn chante</h2>
           <p className="mt-2 text-zinc-400">Upload premye chante w la, e estatistik ou yo ap parèt isit la.</p>
-          {canUpload && (
-            <Link
-              href="/upload"
-              className="mt-6 inline-block rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white"
-            >
-              + Pibliye premye chante w
-            </Link>
-          )}
+          <Link
+            href="/upload"
+            className="mt-6 inline-block rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white"
+          >
+            + Pibliye premye chante w
+          </Link>
         </section>
       ) : (
         <>

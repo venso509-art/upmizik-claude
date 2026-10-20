@@ -26,8 +26,8 @@ export default async function ArtistStatsPage({ searchParams }: { searchParams: 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "artist") redirect("/dashboard");
+  const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", user.id).single();
+  if (profile?.role !== "artist" || profile.status !== "approved") redirect("/dashboard");
 
   const days = parseRange(searchParams.jou);
   const [dailyRes, topRes] = await Promise.all([
