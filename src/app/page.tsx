@@ -4,6 +4,7 @@ import { SongCard } from "@/components/SongCard";
 import { GENRES } from "@/lib/genres";
 import { getTop10, getTop3 } from "@/lib/top";
 import { Top10Section } from "@/components/Top10Section";
+import { AdBanner, type PublicAd } from "@/components/ads/AdBanner";
 import { Top3Section } from "@/components/Top3Section";
 import { ArtistBubbles, type BubbleArtist } from "@/components/ArtistBubbles";
 import { Reveal } from "@/components/Reveal";
@@ -30,11 +31,18 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
 
   const songs = (rows ?? []).map((s) => toTrack(supabase, s));
   const { data: { user } } = await supabase.auth.getUser();
-  const [extras, top3, myArtists] = await Promise.all([
+  const [extras, top3, myArtists, { data: adRows }] = await Promise.all([
     getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null),
     getTop3(supabase),
     user ? supabase.rpc("my_top_artists", { p_limit: 15 }) : Promise.resolve({ data: [] }),
+    // RLS la bay sèlman piblisite ki aktif e ki poko ekspire (admin wè tout, kidonk nou refiltre)
+    supabase.from("ads").select("id, title, image_path, is_active, starts_at, expires_at").order("created_at", { ascending: false }).limit(20),
   ]);
+  const now = Date.now();
+  const ads: PublicAd[] = (adRows ?? [])
+    .filter((a) => a.is_active && new Date(a.starts_at).getTime() <= now && (!a.expires_at || new Date(a.expires_at).getTime() > now))
+    .slice(0, 10)
+    .map((a) => ({ id: a.id, title: a.title, imageUrl: supabase.storage.from("ads").getPublicUrl(a.image_path).data.publicUrl }));
 
   // Atis moun nan koute plis; si li poko gen istwa, atis ki pi popilè yo
   let bubbles = (myArtists.data ?? []) as BubbleArtist[];
@@ -114,6 +122,11 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
       </Reveal>
       <Reveal>
         <Top10Section entries={top10} />
+      </Reveal>
+
+      {/* ===== PIBLISITE ===== */}
+      <Reveal>
+        <AdBanner ads={ads} />
       </Reveal>
 
       {/* ===== DÈNYE CHANTE + FILT JAN MIZIK ===== */}
