@@ -8,7 +8,7 @@ export async function Header() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: profile } = user
-    ? await supabase.from("profiles").select("display_name, role").eq("id", user.id).single()
+    ? await supabase.from("profiles").select("display_name, role, status").eq("id", user.id).single()
     : { data: null };
   const admin = await isAdmin(supabase, user?.id);
 
@@ -23,7 +23,7 @@ export async function Header() {
         {user ? (
           <div className="flex items-center gap-3">
             {admin && (
-              <Link href="/admin/don" className="rounded-lg px-3 py-1.5 text-sm font-medium text-amber-300 transition hover:bg-zinc-800">
+              <Link href="/admin" className="rounded-lg px-3 py-1.5 text-sm font-medium text-amber-300 transition hover:bg-zinc-800">
                 🛡️ <span className="hidden sm:inline">Admin</span>
               </Link>
             )}
@@ -32,7 +32,7 @@ export async function Header() {
                 📊 <span className="hidden sm:inline">Dashboard</span>
               </Link>
             )}
-            {profile?.role === "artist" && (
+            {profile?.role === "artist" && profile.status === "approved" && (
               <Link
                 href="/upload"
                 className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90"

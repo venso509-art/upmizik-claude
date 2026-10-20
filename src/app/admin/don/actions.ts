@@ -24,6 +24,7 @@ export async function reviewDonation(id: string, status: "verified" | "rejected"
   if (error) return { error: `Aksyon an echwe: ${error.message}` };
 
   revalidatePath("/admin/don");
+  revalidatePath("/admin");
   return {};
 }
 
@@ -35,5 +36,6 @@ export async function markThanked(id: string): Promise<AdminResult> {
   if (error) return { error: `Aksyon an echwe: ${error.message}` };
 
   revalidatePath("/admin/don");
+  revalidatePath("/admin");
   return {};
 }

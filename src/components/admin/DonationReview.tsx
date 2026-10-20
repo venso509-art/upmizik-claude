@@ -98,14 +98,14 @@ function DonationCard({ d }: { d: AdminDonation }) {
                 disabled={pending}
                 className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
               >
-                ✅ Valide
+                ✅ Approve
               </button>
               <button
                 onClick={() => confirm("Rejte don sa a?") && run(() => reviewDonation(d.id, "rejected"))}
                 disabled={pending}
                 className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition hover:border-red-800 hover:text-red-300 disabled:opacity-60"
               >
-                ❌ Rejte
+                ❌ Reject
               </button>
             </>
           )}

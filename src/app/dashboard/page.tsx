@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 import { AuthCard } from "@/components/auth/ui";
+import { AccountStatusNotice } from "@/components/AccountStatusNotice";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
 import { SongManager, type ManagedSong } from "@/components/dashboard/SongManager";
 
@@ -44,7 +45,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
 
-  const { data: profile } = await supabase.from("profiles").select("display_name, role").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("display_name, role, status").eq("id", user.id).single();
   if (profile?.role !== "artist") {
     return (
       <AuthCard title="Dashboard la se pou atis" subtitle="Kont ou se yon kont koutè.">
@@ -58,6 +59,8 @@ export default async function DashboardPage() {
       </AuthCard>
     );
   }
+
+  const canUpload = profile.status === "approved";
 
   type DashboardSong = SongRow & { created_at: string; comments?: { count: number }[] };
   const query = (columns: string) =>
@@ -121,12 +124,21 @@ export default async function DashboardPage() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-            <Link
-              href="/upload"
-              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-fuchsia-900/50 transition hover:scale-[1.02] hover:opacity-95"
-            >
-              <span className="text-2xl leading-none">+</span> Pibliye yon nouvo chante
-            </Link>
+            {canUpload ? (
+              <Link
+                href="/upload"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-fuchsia-900/50 transition hover:scale-[1.02] hover:opacity-95"
+              >
+                <span className="text-2xl leading-none">+</span> Pibliye yon nouvo chante
+              </Link>
+            ) : (
+              <span
+                aria-disabled="true"
+                className="flex cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-zinc-800 px-8 py-4 text-lg font-bold text-zinc-500"
+              >
+                🔒 Pibliye yon nouvo chante
+              </span>
+            )}
             <Link
               href={`/atis/${user.id}`}
               className="rounded-2xl border border-zinc-700 px-8 py-3 text-center font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-white"
@@ -142,6 +154,12 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {!canUpload && (
+        <div className="mt-6">
+          <AccountStatusNotice status={profile.status === "blocked" ? "blocked" : "pending"} />
+        </div>
+      )}
 
       {/* ===== REZIME ===== */}
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -160,12 +178,14 @@ export default async function DashboardPage() {
           <p className="text-5xl">🎶</p>
           <h2 className="mt-4 text-xl font-bold text-white">Ou poko pibliye okenn chante</h2>
           <p className="mt-2 text-zinc-400">Upload premye chante w la, e estatistik ou yo ap parèt isit la.</p>
-          <Link
-            href="/upload"
-            className="mt-6 inline-block rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white"
-          >
-            + Pibliye premye chante w
-          </Link>
+          {canUpload && (
+            <Link
+              href="/upload"
+              className="mt-6 inline-block rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white"
+            >
+              + Pibliye premye chante w
+            </Link>
+          )}
         </section>
       ) : (
         <>

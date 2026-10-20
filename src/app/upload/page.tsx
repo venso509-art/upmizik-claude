@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AuthCard } from "@/components/auth/ui";
 import { UploadForm } from "@/components/upload/UploadForm";
+import { AccountStatusNotice } from "@/components/AccountStatusNotice";
 
 export const metadata: Metadata = { title: "Upload | UpMizik" };
 
@@ -12,7 +13,7 @@ export default async function UploadPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", user.id).single();
 
   if (profile?.role !== "artist") {
     return (
@@ -24,6 +25,17 @@ export default async function UploadPage() {
           </Link>
           .
         </p>
+      </AuthCard>
+    );
+  }
+
+  if (profile.status !== "approved") {
+    return (
+      <AuthCard
+        title={profile.status === "blocked" ? "Kont ou bloke" : "Kont ou ap tann validasyon admin"}
+        subtitle="Ou poko ka pibliye mizik."
+      >
+        <AccountStatusNotice status={profile.status} />
       </AuthCard>
     );
   }
