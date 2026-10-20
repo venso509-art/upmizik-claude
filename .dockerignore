@@ -1,0 +1,17 @@
+# Pa voye fichye sa yo nan imaj Docker la
+node_modules
+.next
+.git
+.gitignore
+
+# Sekrè lokal yo (nan Coolify, nou mete yo kòm "Environment Variables")
+.env
+.env*.local
+
+# Dokiman ak fichye ki pa nesesè pou sit la kouri
+supabase
+README.md
+*.log
+npm-debug.log*
+Dockerfile
+.dockerignore
