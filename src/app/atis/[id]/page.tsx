@@ -32,7 +32,7 @@ async function getArtist(id: string): Promise<Artist | null> {
   if (!UUID_RE.test(id)) return null;
   const supabase = createClient();
   const query = (columns: string) =>
-    supabase.from("profiles").select(columns).eq("id", id).eq("role", "artist").maybeSingle<Artist>();
+    supabase.from("profiles").select(columns).eq("id", id).eq("role", "artist").is("archived_at", null).maybeSingle<Artist>();
 
   const full = await query(`${BASE_COLUMNS}, ${EXTRA_COLUMNS}`);
   if (!full.error) return full.data;
@@ -79,6 +79,7 @@ export default async function ArtistPage({ params }: Props) {
       .from("songs")
       .select(SONG_SELECT)
       .eq("artist_id", artist.id)
+      .is("archived_at", null)
       .order("created_at", { ascending: false })
       .returns<SongRow[]>(),
     supabase.auth.getUser(),

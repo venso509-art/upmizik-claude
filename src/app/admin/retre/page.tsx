@@ -56,11 +56,12 @@ export default async function AdminPayoutsPage({ searchParams }: { searchParams:
       .from("payouts")
       .select("id, artist_id, method, phone, amount_htg, status, reference, admin_note, created_at, processed_at, artist:profiles!payouts_artist_id_fkey(display_name)")
       .eq("status", status)
+      .is("archived_at", null)
       // An atant: pi ansyen an premye (premye vini, premye sèvi). Lòt yo: pi resan an premye.
       .order(status === "pending" ? "created_at" : "processed_at", { ascending: status === "pending" })
       .limit(100)
       .returns<Row[]>(),
-    ...TABS.map((t) => supabase.from("payouts").select("id", { count: "exact", head: true }).eq("status", t.status)),
+    ...TABS.map((t) => supabase.from("payouts").select("id", { count: "exact", head: true }).eq("status", t.status).is("archived_at", null)),
   ]);
 
   const payouts: AdminPayout[] = (rows ?? []).map((r) => ({

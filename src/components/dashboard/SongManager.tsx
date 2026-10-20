@@ -20,6 +20,7 @@ export type ManagedSong = {
   durationSeconds: number | null;
   youtubeUrl: string | null;
   createdAt: string;
+  archived?: boolean; // admin nan achive l: li pa parèt sou sit la
 };
 
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
@@ -108,6 +109,11 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
             <div className="min-w-0 flex-1">
               <Link href={`/chante/${s.id}`} className="block truncate font-medium text-white hover:underline">
                 {s.title}
+                {s.archived && (
+                  <span className="ml-2 rounded-full bg-zinc-700 px-2 py-0.5 text-[11px] font-normal text-zinc-300" title="Ekip UpMizik la achive chante sa a: li pa parèt sou sit la">
+                    🗄️ Achive
+                  </span>
+                )}
               </Link>
               <p className="truncate text-xs text-zinc-500">
                 {s.genre ?? "San jan"} · {formatDuration(s.durationSeconds)} ·{" "}

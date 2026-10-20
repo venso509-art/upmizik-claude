@@ -26,6 +26,7 @@ export async function AdminTabs() {
           { href: "/admin/pub", label: "📢 Pub" },
           { href: "/admin/rpa", label: "🚀 RPA" },
           { href: "/admin/sekirite", label: "🔐 Sekirite" },
+          { href: "/admin/achiv", label: "🗄️ Achiv" },
           { href: "/admin/mesaj", label: "📣 Mesaj" },
         ]}
       />

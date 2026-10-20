@@ -8,11 +8,12 @@ export type TopEntry = { position: number; track: Track; plays: number };
 export async function getTop3(supabase: SupabaseClient): Promise<{ entries: TopEntry[]; auto: boolean }> {
   const { data: picked } = await supabase
     .from("top_songs")
-    .select(`position, song:songs(${SONG_SELECT})`)
+    .select(`position, song:songs(${SONG_SELECT}, archived_at)`)
     .order("position")
-    .returns<{ position: number; song: SongRow | null }[]>();
+    .returns<{ position: number; song: (SongRow & { archived_at: string | null }) | null }[]>();
 
-  const chosen = (picked ?? []).filter((r): r is { position: number; song: SongRow } => r.song !== null);
+  // Admin nan wè mizik achive yo tou (RLS), kidonk nou retire yo isit la
+  const chosen = (picked ?? []).filter((r): r is { position: number; song: SongRow & { archived_at: null } } => r.song !== null && !r.song.archived_at);
   if (chosen.length > 0) {
     return {
       auto: false,
@@ -23,6 +24,7 @@ export async function getTop3(supabase: SupabaseClient): Promise<{ entries: TopE
   const { data: popular } = await supabase
     .from("songs")
     .select(SONG_SELECT)
+    .is("archived_at", null)
     .order("play_count", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(3)
@@ -46,6 +48,7 @@ export async function getTop10(supabase: SupabaseClient, excludeIds: string[]): 
     .from("songs")
     .select(SONG_SELECT)
     .in("id", order.map((r) => r.song_id))
+    .is("archived_at", null)
     .returns<SongRow[]>();
   const byId = new Map((rows ?? []).map((s) => [s.id, s]));
 

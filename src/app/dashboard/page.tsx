@@ -84,14 +84,14 @@ export default async function DashboardPage() {
     );
   }
 
-  type DashboardSong = SongRow & { created_at: string; comments?: { count: number }[] };
+  type DashboardSong = SongRow & { created_at: string; archived_at?: string | null; comments?: { count: number }[] };
   const query = (columns: string) =>
     supabase.from("songs").select(columns).eq("artist_id", user.id).order("created_at", { ascending: false }).returns<DashboardSong[]>();
 
-  let { data: rows, error } = await query(`${SONG_SELECT}, created_at, comments(count)`);
+  let { data: rows, error } = await query(`${SONG_SELECT}, created_at, archived_at, comments(count)`);
   if (error) {
     // Si tablo comments la poko egziste, chaje chante yo san kòmantè
-    ({ data: rows, error } = await query(`${SONG_SELECT}, created_at`));
+    ({ data: rows, error } = await query(`${SONG_SELECT}, created_at, archived_at`));
   }
 
   const songs = rows ?? [];
@@ -116,6 +116,7 @@ export default async function DashboardPage() {
     durationSeconds: s.duration_seconds,
     youtubeUrl: extras[s.id]?.songYoutubeUrl ?? null,
     createdAt: s.created_at,
+    archived: Boolean(s.archived_at),
   }));
 
   // Grafik 1: koute pa chante (top 8)

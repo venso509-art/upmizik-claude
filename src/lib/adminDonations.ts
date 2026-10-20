@@ -29,6 +29,7 @@ export async function loadAdminDonations(supabase: SupabaseClient, status: Donat
       "id, amount_usd, amount_htg, method, donor_name, contact_type, contact_value, message, proof_path, status, thanked_at, created_at, artist:profiles!donations_artist_id_fkey(display_name), song:songs(title)",
     )
     .eq("status", status)
+    .is("archived_at", null)
     .order("created_at", { ascending: status === "pending" })
     .limit(limit)
     .returns<Row[]>();
@@ -58,6 +59,6 @@ export async function loadAdminDonations(supabase: SupabaseClient, status: Donat
 }
 
 export async function countDonations(supabase: SupabaseClient, status: DonationStatus) {
-  const { count } = await supabase.from("donations").select("id", { count: "exact", head: true }).eq("status", status);
+  const { count } = await supabase.from("donations").select("id", { count: "exact", head: true }).eq("status", status).is("archived_at", null);
   return count ?? 0;
 }

@@ -27,7 +27,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
   // ?jan=Konpa → montre sèlman chante jan sa a (jiska 24); san jan → 8 dènye chante yo
   const genre = GENRES.find((g) => g === searchParams.jan) ?? null;
   const supabase = createClient();
-  let songsQuery = supabase.from("songs").select(SONG_SELECT).order("created_at", { ascending: false });
+  let songsQuery = supabase.from("songs").select(SONG_SELECT).is("archived_at", null).order("created_at", { ascending: false });
   if (genre) songsQuery = songsQuery.eq("genre", genre);
   const { data: rows } = await songsQuery.limit(genre ? 24 : 8).returns<SongRow[]>();
 
