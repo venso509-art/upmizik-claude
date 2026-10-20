@@ -15,12 +15,15 @@ function greeting() {
   return "Bonswa";
 }
 
-function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function StatTile({ icon, label, value, hint }: { icon: string; label: string; value: number; hint?: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5">
-      <p className="text-sm text-zinc-400">{label}</p>
-      <p className="mt-2 truncate text-2xl font-bold text-white">{value}</p>
-      {hint && <p className="mt-1 truncate text-xs text-zinc-500">{hint}</p>}
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">{icon}</span>
+        <p className="text-sm font-medium text-zinc-400">{label}</p>
+      </div>
+      <p className="mt-4 text-4xl font-extrabold tracking-tight text-white">{value.toLocaleString("fr-HT")}</p>
+      <p className="mt-1 truncate text-xs text-zinc-500">{hint ?? " "}</p>
     </div>
   );
 }
@@ -43,16 +46,20 @@ export default async function DashboardPage() {
   const { data: profile } = await supabase.from("profiles").select("display_name, role").eq("id", user.id).single();
   if (profile?.role !== "artist") redirect("/");
 
-  const { data: rows } = await supabase
-    .from("songs")
-    .select(`${SONG_SELECT}, created_at`)
-    .eq("artist_id", user.id)
-    .order("created_at", { ascending: false })
-    .returns<(SongRow & { created_at: string })[]>();
+  type DashboardSong = SongRow & { created_at: string; comments?: { count: number }[] };
+  const query = (columns: string) =>
+    supabase.from("songs").select(columns).eq("artist_id", user.id).order("created_at", { ascending: false }).returns<DashboardSong[]>();
+
+  let { data: rows, error } = await query(`${SONG_SELECT}, created_at, comments(count)`);
+  if (error) {
+    // Si tablo comments la poko egziste, chaje chante yo san kòmantè
+    ({ data: rows, error } = await query(`${SONG_SELECT}, created_at`));
+  }
 
   const songs = rows ?? [];
+  const commentCount = (s: (typeof songs)[number]) => s.comments?.[0]?.count ?? 0;
   const totalPlays = songs.reduce((sum, s) => sum + s.play_count, 0);
-  const avgPlays = songs.length ? Math.round(totalPlays / songs.length) : 0;
+  const totalComments = songs.reduce((sum, s) => sum + commentCount(s), 0);
   const top = [...songs].sort((a, b) => b.play_count - a.play_count)[0];
 
   const managed: ManagedSong[] = songs.map((s) => ({
@@ -61,6 +68,7 @@ export default async function DashboardPage() {
     genre: s.genre,
     coverUrl: toTrack(supabase, s).coverUrl,
     plays: s.play_count,
+    comments: commentCount(s),
     durationSeconds: s.duration_seconds,
     createdAt: s.created_at,
   }));
@@ -94,12 +102,6 @@ export default async function DashboardPage() {
               {greeting()}, {profile.display_name}! 👋
             </h1>
             <p className="mt-2 text-zinc-300">Men kijan mizik ou ap mache sou UpMizik.</p>
-
-            {/* Chif prensipal la */}
-            <div className="mt-8">
-              <p className="text-6xl font-extrabold tracking-tight text-white">{totalPlays.toLocaleString("fr-HT")}</p>
-              <p className="mt-1 text-sm text-zinc-400">koute an total</p>
-            </div>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
@@ -107,7 +109,7 @@ export default async function DashboardPage() {
               href="/upload"
               className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-fuchsia-900/50 transition hover:scale-[1.02] hover:opacity-95"
             >
-              <span className="text-2xl leading-none">+</span> Upload nouvo chante
+              <span className="text-2xl leading-none">+</span> Pibliye yon nouvo chante
             </Link>
             <Link
               href={`/atis/${user.id}`}
@@ -120,16 +122,15 @@ export default async function DashboardPage() {
       </section>
 
       {/* ===== REZIME ===== */}
-      <section className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <StatTile label="Chante pibliye" value={songs.length.toLocaleString("fr-HT")} />
-        <StatTile label="Mwayèn koute pa chante" value={avgPlays.toLocaleString("fr-HT")} />
-        <div className="col-span-2 lg:col-span-1">
-          <StatTile
-            label="🏆 Chante ki pi popilè"
-            value={top ? top.title : "—"}
-            hint={top ? `${top.play_count.toLocaleString("fr-HT")} koute` : "Poko gen chante"}
-          />
-        </div>
+      <section className="mt-6 grid gap-4 sm:grid-cols-3">
+        <StatTile icon="🎵" label="Total Chante" value={songs.length} />
+        <StatTile
+          icon="🎧"
+          label="Total Koute"
+          value={totalPlays}
+          hint={top && top.play_count > 0 ? `🏆 Pi popilè: ${top.title}` : undefined}
+        />
+        <StatTile icon="💬" label="Total Kòmantè" value={totalComments} />
       </section>
 
       {songs.length === 0 ? (

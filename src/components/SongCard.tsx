@@ -38,8 +38,12 @@ export function SongCard({ song, queue }: { song: Track; queue: Track[] }) {
             )}
           </span>
         </div>
-        <h3 className={`mt-3 truncate font-semibold ${isCurrent ? "text-fuchsia-400" : "text-white"}`}>{song.title}</h3>
       </button>
+      <h3 className={`mt-3 truncate font-semibold ${isCurrent ? "text-fuchsia-400" : "text-white"}`}>
+        <Link href={`/chante/${song.id}`} className="hover:underline">
+          {song.title}
+        </Link>
+      </h3>
       <p className="truncate text-sm text-zinc-400">
         <Link href={`/atis/${song.artistId}`} className="hover:text-white hover:underline">
           {song.artistName}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteSong, updateSong } from "@/app/dashboard/actions";
 import { GENRES } from "@/lib/genres";
@@ -12,6 +13,7 @@ export type ManagedSong = {
   genre: string | null;
   coverUrl: string | null;
   plays: number;
+  comments: number;
   durationSeconds: number | null;
   createdAt: string;
 };
@@ -83,15 +85,21 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
           <li key={s.id} className="flex items-center gap-4 py-3">
             <Cover url={s.coverUrl} />
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-white">{s.title}</p>
+              <Link href={`/chante/${s.id}`} className="block truncate font-medium text-white hover:underline">
+                {s.title}
+              </Link>
               <p className="truncate text-xs text-zinc-500">
                 {s.genre ?? "San jan"} · {formatDuration(s.durationSeconds)} ·{" "}
                 {new Date(s.createdAt).toLocaleDateString("fr-HT", { day: "numeric", month: "short", year: "numeric" })}
               </p>
             </div>
-            <div className="hidden text-right sm:block">
+            <div className="hidden w-16 text-right sm:block">
               <p className="font-semibold tabular-nums text-white">{s.plays.toLocaleString("fr-HT")}</p>
               <p className="text-xs text-zinc-500">koute</p>
+            </div>
+            <div className="hidden w-16 text-right sm:block">
+              <p className="font-semibold tabular-nums text-white">{s.comments.toLocaleString("fr-HT")}</p>
+              <p className="text-xs text-zinc-500">kòmantè</p>
             </div>
             <div className="flex gap-1">
               <button

@@ -3,7 +3,7 @@
 import { usePlayer, type Track } from "@/components/player/PlayerProvider";
 import { formatDuration } from "@/lib/songs";
 
-export function PlayAllButton({ tracks }: { tracks: Track[] }) {
+export function PlayAllButton({ tracks, label = "▶ Jwe tout" }: { tracks: Track[]; label?: string }) {
   const { current, isPlaying, playTrack, toggle } = usePlayer();
   const playingThisList = isPlaying && tracks.some((t) => t.id === current?.id);
 
@@ -13,7 +13,7 @@ export function PlayAllButton({ tracks }: { tracks: Track[] }) {
       onClick={() => (playingThisList ? toggle() : playTrack(tracks[0], tracks))}
       className="rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-fuchsia-900/40 transition hover:opacity-90"
     >
-      {playingThisList ? "⏸ Poz" : "▶ Jwe tout"}
+      {playingThisList ? "⏸ Poz" : label}
     </button>
   );
 }
