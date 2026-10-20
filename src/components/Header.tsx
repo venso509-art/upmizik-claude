@@ -21,6 +21,11 @@ export async function Header() {
         {user ? (
           <div className="flex items-center gap-3">
             {profile?.role === "artist" && (
+              <Link href="/dashboard" className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800 hover:text-white">
+                📊 <span className="hidden sm:inline">Dashboard</span>
+              </Link>
+            )}
+            {profile?.role === "artist" && (
               <Link
                 href="/upload"
                 className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90"

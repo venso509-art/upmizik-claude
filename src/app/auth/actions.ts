@@ -69,12 +69,15 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
   if (!email || !password) return { error: "Ranpli imèl ak modpas ou." };
 
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) return { error: translateError(error) };
 
+  // Atis yo ateri sou dashboard yo; koutè yo sou paj akèy la
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(profile?.role === "artist" ? "/dashboard" : "/");
 }
 
 export async function logout() {
