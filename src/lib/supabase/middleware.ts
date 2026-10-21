@@ -31,7 +31,22 @@ export async function updateSession(request: NextRequest) {
   // Pa mete okenn kòd ant createServerClient ak getUser():
   // se apèl sa a ki renouvle tikè a si l prèske ekspire.
   try {
-    await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Kont BLOKE: dekonekte l touswit, menm si li te deja konekte anvan admin nan bloke l
+    if (user) {
+      const { data: profile } = await supabase.from("profiles").select("status").eq("id", user.id).maybeSingle();
+      if (profile?.status === "blocked") {
+        await supabase.auth.signOut();
+        const loginUrl = request.nextUrl.clone();
+        loginUrl.pathname = "/konekte";
+        loginUrl.search = "?bloke=1";
+        const redirect = NextResponse.redirect(loginUrl);
+        // Pote cookies ki efase sesyon an yo sou redireksyon an
+        response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+        return redirect;
+      }
+    }
   } catch (err) {
     // Supabase pa reponn (rezo, DNS...): pa bloke paj la pou sa
     console.error("[UpMizik] Middleware: Supabase pa reponn:", err);

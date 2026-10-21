@@ -6,12 +6,16 @@ import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata: Metadata = { title: "Konekte | UpMizik" };
 
-export default async function LoginPage({ searchParams }: { searchParams: { konfime?: string } }) {
+export default async function LoginPage({ searchParams }: { searchParams: { konfime?: string; bloke?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) redirect("/");
 
-  const notice = searchParams.konfime ? "Imèl ou konfime! Konekte kounye a." : undefined;
+  const notice = searchParams.bloke
+    ? "⛔ Kont ou bloke pa ekip UpMizik la, e nou dekonekte w. Kontakte nou: upmizikcontact@gmail.com."
+    : searchParams.konfime
+      ? "Imèl ou konfime! Konekte kounye a."
+      : undefined;
 
   return (
     <AuthCard title="Byenvini ankò" subtitle="Konekte pou w kontinye koute." closable>

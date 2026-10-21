@@ -182,6 +182,11 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
 
   // Modération manyèl: yon atis pa ka konekte toutotan admin nan pa apwouve kont li.
   // Eksepsyon: si prèv peman li te rejte (oswa li pa t janm rive), li ka konekte pou l voye yon lòt.
+  // Nenpòt kont bloke (atis OSWA koutè) pa ka konekte ditou
+  if (profile?.status === "blocked") {
+    await supabase.auth.signOut();
+    return { error: "Kont ou bloke. Kontakte ekip UpMizik la: upmizikcontact@gmail.com." };
+  }
   const blocked = await artistLoginBlock(supabase, data.user.id, profile);
   if (blocked) {
     await supabase.auth.signOut();
