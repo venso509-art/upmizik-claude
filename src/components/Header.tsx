@@ -53,9 +53,14 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4">
-        <Link href="/" className="shrink-0 text-xl font-extrabold tracking-tight">
-          <span className="bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">Up</span>
-          <span className="text-white">Mizik</span>
+        <Link href="/" className="flex shrink-0 items-center gap-2 text-xl font-extrabold tracking-tight" aria-label="UpMizik: paj akèy">
+          {/* Logo won UpMizik la */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.jpg" alt="" width={36} height={36} className="h-9 w-9 rounded-full bg-white object-cover shadow-md shadow-fuchsia-900/40 ring-2 ring-white/10" />
+          <span>
+            <span className="bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">Up</span>
+            <span className="text-white">Mizik</span>
+          </span>
         </Link>
 
         {/* Lyen prensipal yo sou òdinatè (sou telefòn yo nan ba anba a) */}
