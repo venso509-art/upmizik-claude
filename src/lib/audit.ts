@@ -81,6 +81,10 @@ export function describeAudit(action: string, d: Details): { icon: string; text:
       return { icon: "✅", text: `Debloke yon pòs ${name}${d.excerpt ? `: « ${d.excerpt} »` : ""}` };
     case "post.deleted":
       return { icon: "🗞️", text: `Efase yon pòs ${name}${d.excerpt ? `: « ${d.excerpt} »` : ""}` };
+    case "security.password_changed":
+      return { icon: "🔑", text: "Chanje modpas li (ak kòd sekrè)" };
+    case "security.lockout":
+      return { icon: "⛔", text: "3 tantativ echwe sou /sekirite: kont lan dekonekte epi bloke 30 minit" };
     case "archive":
       return { icon: "🗄️", text: "Achive yon eleman" };
     case "restore":
