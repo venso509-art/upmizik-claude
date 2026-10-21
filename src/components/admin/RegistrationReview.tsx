@@ -8,12 +8,14 @@ import { formatDate } from "@/lib/finance";
 import { FormMessage, inputClass } from "@/components/auth/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Portal } from "@/components/Portal";
+import { ArtistContactBox } from "./ArtistContactBox";
 
 export type AdminRegistration = {
   id: string;
   artistId: string;
   artistName: string;
   email: string | null;
+  phone: string | null;
   method: DonationMethod;
   amountUsd: number;
   amountHtg: number;
@@ -131,6 +133,11 @@ function RegistrationCard({ r }: { r: AdminRegistration }) {
             </div>
           </div>
         )}
+
+        {/* Kontak manyèl: imèl, WhatsApp oswa mesaj sou sit la */}
+        <div className="pt-1">
+          <ArtistContactBox artistId={r.artistId} name={r.artistName} email={r.email} phone={r.phone} />
+        </div>
       </div>
 
       {zoom && r.proofUrl && (

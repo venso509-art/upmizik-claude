@@ -23,3 +23,11 @@ export async function sendAdminMessage(_prev: SendState, formData: FormData): Pr
   const count = Number(data ?? 0);
   return { message: `Mesaj la voye bay ${count} ${count > 1 ? "atis" : "moun"}. ✅` };
 }
+
+// Voye yon mesaj dirèk bay yon sèl atis (nan bwat mesaj li sou sit la)
+export async function sendDirectMessage(userId: string, title: string, body: string): Promise<SendState> {
+  if (!title.trim() || !body.trim()) return { error: "Mesaj la bezwen yon tit ak yon kontni." };
+  const { error } = await createClient().rpc("send_admin_message", { p_user_id: userId, p_title: title.trim(), p_body: body.trim() });
+  if (error) return { error: error.message };
+  return { message: "Mesaj la voye nan bwat atis la. ✅" };
+}

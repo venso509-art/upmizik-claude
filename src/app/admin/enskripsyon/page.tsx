@@ -39,7 +39,7 @@ export default async function AdminRegistrationsPage({ searchParams }: { searchP
 
   const status = TABS.find((t) => t.status === searchParams.status)?.status ?? "pending";
 
-  const [{ data: rows }, { data: users }, ...counts] = await Promise.all([
+  const [{ data: rows }, { data: users }, { data: contacts }, ...counts] = await Promise.all([
     supabase
       .from("artist_registrations")
       .select(
@@ -50,11 +50,14 @@ export default async function AdminRegistrationsPage({ searchParams }: { searchP
       .limit(100)
       .returns<Row[]>(),
     supabase.rpc("admin_list_users"),
+    // Imèl + telefòn atis yo (pou kontakte yo). Si migration nan poko kouri, sa retounen yon erè: nou inyore l.
+    supabase.rpc("admin_artist_contacts"),
     ...TABS.map((t) => supabase.from("artist_registrations").select("id", { count: "exact", head: true }).eq("status", t.status)),
   ]);
 
   const list = rows ?? [];
   const emails = new Map(((users ?? []) as { id: string; email: string }[]).map((u) => [u.id, u.email]));
+  const phones = new Map(((contacts ?? []) as { artist_id: string; phone: string | null }[]).map((c) => [c.artist_id, c.phone]));
 
   // Lyen tanporè (1 è) pou wè foto prèv yo, paske bucket la prive
   const { data: signed } = list.length
@@ -67,6 +70,7 @@ export default async function AdminRegistrationsPage({ searchParams }: { searchP
     artistId: r.artist_id,
     artistName: r.artist?.display_name ?? "Atis enkoni",
     email: emails.get(r.artist_id) ?? null,
+    phone: phones.get(r.artist_id) ?? null,
     method: r.method,
     amountUsd: Number(r.amount_usd),
     amountHtg: Number(r.amount_htg),

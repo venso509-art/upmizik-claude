@@ -125,8 +125,36 @@ export async function signupArtist(formData: FormData): Promise<ArtistSignupResu
     return { error: `Kont ou kreye, men demann lan pa anrejistre (${rpcError.message}). Konekte epi voye prèv la ankò sou dashboard ou.` };
   }
 
-  if (data.session) revalidatePath("/", "layout");
+  // Modération manyèl: kont lan rete an "standby" jiskaske admin nan apwouve l,
+  // kidonk nou dekonekte atis la touswit (lè "Confirm email" dezaktive, Supabase te konekte l).
+  if (data.session) {
+    await supabase.auth.signOut();
+    revalidatePath("/", "layout");
+  }
   return { ok: true, email, needsEmailConfirmation: !data.session };
+}
+
+// Retounen yon mesaj si atis la pa gen dwa konekte kounye a, oswa null si l ka konekte
+async function artistLoginBlock(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  profile: { role: string; status: string } | null,
+): Promise<string | null> {
+  if (profile?.role !== "artist" || profile.status === "approved") return null;
+  if (profile.status === "blocked") return "Kont atis ou bloke. Kontakte ekip UpMizik la: upmizikcontact@gmail.com.";
+
+  const { data: last } = await supabase
+    .from("artist_registrations")
+    .select("status")
+    .eq("artist_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (last?.status === "pending") {
+    return "⏳ Kont atis ou ap tann validasyon admin. W ap ka konekte depi ekip UpMizik la apwouve l.";
+  }
+  return null; // prèv rejte oswa pa janm voye: li ka konekte pou l voye yon nouvo prèv
 }
 
 export async function login(_prev: AuthState, formData: FormData): Promise<AuthState> {
@@ -150,7 +178,15 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
   if (error) return { error: translateError(error) };
 
   // Atis yo ateri sou dashboard yo; koutè yo sou paj akèy la
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", data.user.id).single();
+
+  // Modération manyèl: yon atis pa ka konekte toutotan admin nan pa apwouve kont li.
+  // Eksepsyon: si prèv peman li te rejte (oswa li pa t janm rive), li ka konekte pou l voye yon lòt.
+  const blocked = await artistLoginBlock(supabase, data.user.id, profile);
+  if (blocked) {
+    await supabase.auth.signOut();
+    return { error: blocked };
+  }
 
   revalidatePath("/", "layout");
   redirect(profile?.role === "artist" ? "/dashboard" : "/");

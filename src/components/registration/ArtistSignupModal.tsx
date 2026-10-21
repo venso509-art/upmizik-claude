@@ -236,20 +236,15 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                 <div className="text-sm text-amber-100">
                   <p className="font-semibold">Demann ou an ale bò kot ekip UpMizik la</p>
                   <p className="mt-1 text-amber-100/80">
-                    Admin nan ap verifye prèv peman an. W ap resevwa yon mesaj lè demann ou an valide oswa refize. Depi l valide, w ap ka
-                    antre nan espas atis ou epi pibliye mizik ou.
+                    Admin nan ap verifye prèv peman an. Kont ou an <span className="font-semibold">standby</span> jiskaske li valide l:
+                    ekip la ap kontakte w sou imèl oswa WhatsApp. Depi l valide, w ap ka konekte, antre nan espas atis ou epi pibliye
+                    mizik ou.
                   </p>
                 </div>
               </div>
-              {result?.needsEmailConfirmation ? (
-                <Link href="/" className="block w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 text-center font-semibold text-white">
-                  Retounen sou paj akèy la
-                </Link>
-              ) : (
-                <Link href="/dashboard" className="block w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 text-center font-semibold text-white">
-                  Swiv demann mwen
-                </Link>
-              )}
+              <Link href="/" className="block w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 text-center font-semibold text-white">
+                Retounen sou paj akèy la
+              </Link>
             </div>
           )}
         </div>
