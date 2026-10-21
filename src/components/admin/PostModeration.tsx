@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deletePost, setPostStatus } from "@/app/sosyal/actions";
-import { Avatar } from "@/components/social/PostCard";
+import { Avatar, LinkCard, PostImage } from "@/components/social/PostCard";
 import { postState, type PostStatus } from "@/lib/posts";
 
 export type AdminPost = {
@@ -12,6 +12,8 @@ export type AdminPost = {
   createdAt: string;
   expiresAt: string;
   status: PostStatus;
+  imageUrl: string | null;
+  linkUrl: string | null;
   artistId: string;
   artistName: string;
   artistAvatar: string | null;
@@ -56,6 +58,16 @@ function PostRow({ post, now }: { post: AdminPost; now: number }) {
             {new Date(post.expiresAt).toLocaleDateString("fr-HT", { dateStyle: "medium" })}
           </p>
           <p className="mt-3 whitespace-pre-line break-words text-sm text-zinc-200">{post.content}</p>
+          {post.imageUrl && (
+            <div className="mt-3 w-40">
+              <PostImage src={post.imageUrl} alt="" />
+            </div>
+          )}
+          {post.linkUrl && (
+            <div className="mt-3 max-w-sm">
+              <LinkCard url={post.linkUrl} compact />
+            </div>
+          )}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {post.status !== "deleted" && (

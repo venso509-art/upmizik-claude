@@ -11,6 +11,8 @@ import { Top3Section } from "@/components/Top3Section";
 import { ArtistBubbles, type BubbleArtist } from "@/components/ArtistBubbles";
 import { Reveal } from "@/components/Reveal";
 import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
+import { SocialStrip } from "@/components/social/SocialStrip";
+import { withImageUrls, type FeedPost } from "@/lib/posts";
 
 // Wotè ak reta chak ba nan egalizè a (pou yo pa danse ansanm)
 const bars = [
@@ -33,13 +35,15 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
 
   const songs = (rows ?? []).map((s) => toTrack(supabase, s));
   const { data: { user } } = await supabase.auth.getUser();
-  const [extras, top3, myArtists, { data: adRows }, promos] = await Promise.all([
+  const [extras, top3, myArtists, { data: adRows }, promos, { data: feedRows }] = await Promise.all([
     getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null),
     getTop3(supabase),
     user ? supabase.rpc("my_top_artists", { p_limit: 15 }) : Promise.resolve({ data: [] }),
     // RLS la bay sèlman piblisite ki aktif e ki poko ekspire (admin wè tout, kidonk nou refiltre)
     supabase.from("ads").select("id, title, image_path, is_active, starts_at, expires_at").order("created_at", { ascending: false }).limit(20),
     getActivePromos(supabase),
+    // Dènye pòs Sosyal yo (si yon migration poko kouri, data = null epi seksyon an vid)
+    supabase.rpc("social_feed", { p_limit: 12 }),
   ]);
   const now = Date.now();
   const ads: PublicAd[] = (adRows ?? [])
@@ -192,7 +196,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
       </section>
 
       {/* ===== POU ATIS YO ===== */}
-      <Reveal as="section" className="mx-auto max-w-6xl px-4 pb-20">
+      <Reveal as="section" className="mx-auto max-w-6xl px-4 pb-16">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-fuchsia-600 to-violet-700 px-8 py-14 md:px-14">
           <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
           <h2 className="relative max-w-xl text-3xl font-extrabold text-white sm:text-4xl">
@@ -211,6 +215,10 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
           </Link>
         </div>
       </Reveal>
+
+      {/* ===== SOSYAL: dènye pòs atis yo ===== */}
+      <SocialStrip posts={withImageUrls(supabase, (feedRows ?? []) as FeedPost[])} now={now} />
+
     </>
   );
 }

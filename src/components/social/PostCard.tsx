@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { daysLeft, daysLeftLabel, timeAgo, type FeedPost } from "@/lib/posts";
+import { daysLeft, daysLeftLabel, linkInfo, timeAgo, type FeedPost } from "@/lib/posts";
 
 // Transfòme lyen yo (https://...) an lyen ki ka klike
 function Linkified({ text }: { text: string }) {
@@ -33,13 +33,56 @@ export function Avatar({ name, url, size = "h-12 w-12" }: { name: string; url: s
   );
 }
 
+// Kat pou yon lyen: imaj YouTube la si se yon videyo, sinon domèn sit la
+export function LinkCard({ url, compact = false }: { url: string; compact?: boolean }) {
+  const info = linkInfo(url);
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer nofollow"
+      className="group/link block overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-950/60 transition hover:border-fuchsia-500/60"
+    >
+      {info.thumbnail && (
+        <span className="relative block aspect-video bg-zinc-900">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={info.thumbnail} alt="" loading="lazy" className="h-full w-full object-cover" />
+          <span className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-xl transition group-hover/link:scale-110">▶</span>
+          </span>
+        </span>
+      )}
+      <span className={`flex items-center gap-3 ${compact ? "px-3 py-2" : "px-4 py-3"}`}>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-fuchsia-500/15 text-lg">{info.youtubeId ? "▶" : "🔗"}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold text-white">{info.youtubeId ? "Gade videyo a sou YouTube" : info.host}</span>
+          <span className="block truncate text-xs text-zinc-500">{url}</span>
+        </span>
+        <span className="text-zinc-500 transition group-hover/link:translate-x-0.5 group-hover/link:text-fuchsia-300" aria-hidden>
+          ↗
+        </span>
+      </span>
+    </a>
+  );
+}
+
+// Imaj kare pòs la
+export function PostImage({ src, alt }: { src: string; alt: string }) {
+  return (
+    <span className="block aspect-square overflow-hidden rounded-xl bg-zinc-900">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
+    </span>
+  );
+}
+
 export function PostCard({ post, now }: { post: FeedPost; now: number }) {
   const left = daysLeft(post.expires_at, now);
   // Koulè kontè a: vèt → jòn lè l prèske fini
   const tone = left <= 3 ? "border-amber-500/40 bg-amber-500/10 text-amber-300" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
 
   return (
-    <article className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 transition hover:border-zinc-700">
+    <article id={post.id} className="scroll-mt-40 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 transition hover:border-zinc-700">
       <header className="flex items-start gap-3">
         <Link href={`/atis/${post.artist_id}`} className="shrink-0">
           <Avatar name={post.artist_name} url={post.artist_avatar} />
@@ -60,6 +103,16 @@ export function PostCard({ post, now }: { post: FeedPost; now: number }) {
       <p className="mt-4 whitespace-pre-line break-words text-[15px] leading-relaxed text-zinc-200">
         <Linkified text={post.content} />
       </p>
+      {post.image_url && (
+        <div className="mt-4">
+          <PostImage src={post.image_url} alt={`Pòs ${post.artist_name}`} />
+        </div>
+      )}
+      {post.link_url && (
+        <div className="mt-4">
+          <LinkCard url={post.link_url} />
+        </div>
+      )}
     </article>
   );
 }

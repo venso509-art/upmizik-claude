@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SearchInput } from "@/components/search/SearchInput";
 import { RefreshButton } from "@/components/social/RefreshButton";
 import { PostCard } from "@/components/social/PostCard";
-import type { FeedPost } from "@/lib/posts";
+import { withImageUrls, type FeedPost } from "@/lib/posts";
 
 export const metadata: Metadata = { title: "Sosyal | UpMizik", description: "Nouvèl, evènman ak nouvo pwojè atis UpMizik yo." };
 
@@ -22,7 +22,7 @@ export default async function SocialPage({ searchParams }: { searchParams: { q?:
     supabase.rpc("social_feed", { p_q: q || null, p_limit: PAGE_SIZE + 1, p_before: before }),
     supabase.auth.getUser(),
   ]);
-  const rows = (data ?? []) as FeedPost[];
+  const rows = withImageUrls(supabase, (data ?? []) as FeedPost[]);
   const posts = rows.slice(0, PAGE_SIZE);
   const hasMore = rows.length > PAGE_SIZE;
   const now = Date.now();

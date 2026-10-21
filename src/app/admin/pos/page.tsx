@@ -6,7 +6,7 @@ import { isAdmin } from "@/lib/admin";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { PostModeration, type AdminPost } from "@/components/admin/PostModeration";
 import { SearchInput } from "@/components/search/SearchInput";
-import type { PostStatus } from "@/lib/posts";
+import { postImageUrl, type PostStatus } from "@/lib/posts";
 
 export const metadata: Metadata = { title: "Admin: Jesyon Pòs | UpMizik" };
 export const dynamic = "force-dynamic";
@@ -25,6 +25,8 @@ type Row = {
   created_at: string;
   expires_at: string;
   status: PostStatus;
+  image_path: string | null;
+  link_url: string | null;
   artist_id: string;
   profiles: { display_name: string; avatar_url: string | null } | { display_name: string; avatar_url: string | null }[] | null;
 };
@@ -41,7 +43,7 @@ export default async function AdminPostsPage({ searchParams }: { searchParams: {
 
   let query = supabase
     .from("posts")
-    .select("id, content, created_at, expires_at, status, artist_id, profiles!posts_artist_id_fkey(display_name, avatar_url)")
+    .select("id, content, created_at, expires_at, status, image_path, link_url, artist_id, profiles!posts_artist_id_fkey(display_name, avatar_url)")
     .order("created_at", { ascending: false })
     .limit(100);
   if (filter === "aktif") query = query.eq("status", "active").gt("expires_at", nowIso);
@@ -63,6 +65,8 @@ export default async function AdminPostsPage({ searchParams }: { searchParams: {
       createdAt: r.created_at,
       expiresAt: r.expires_at,
       status: r.status,
+      imageUrl: postImageUrl(supabase, r.image_path),
+      linkUrl: r.link_url,
       artistId: r.artist_id,
       artistName: p?.display_name ?? "Atis enkoni",
       artistAvatar: p?.avatar_url ?? null,

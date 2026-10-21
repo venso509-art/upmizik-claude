@@ -13,6 +13,7 @@ import { toBalance, type BalanceRow } from "@/lib/finance";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
 import { SongManager, type ManagedSong } from "@/components/dashboard/SongManager";
 import { PostComposer, type MyPost } from "@/components/social/PostComposer";
+import { postImageUrl } from "@/lib/posts";
 
 export const metadata: Metadata = { title: "Dashboard | UpMizik" };
 
@@ -107,7 +108,7 @@ export default async function DashboardPage() {
     // 10 dènye pòs atis la (si migration Sosyal la poko kouri, lis la vid)
     supabase
       .from("posts")
-      .select("id, content, created_at, expires_at, status")
+      .select("id, content, created_at, expires_at, status, image_path, link_url")
       .eq("artist_id", user.id)
       .order("created_at", { ascending: false })
       .limit(10)
@@ -208,7 +209,11 @@ export default async function DashboardPage() {
       </section>
 
       {/* ===== SOSYAL: pibliye yon pòs ===== */}
-      <PostComposer posts={myPosts ?? []} artistName={profile.display_name} />
+      <PostComposer
+        posts={(myPosts ?? []).map((p) => ({ ...p, imageUrl: postImageUrl(supabase, p.image_path) }))}
+        artistId={user.id}
+        artistName={profile.display_name}
+      />
 
       {/* ===== NIVO YO ===== */}
       <LevelsCard artistId={user.id} verified={profile.is_verified} />

@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { POST_MAX_LENGTH } from "@/lib/posts";
+import { normalizeUrl } from "@/lib/links";
 
-export type PostFormState = { error?: string; message?: string; ok?: number } | undefined;
+export type PostResult = { error?: string; message?: string };
 
 function refresh() {
   revalidatePath("/sosyal");
@@ -13,24 +14,35 @@ function refresh() {
   revalidatePath("/admin/pos");
 }
 
-// Atis la pibliye yon nouvo pòs (dire 30 jou, kalkile pa baz done a)
-export async function createPost(_prev: PostFormState, formData: FormData): Promise<PostFormState> {
+// Atis la pibliye yon nouvo pòs (dire 30 jou, kalkile pa baz done a).
+// Pòs la dwe gen yon imaj (deja monte nan post-images/<atis>/...) OSWA yon lyen, plis tèks la.
+export async function createPost(input: { content: string; imagePath: string | null; linkUrl: string | null }): Promise<PostResult> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Ou dwe konekte." };
 
-  const content = String(formData.get("content") ?? "").trim();
-  if (!content) return { error: "Ekri yon bagay anvan w pibliye." };
+  const content = input.content.trim();
+  if (!content) return { error: "Ekri yon ti tèks pou akonpaye pòs la." };
   if (content.length > POST_MAX_LENGTH) return { error: `Pòs la twò long (maksimòm ${POST_MAX_LENGTH} karaktè).` };
 
-  const { error } = await supabase.from("posts").insert({ artist_id: user.id, content });
+  const imagePath = input.imagePath?.trim() || null;
+  if (imagePath && !imagePath.startsWith(`${user.id}/`)) return { error: "Imaj la pa valid." };
+  let linkUrl: string | null = null;
+  if (input.linkUrl?.trim()) {
+    const normalized = normalizeUrl(input.linkUrl);
+    if (!normalized) return { error: "Lyen an pa valid. Egz: https://youtube.com/..." };
+    linkUrl = normalized;
+  }
+  if (!imagePath && !linkUrl) return { error: "Mete yon imaj oswa yon lyen avèk tèks ou a." };
+
+  const { error } = await supabase.from("posts").insert({ artist_id: user.id, content, image_path: imagePath, link_url: linkUrl });
   if (error) {
     if (error.code === "42501") return { error: "Se sèlman atis ki apwouve ki ka pibliye." };
     return { error: error.message };
   }
 
   refresh();
-  return { message: "Pòs ou pibliye! Li parèt sou paj Sosyal la pou 30 jou. 🎉", ok: Date.now() };
+  return { message: "Pòs ou pibliye! Li parèt sou paj Sosyal la pou 30 jou. 🎉" };
 }
 
 // Atis la retire pwòp pòs li
@@ -70,9 +82,11 @@ export async function deletePost(postId: string): Promise<{ error?: string }> {
   const { supabase, ok } = await requireAdmin();
   if (!ok) return { error: "Se sèlman admin ki ka fè sa." };
 
-  const { data, error } = await supabase.from("posts").delete().eq("id", postId).select("id");
+  const { data, error } = await supabase.from("posts").delete().eq("id", postId).select("id, image_path");
   if (error) return { error: error.message };
   if (!data?.length) return { error: "Pòs sa a pa jwenn." };
+  // Efase imaj la tou, pou l pa rete nan stockage la
+  if (data[0].image_path) await supabase.storage.from("post-images").remove([data[0].image_path]);
   refresh();
   return {};
 }
