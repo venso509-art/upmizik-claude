@@ -15,8 +15,10 @@ export default async function ProfilePage() {
     .from("profiles")
     .select("id, display_name, role, avatar_url, location, bio, influences, vision, youtube_url, instagram_url")
     .eq("id", user.id)
-    .single<EditableProfile>();
+    .single<Omit<EditableProfile, "banner_url">>();
   if (!profile) redirect("/");
+  // Apa, pou paj la mache menm si migration banyè a poko kouri
+  const { data: banner } = await supabase.from("profiles").select("banner_url").eq("id", user.id).maybeSingle<{ banner_url: string | null }>();
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -31,7 +33,7 @@ export default async function ProfilePage() {
           </Link>
         )}
       </div>
-      <ProfileForm profile={profile} />
+      <ProfileForm profile={{ ...profile, banner_url: banner?.banner_url ?? null }} />
     </div>
   );
 }
