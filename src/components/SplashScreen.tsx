@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-const MAX_MS = 2500; // pa janm plis pase 2.5 s
+// Splash la rete vizib ant 1.5 s ak 2 s depi li parèt sou ekran an (demann Venso)
+const MIN_MS = 1500;
+const MAX_MS = 2000;
 const FADE_MS = 300;
 
 // Splash UpMizik la. HTML + CSS li yo rann sou sèvè a (li parèt menm anvan JavaScript),
-// e CSS la fè l disparèt poukont li apre 2.5 s si JavaScript pa ta janm chaje.
-// Konpozan sa a fè l disparèt PI BONÈ depi paj la pare, epi li retire l nèt nan DOM an.
+// e CSS la fè l disparèt poukont li apre 2 s si JavaScript pa ta janm chaje.
+// Konpozan sa a kenbe l vizib 1.5–2 s, fè l disparèt dousman, epi li retire l nèt nan DOM an.
 export function SplashScreen() {
   const [phase, setPhase] = useState<"visible" | "leaving" | "gone">("visible");
 
@@ -17,19 +19,30 @@ export function SplashScreen() {
       setPhase("gone");
       return;
     }
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let fadeTimer: ReturnType<typeof setTimeout> | undefined;
+    let minTimer: ReturnType<typeof setTimeout> | undefined;
     const leave = () => {
       setPhase((p) => (p === "visible" ? "leaving" : p));
-      timer = setTimeout(() => setPhase("gone"), FADE_MS);
+      if (!fadeTimer) fadeTimer = setTimeout(() => setPhase("gone"), FADE_MS);
     };
-    // Pi ta posib: 2.5 s apre paj la kòmanse chaje (pa okenn reta atifisyèl)
-    const cap = setTimeout(leave, Math.max(0, MAX_MS - performance.now()));
-    if (document.readyState === "complete") leave();
-    else window.addEventListener("load", leave, { once: true });
+    // Moman splash la parèt sou ekran an (premye pent), pou kontwole konbyen tan li rete vizib
+    const shownAt =
+      performance.getEntriesByType("paint").find((e) => e.name === "first-contentful-paint")?.startTime ?? performance.now();
+    const minEnd = shownAt + MIN_MS;
+    const maxEnd = shownAt + MAX_MS;
+    // Paj la pare: tann jiskaske splash la te vizib omwen 1.5 s
+    const onReady = () => {
+      minTimer = setTimeout(leave, Math.max(0, minEnd - performance.now()));
+    };
+    // Pi ta posib: 2 s, menm si paj la poko fin chaje
+    const cap = setTimeout(leave, Math.max(0, maxEnd - performance.now()));
+    if (document.readyState === "complete") onReady();
+    else window.addEventListener("load", onReady, { once: true });
     return () => {
       clearTimeout(cap);
-      if (timer) clearTimeout(timer);
-      window.removeEventListener("load", leave);
+      if (minTimer) clearTimeout(minTimer);
+      if (fadeTimer) clearTimeout(fadeTimer);
+      window.removeEventListener("load", onReady);
     };
   }, []);
 

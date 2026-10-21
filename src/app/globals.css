@@ -39,8 +39,8 @@ body {
     radial-gradient(420px 420px at 50% 45%, rgba(10, 92, 54, 0.32), transparent 70%),
     #0b132b;
   pointer-events: auto; /* bloke klik yo pandan l vizib */
-  /* GARANTI: menm si JavaScript pa janm chaje, splash la disparèt apre 2.5 s */
-  animation: up-splash-out 0.3s ease 2.5s forwards;
+  /* GARANTI: menm si JavaScript pa janm chaje, splash la disparèt apre 2 s */
+  animation: up-splash-out 0.3s ease 2s forwards;
 }
 .up-splash.is-leaving {
   animation: up-splash-out 0.3s ease forwards;
