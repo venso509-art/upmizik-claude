@@ -6,6 +6,8 @@ import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 import { PlayAllButton, TrackList } from "@/components/TrackList";
 import { DonateButton } from "@/components/donate/DonateButton";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { TrophyCase } from "@/components/TrophyCase";
+import { computeTrophies, type TrophyStats } from "@/lib/trophies";
 
 type Props = { params: { id: string } };
 
@@ -23,6 +25,7 @@ type Artist = {
   vision?: string | null;
   youtube_url?: string | null;
   instagram_url?: string | null;
+  banner_url?: string | null;
 };
 
 const BASE_COLUMNS = "id, display_name, bio, avatar_url, created_at, is_verified";
@@ -34,9 +37,11 @@ async function getArtist(id: string): Promise<Artist | null> {
   const query = (columns: string) =>
     supabase.from("profiles").select(columns).eq("id", id).eq("role", "artist").is("archived_at", null).maybeSingle<Artist>();
 
-  const full = await query(`${BASE_COLUMNS}, ${EXTRA_COLUMNS}`);
-  if (!full.error) return full.data;
-  // Si nouvo kolòn yo poko egziste (migration poko kouri), chaje sa ki baz yo
+  // Si nouvo kolòn yo poko egziste (migration poko kouri), eseye ak mwens kolòn
+  for (const columns of [`${BASE_COLUMNS}, ${EXTRA_COLUMNS}, banner_url`, `${BASE_COLUMNS}, ${EXTRA_COLUMNS}`]) {
+    const res = await query(columns);
+    if (!res.error) return res.data;
+  }
   return (await query(BASE_COLUMNS)).data;
 }
 
@@ -74,7 +79,7 @@ export default async function ArtistPage({ params }: Props) {
   if (!artist) notFound();
 
   const supabase = createClient();
-  const [{ data: rows }, { data: { user } }] = await Promise.all([
+  const [{ data: rows }, { data: { user } }, { data: trophyRows }] = await Promise.all([
     supabase
       .from("songs")
       .select(SONG_SELECT)
@@ -83,7 +88,10 @@ export default async function ArtistPage({ params }: Props) {
       .order("created_at", { ascending: false })
       .returns<SongRow[]>(),
     supabase.auth.getUser(),
+    // Si migration trofe a poko kouri, data = null epi vitrin nan pa parèt
+    supabase.rpc("artist_trophy_stats", { p_artist: artist.id }),
   ]);
+  const trophyStats = ((trophyRows ?? []) as TrophyStats[])[0] ?? null;
 
   const songs = rows ?? [];
   const tracks = songs.map((s) => toTrack(supabase, s));
@@ -102,8 +110,21 @@ export default async function ArtistPage({ params }: Props) {
     <>
       {/* ===== BANYÈ ===== */}
       <section className="relative overflow-hidden bg-gradient-to-b from-fuchsia-900/40 via-violet-950/30 to-zinc-950">
-        <div className="pointer-events-none absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
-        <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 pb-10 pt-16 text-center sm:flex-row sm:items-end sm:text-left">
+        {artist.banner_url ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={artist.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            {/* Fonse anba a pou tèks la toujou li byen sou nenpòt foto */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-zinc-950/10" />
+          </>
+        ) : (
+          <div className="pointer-events-none absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
+        )}
+        <div
+          className={`relative mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 pb-10 text-center sm:flex-row sm:items-end sm:text-left ${
+            artist.banner_url ? "pt-32 sm:pt-48" : "pt-16"
+          }`}
+        >
           <div className="h-40 w-40 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 shadow-2xl shadow-black/50">
             {artist.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -150,6 +171,8 @@ export default async function ArtistPage({ params }: Props) {
             {artist.vision && <AboutCard icon="🎯" title="Vizyon mwen pou mizik" text={artist.vision} />}
           </div>
         )}
+
+        {trophyStats && <TrophyCase trophies={computeTrophies(trophyStats)} isOwner={isOwner} />}
 
         {tracks.length > 0 ? (
           <>
