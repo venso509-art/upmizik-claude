@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/footer/Footer";
 import { SettingsProvider } from "@/components/SettingsProvider";
+import { BottomNav } from "@/components/BottomNav";
 import { getSettings } from "@/lib/settings-server";
 import { PlayerProvider } from "@/components/player/PlayerProvider";
 import { PlayerBar } from "@/components/player/PlayerBar";
@@ -27,7 +28,8 @@ export const metadata: Metadata = {
   icons: { apple: "/pwa-icon/192" },
 };
 
-export const viewport: Viewport = { themeColor: "#09090b" };
+// viewportFit "cover": ba navigasyon anba a respekte zòn bouton iPhone yo
+export const viewport: Viewport = { themeColor: "#09090b", viewportFit: "cover" };
 
 export default async function RootLayout({
   children,
@@ -48,6 +50,7 @@ export default async function RootLayout({
             <main>{children}</main>
             <Footer />
             <PlayerBar />
+            <BottomNav />
             <ServiceWorkerRegister />
           </PlayerProvider>
         </SettingsProvider>

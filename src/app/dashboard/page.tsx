@@ -12,6 +12,7 @@ import { formatHTG } from "@/lib/donations";
 import { toBalance, type BalanceRow } from "@/lib/finance";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
 import { SongManager, type ManagedSong } from "@/components/dashboard/SongManager";
+import { PostComposer, type MyPost } from "@/components/social/PostComposer";
 
 export const metadata: Metadata = { title: "Dashboard | UpMizik" };
 
@@ -100,9 +101,17 @@ export default async function DashboardPage() {
   const totalComments = songs.reduce((sum, s) => sum + commentCount(s), 0);
   const top = [...songs].sort((a, b) => b.play_count - a.play_count)[0];
 
-  const [extras, balanceRes] = await Promise.all([
+  const [extras, balanceRes, { data: myPosts }] = await Promise.all([
     getSongExtras(supabase, songs.map((s) => s.id), user.id),
     supabase.rpc("artist_balance", { p_artist_id: user.id }),
+    // 10 dènye pòs atis la (si migration Sosyal la poko kouri, lis la vid)
+    supabase
+      .from("posts")
+      .select("id, content, created_at, expires_at, status")
+      .eq("artist_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .returns<MyPost[]>(),
   ]);
   const balance = toBalance((balanceRes.data as BalanceRow[] | null)?.[0]);
 
@@ -197,6 +206,9 @@ export default async function DashboardPage() {
           <p className="mt-1 text-xs text-fuchsia-300 group-hover:underline">Mande retrè →</p>
         </Link>
       </section>
+
+      {/* ===== SOSYAL: pibliye yon pòs ===== */}
+      <PostComposer posts={myPosts ?? []} artistName={profile.display_name} />
 
       {/* ===== NIVO YO ===== */}
       <LevelsCard artistId={user.id} verified={profile.is_verified} />

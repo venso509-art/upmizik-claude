@@ -58,6 +58,16 @@ export async function Header() {
           <span className="text-white">Mizik</span>
         </Link>
 
+        {/* Lyen prensipal yo sou òdinatè (sou telefòn yo nan ba anba a) */}
+        <nav className="ml-4 hidden shrink-0 items-center gap-1 lg:flex">
+          <Link href="/atis" className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white">
+            Atis
+          </Link>
+          <Link href="/sosyal" className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white">
+            Sosyal
+          </Link>
+        </nav>
+
         {/* Ba rechèch la nan mitan (òdinatè), oswa bouton 🔍 (telefòn) */}
         <div className="flex min-w-0 flex-1 justify-end md:justify-center md:px-4 lg:px-6">
           <HeaderSearch />

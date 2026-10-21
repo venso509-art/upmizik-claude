@@ -69,6 +69,12 @@ export function describeAudit(action: string, d: Details): { icon: string; text:
         .map(([k, v]) => `${labels[k] ?? k}: ${(v as unknown[])[0]} → ${(v as unknown[])[1]}`);
       return { icon: "💳", text: `Chanje paramèt peman yo${changes.length ? ` (${changes.join(", ")})` : ""}` };
     }
+    case "post.blocked":
+      return { icon: "🚫", text: `Bloke yon pòs ${name}${d.excerpt ? `: « ${d.excerpt} »` : ""}` };
+    case "post.active":
+      return { icon: "✅", text: `Debloke yon pòs ${name}${d.excerpt ? `: « ${d.excerpt} »` : ""}` };
+    case "post.deleted":
+      return { icon: "🗞️", text: `Efase yon pòs ${name}${d.excerpt ? `: « ${d.excerpt} »` : ""}` };
     case "archive":
       return { icon: "🗄️", text: "Achive yon eleman" };
     case "restore":
