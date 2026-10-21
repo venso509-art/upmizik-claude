@@ -22,6 +22,7 @@ export function DonateButton({
   songTitle = null,
   className,
   label,
+  defaultOpen = false,
 }: {
   artistId: string;
   artistName: string;
@@ -29,8 +30,9 @@ export function DonateButton({
   songTitle?: string | null;
   className: string;
   label?: string;
+  defaultOpen?: boolean; // louvri fenèt don an touswit (paj /don/...)
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={className} aria-label={`Fè yon don bay ${artistName}`}>

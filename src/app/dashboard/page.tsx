@@ -14,6 +14,7 @@ import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
 import { SongManager, type ManagedSong } from "@/components/dashboard/SongManager";
 import { PostComposer, type MyPost } from "@/components/social/PostComposer";
 import { postImageUrl } from "@/lib/posts";
+import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 
 export const metadata: Metadata = { title: "Dashboard | UpMizik" };
 
@@ -72,7 +73,18 @@ export default async function DashboardPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1 className="text-3xl font-extrabold tracking-tight text-white">🎤 Espas atis</h1>
-        <p className="mt-1 text-zinc-400">
+        {profile.status === "pending" && (
+          <div className="mt-5 flex items-center gap-4 rounded-2xl border border-citron-400/40 bg-citron-400/10 p-5">
+            <span className="text-3xl" aria-hidden>
+              ⏳
+            </span>
+            <div>
+              <p className="text-lg font-bold text-citron-300">Kont ou ap tann validasyon admin</p>
+              <p className="text-sm text-zinc-300">Ou p ap ka pibliye mizik toutotan ekip UpMizik la pa apwouve kont ou.</p>
+            </div>
+          </div>
+        )}
+        <p className="mt-4 text-zinc-400">
           Bonjou {profile.display_name}! Espas atis ou ap louvri depi ekip UpMizik la valide kont ou. Pandan tan sa a, ou ka koute mizik sou{" "}
           <Link href="/" className="text-fuchsia-400 hover:text-fuchsia-300">
             paj akèy la
@@ -181,6 +193,7 @@ export default async function DashboardPage() {
             >
               ✏️ Modifye pwofil
             </Link>
+            <ShareLinkButton path={`/don/${user.id}`} label="🔗 Pataje lyen don mwen" />
           </div>
         </div>
       </section>
