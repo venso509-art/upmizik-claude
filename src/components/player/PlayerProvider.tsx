@@ -14,6 +14,7 @@ export type Track = {
   coverUrl: string | null;
   audioUrl: string;
   durationSeconds: number | null;
+  playCount?: number; // kantite ekout (pou kat yo)
 };
 
 type PlayerState = {

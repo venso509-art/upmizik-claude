@@ -34,6 +34,7 @@ export function toTrack(supabase: SupabaseClient, s: SongRow): Track {
     coverUrl: s.cover_path ? supabase.storage.from("covers").getPublicUrl(s.cover_path).data.publicUrl : null,
     audioUrl: supabase.storage.from("audio").getPublicUrl(s.audio_path).data.publicUrl,
     durationSeconds: s.duration_seconds,
+    playCount: s.play_count,
   };
 }
 

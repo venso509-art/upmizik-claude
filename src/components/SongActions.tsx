@@ -32,6 +32,9 @@ export function SongActions({
   currentUserId,
   size = "sm",
   track,
+  variant = "full",
+  plays,
+  compact = false,
 }: {
   songId: string;
   title: string;
@@ -41,6 +44,9 @@ export function SongActions({
   currentUserId: string | null;
   size?: "sm" | "lg";
   track?: Track; // si li la: bouton 📥 pou sove mizik la offline
+  variant?: "full" | "podium"; // podium = Top 3 (ekout, like, kòmante, don)
+  plays?: number;
+  compact?: boolean; // kat Top 3 etwat sou telefòn (#2, #3)
 }) {
   const router = useRouter();
   const [liked, setLiked] = useState(extras.liked);
@@ -82,6 +88,45 @@ export function SongActions({
     await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  // TOP 3: sèlman ekout, like, kòmante, ak bouton don an k ap bat tankou yon kè
+  if (variant === "podium") {
+    const size = compact ? "gap-1 px-2 py-1 text-xs md:gap-1.5 md:px-3 md:py-1.5 md:text-sm" : "gap-1.5 px-3 py-1.5 text-sm";
+    const pill = `inline-flex items-center rounded-full bg-zinc-800/80 font-medium text-zinc-200 transition hover:bg-zinc-700 hover:text-white ${size}`;
+    return (
+      <div className={`flex flex-wrap items-center justify-center md:justify-start ${compact ? "gap-1 md:gap-2" : "gap-2"}`}>
+        {typeof plays === "number" && (
+          <span className={`inline-flex items-center gap-1 px-1 font-semibold tabular-nums text-zinc-300 ${compact ? "text-xs md:text-sm" : "text-sm"}`} title={`${plays.toLocaleString("fr-HT")} ekout`}>
+            🎧 {plays.toLocaleString("fr-HT")}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={toggleLike}
+          className={`${pill} ${liked ? "bg-red-500/15 text-red-300 ring-1 ring-red-400/40" : ""}`}
+          aria-pressed={liked}
+          aria-label={liked ? "Retire like" : "Like"}
+        >
+          {liked ? "❤️" : "🤍"} <span className="tabular-nums">{likeCount}</span>
+        </button>
+        <Link href={`/chante/${songId}#komante`} className={pill} aria-label="Kòmante">
+          💬 <span className="tabular-nums">{extras.commentCount}</span>
+        </Link>
+        <span className="relative inline-flex">
+          {/* Sèk limyè ki gaye pou atire je moun nan */}
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-citron-400 motion-safe:animate-donate-glow" aria-hidden />
+          <DonateButton
+            artistId={artistId}
+            artistName={artistName}
+            songId={songId}
+            songTitle={title}
+            label="Sipòte"
+            className={`btn-primary relative inline-flex items-center rounded-full motion-safe:animate-heartbeat ${compact ? "gap-1 px-2.5 py-1 text-xs md:gap-1.5 md:px-3.5 md:py-1.5 md:text-sm" : "gap-1.5 px-3.5 py-1.5 text-sm"}`}
+          />
+        </span>
+      </div>
+    );
   }
 
   return (

@@ -105,6 +105,18 @@ const config: Config = {
           "0%, 100%": { transform: "translateX(0)" },
           "50%": { transform: "translateX(5px)" },
         },
+        // Bouton don Top 3 a: bat tankou yon kè (de ti kou, epi yon poz)
+        heartbeat: {
+          "0%, 40%, 100%": { transform: "scale(1)" },
+          "10%": { transform: "scale(1.14)" },
+          "20%": { transform: "scale(1)" },
+          "30%": { transform: "scale(1.1)" },
+        },
+        // Sèk limyè ki gaye toutotan bouton don an
+        "donate-glow": {
+          "0%": { transform: "scale(1)", opacity: "0.55" },
+          "70%, 100%": { transform: "scale(1.6)", opacity: "0" },
+        },
         // Ti pwen ki klere sou bouton an pandan men an peze
         "ad-press": {
           "0%, 44%, 60%, 100%": { transform: "scale(1)" },
@@ -118,6 +130,8 @@ const config: Config = {
         "ad-ripple": "ad-ripple 2.8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite",
         "ad-nudge": "ad-nudge 1s ease-in-out infinite",
         "ad-press": "ad-press 2.8s ease-in-out infinite",
+        heartbeat: "heartbeat 1.8s ease-in-out infinite",
+        "donate-glow": "donate-glow 1.8s ease-out infinite",
       },
     },
   },

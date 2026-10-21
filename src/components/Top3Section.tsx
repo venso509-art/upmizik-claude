@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import type { TopEntry } from "@/lib/top";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { SongActions } from "@/components/SongActions";
+import type { SongExtras } from "@/lib/songs";
 
 const MEDALS: Record<number, { emoji: string; label: string; ring: string; glow: string; badge: string }> = {
   1: { emoji: "🥇", label: "1ye", ring: "ring-amber-400/70", glow: "shadow-amber-500/30", badge: "from-amber-300 to-amber-500 text-amber-950" },
@@ -11,7 +13,17 @@ const MEDALS: Record<number, { emoji: string; label: string; ring: string; glow:
   3: { emoji: "🥉", label: "3yèm", ring: "ring-orange-400/50", glow: "shadow-orange-500/10", badge: "from-orange-300 to-orange-600 text-orange-950" },
 };
 
-function PodiumCard({ entry, queue }: { entry: TopEntry; queue: TopEntry[] }) {
+function PodiumCard({
+  entry,
+  queue,
+  extras,
+  currentUserId,
+}: {
+  entry: TopEntry;
+  queue: TopEntry[];
+  extras?: SongExtras;
+  currentUserId: string | null;
+}) {
   const { current, isPlaying, playTrack } = usePlayer();
   const { track, position, plays } = entry;
   const m = MEDALS[position];
@@ -70,13 +82,39 @@ function PodiumCard({ entry, queue }: { entry: TopEntry; queue: TopEntry[] }) {
           </Link>
           {track.genre ? ` · ${track.genre}` : ""}
         </p>
-        <p className={`font-medium text-zinc-500 md:mt-2 md:text-xs ${first ? "mt-2 text-sm" : "mt-1 text-[11px]"}`}>🎧 {plays.toLocaleString("fr-HT")} ekout</p>
+        {extras ? (
+          <div className="mt-3">
+            <SongActions
+              variant="podium"
+              compact={!first}
+              plays={plays}
+              songId={track.id}
+              title={track.title}
+              artistId={track.artistId}
+              artistName={track.artistName}
+              extras={extras}
+              currentUserId={currentUserId}
+            />
+          </div>
+        ) : (
+          <p className={`font-medium text-zinc-500 md:mt-2 md:text-xs ${first ? "mt-2 text-sm" : "mt-1 text-[11px]"}`}>🎧 {plays.toLocaleString("fr-HT")} ekout</p>
+        )}
       </div>
     </article>
   );
 }
 
-export function Top3Section({ entries, auto }: { entries: TopEntry[]; auto: boolean }) {
+export function Top3Section({
+  entries,
+  auto,
+  extras,
+  currentUserId = null,
+}: {
+  entries: TopEntry[];
+  auto: boolean;
+  extras?: Record<string, SongExtras>;
+  currentUserId?: string | null;
+}) {
   const { current, isPlaying, playTrack, toggle } = usePlayer();
   if (entries.length === 0) return null;
 
@@ -115,7 +153,7 @@ export function Top3Section({ entries, auto }: { entries: TopEntry[]; auto: bool
               : `${e.position === 2 ? "md:order-1" : "md:order-3"} ${lone ? "col-span-2 mx-auto w-1/2 md:col-span-1 md:w-full" : ""}`;
           return (
             <div key={e.track.id} className={cls}>
-              <PodiumCard entry={e} queue={entries} />
+              <PodiumCard entry={e} queue={entries} extras={extras?.[e.track.id]} currentUserId={currentUserId} />
             </div>
           );
         })}

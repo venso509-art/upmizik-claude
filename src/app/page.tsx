@@ -60,11 +60,13 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
   }
 
   // Badj ✓ pou sèk yo, ak Top 10 otomatik la (san mizik ki deja nan Top 3 a)
-  const [{ data: verifiedRows }, top10] = await Promise.all([
+  const [{ data: verifiedRows }, top10, top3Extras] = await Promise.all([
     bubbles.length
       ? supabase.from("profiles").select("id").eq("is_verified", true).in("id", bubbles.map((b) => b.artist_id))
       : Promise.resolve({ data: [] as { id: string }[] }),
     getTop10(supabase, top3.entries.map((e) => e.track.id)),
+    // Likes, kòmantè ak featuring pou bouton Top 3 yo
+    getSongExtras(supabase, top3.entries.map((e) => e.track.id), user?.id ?? null),
   ]);
   const verified = new Set((verifiedRows ?? []).map((r) => r.id));
   bubbles = bubbles.map((b) => ({ ...b, is_verified: verified.has(b.artist_id) }));
@@ -130,7 +132,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
 
       {/* ===== TOP 3 (admin chwazi) + TOP 10 (otomatik) ===== */}
       <Reveal>
-        <Top3Section entries={top3.entries} auto={top3.auto} />
+        <Top3Section entries={top3.entries} auto={top3.auto} extras={top3Extras} currentUserId={user?.id ?? null} />
       </Reveal>
       <Reveal>
         <Top10Section entries={top10} />
