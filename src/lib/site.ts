@@ -2,9 +2,9 @@
 export const CONTACT_EMAIL = "upmizikcontact@gmail.com";
 
 // Mete lyen paj UpMizik yo isit la. Yon lyen null = ikòn nan parèt gri ak "Byento".
-export const SOCIAL_LINKS: { name: "Facebook" | "Instagram" | "X" | "YouTube"; url: string | null }[] = [
-  { name: "Facebook", url: null },
-  { name: "Instagram", url: null },
-  { name: "X", url: null },
-  { name: "YouTube", url: null },
+// Ikòn ki disponib: Facebook, Instagram, X, YouTube, TikTok (gade SocialIcons.tsx)
+export const SOCIAL_LINKS: { name: "Facebook" | "Instagram" | "X" | "YouTube" | "TikTok"; url: string | null }[] = [
+  { name: "TikTok", url: "https://www.tiktok.com/@upmizik01" },
+  { name: "Instagram", url: "https://www.instagram.com/upmizik01" },
+  { name: "YouTube", url: "https://www.youtube.com/@upmizik" },
 ];
