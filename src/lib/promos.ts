@@ -5,8 +5,8 @@ import { youtubeId } from "@/lib/youtube";
 type PromoRow = {
   id: string;
   title: string;
-  kind: "video" | "youtube";
-  video_path: string | null;
+  kind: PromoKind;
+  video_path: string | null; // fichye a (videyo OSWA imaj) nan bucket "promo-videos"
   youtube_url: string | null;
   is_active: boolean;
   position: number;
@@ -17,14 +17,33 @@ type PromoRow = {
 export const PROMO_SELECT =
   "id, title, kind, video_path, youtube_url, is_active, position, artist_id, artist:profiles!artist_promos_artist_id_fkey(display_name, is_verified, archived_at)";
 
+export type PromoKind = "video" | "image" | "youtube";
+
+// Fichye RPA yo aksepte: videyo (ak son ki koupe pa defo) ak imaj (GIF yo anime)
+export const PROMO_MEDIA_TYPES: Record<string, { kind: "video" | "image"; mime: string }> = {
+  mp4: { kind: "video", mime: "video/mp4" },
+  m4v: { kind: "video", mime: "video/mp4" },
+  webm: { kind: "video", mime: "video/webm" },
+  mov: { kind: "video", mime: "video/quicktime" },
+  gif: { kind: "image", mime: "image/gif" },
+  jpg: { kind: "image", mime: "image/jpeg" },
+  jpeg: { kind: "image", mime: "image/jpeg" },
+  png: { kind: "image", mime: "image/png" },
+  webp: { kind: "image", mime: "image/webp" },
+};
+export const PROMO_ACCEPT = Object.keys(PROMO_MEDIA_TYPES).map((e) => `.${e}`).join(",");
+export const PROMO_MAX_BYTES = 50 * 1024 * 1024;
+
 export function toPromo(supabase: SupabaseClient, r: PromoRow): Promo {
+  const fileUrl = r.video_path ? supabase.storage.from("promo-videos").getPublicUrl(r.video_path).data.publicUrl : null;
   return {
     id: r.id,
     title: r.title,
     artistId: r.artist_id,
     artistName: r.artist?.display_name ?? "Atis",
     artistVerified: r.artist?.is_verified ?? false,
-    videoUrl: r.kind === "video" && r.video_path ? supabase.storage.from("promo-videos").getPublicUrl(r.video_path).data.publicUrl : null,
+    videoUrl: r.kind === "video" ? fileUrl : null,
+    imageUrl: r.kind === "image" ? fileUrl : null,
     youtubeId: r.kind === "youtube" ? youtubeId(r.youtube_url) : null,
     youtubeUrl: r.kind === "youtube" ? r.youtube_url : null,
   };

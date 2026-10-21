@@ -22,7 +22,7 @@ function refresh() {
 export async function createPromo(input: {
   artistId: string;
   title: string;
-  kind: "video" | "youtube";
+  kind: "video" | "image" | "youtube";
   videoPath: string | null;
   youtubeUrl: string | null;
 }): Promise<Result> {
@@ -38,7 +38,7 @@ export async function createPromo(input: {
     youtubeUrl = normalizeUrl(input.youtubeUrl ?? "") ?? null;
     if (!youtubeUrl || !youtubeId(youtubeUrl)) return { error: "Mete yon lyen videyo YouTube valid." };
   } else if (!input.videoPath) {
-    return { error: "Voye videyo a." };
+    return { error: "Voye videyo a oswa imaj la." };
   }
 
   // Nouvo RPA a ale nan dènye pozisyon an
@@ -48,7 +48,7 @@ export async function createPromo(input: {
     artist_id: input.artistId,
     title,
     kind: input.kind,
-    video_path: input.kind === "video" ? input.videoPath : null,
+    video_path: input.kind === "youtube" ? null : input.videoPath,
     youtube_url: youtubeUrl,
     position: (last?.position ?? -1) + 1,
     created_by: ctx.user.id,

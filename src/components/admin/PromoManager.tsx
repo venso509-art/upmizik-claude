@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { createPromo, deletePromo, movePromo, setPromoActive } from "@/app/admin/rpa/actions";
 import { createClient } from "@/lib/supabase/client";
 import { fileExtension, uploadResumable } from "@/lib/upload";
+import { PROMO_ACCEPT, PROMO_MAX_BYTES, PROMO_MEDIA_TYPES, type PromoKind } from "@/lib/promos";
 import { youtubeId, youtubeThumbnail } from "@/lib/youtube";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -12,16 +13,15 @@ export type AdminPromo = {
   id: string;
   title: string;
   artistName: string;
-  kind: "video" | "youtube";
+  kind: PromoKind;
   videoUrl: string | null;
+  imageUrl: string | null;
   youtubeUrl: string | null;
   isActive: boolean;
 };
 
 export type ArtistOption = { id: string; name: string };
 
-const VIDEO_TYPES: Record<string, string> = { mp4: "video/mp4", webm: "video/webm" };
-const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
 
 export function PromoForm({ artists }: { artists: ArtistOption[] }) {
   const [artistId, setArtistId] = useState("");
@@ -35,11 +35,21 @@ export function PromoForm({ artists }: { artists: ArtistOption[] }) {
   const [pending, startTransition] = useTransition();
   const ytId = kind === "youtube" ? youtubeId(youtube.startsWith("http") ? youtube : `https://${youtube}`) : null;
 
+  // "video" isit la vle di "yon fichye" (videyo OSWA imaj); tip egzak la soti nan ekstansyon an
+  const media = video ? PROMO_MEDIA_TYPES[fileExtension(video)] : null;
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!video) return setPreviewUrl(null);
+    const url = URL.createObjectURL(video);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [video]);
+
   function pickVideo(file: File | undefined) {
     setError(undefined);
     if (!file) return;
-    if (!VIDEO_TYPES[fileExtension(file)]) return setError("Videyo a dwe MP4 oswa WebM.");
-    if (file.size > MAX_VIDEO_BYTES) return setError("Videyo a twò gwo. Maksimòm: 25 MB.");
+    if (!PROMO_MEDIA_TYPES[fileExtension(file)]) return setError("Fòma sa a pa aksepte. Itilize MP4, MOV, WebM, GIF, JPG, PNG oswa WebP.");
+    if (file.size > PROMO_MAX_BYTES) return setError("Fichye a twò gwo. Maksimòm: 50 MB.");
     setVideo(file);
   }
 
@@ -47,10 +57,10 @@ export function PromoForm({ artists }: { artists: ArtistOption[] }) {
     e.preventDefault();
     setError(undefined);
     setMessage(undefined);
-    if (kind === "video" && !video) return setError("Chwazi videyo a.");
+    if (kind === "video" && (!video || !media)) return setError("Chwazi yon videyo oswa yon imaj.");
     startTransition(async () => {
       let videoPath: string | null = null;
-      if (kind === "video" && video) {
+      if (kind === "video" && video && media) {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return setError("Sesyon ou ekspire. Konekte ankò.");
@@ -61,16 +71,22 @@ export function PromoForm({ artists }: { artists: ArtistOption[] }) {
             bucket: "promo-videos",
             path: `${crypto.randomUUID()}.${ext}`,
             file: video,
-            contentType: VIDEO_TYPES[ext],
+            contentType: media.mime,
             accessToken: session.access_token,
             onProgress: setProgress,
           });
         } catch (err) {
-          return setError(`Videyo a pa monte: ${err instanceof Error ? err.message : String(err)}`);
+          return setError(`Fichye a pa monte: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
 
-      const res = await createPromo({ artistId, title, kind, videoPath, youtubeUrl: kind === "youtube" ? youtube : null });
+      const res = await createPromo({
+        artistId,
+        title,
+        kind: kind === "youtube" ? "youtube" : (media?.kind ?? "video"),
+        videoPath,
+        youtubeUrl: kind === "youtube" ? youtube : null,
+      });
       if (res.error) {
         if (videoPath) await createClient().storage.from("promo-videos").remove([videoPath]);
         return setError(res.error);
@@ -102,7 +118,7 @@ export function PromoForm({ artists }: { artists: ArtistOption[] }) {
       <div className="grid grid-cols-2 gap-2">
         {(
           [
-            ["video", "🎬 Videyo kout"],
+            ["video", "🎬 Videyo / Imaj"],
             ["youtube", "▶ Lyen YouTube"],
           ] as const
         ).map(([k, label]) => (
@@ -120,16 +136,37 @@ export function PromoForm({ artists }: { artists: ArtistOption[] }) {
       </div>
 
       {kind === "video" ? (
+        <>
         <label
           className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-700 bg-zinc-950 px-4 py-6 text-center transition hover:border-fuchsia-500 ${
             pending ? "pointer-events-none opacity-60" : ""
           }`}
         >
-          <span className="text-3xl">🎬</span>
-          <span className="mt-1 text-sm text-zinc-300">{video ? video.name : "Chwazi videyo a"}</span>
-          <span className="text-xs text-zinc-500">MP4 oswa WebM · Maks 25 MB · Li ap jwe san son, an bouk</span>
-          <input type="file" accept=".mp4,.webm" className="sr-only" onChange={(e) => pickVideo(e.target.files?.[0])} />
+          {previewUrl && media ? (
+            <span className="mb-2 block h-40 w-32 overflow-hidden rounded-xl bg-zinc-900">
+              {media.kind === "video" ? (
+                <video src={previewUrl} muted loop autoPlay playsInline className="h-full w-full object-cover" />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={previewUrl} alt="Apèsi" className="h-full w-full object-cover" />
+              )}
+            </span>
+          ) : (
+            <span className="text-3xl">🎬</span>
+          )}
+          <span className="mt-1 max-w-full truncate text-sm text-zinc-300">
+            {video ? `${media?.kind === "image" ? "🖼️" : "🎬"} ${video.name}` : "Chwazi yon videyo oswa yon imaj"}
+          </span>
+          <span className="text-xs text-zinc-500">MP4, MOV, WebM, GIF, JPG, PNG, WebP · Maks 50 MB</span>
+          <span className="text-xs text-zinc-500">Videyo yo jwe an bouk, san son; moun nan ka mete son an ak bouton 🔊 la</span>
+          <input type="file" accept={PROMO_ACCEPT} className="sr-only" onChange={(e) => pickVideo(e.target.files?.[0])} />
         </label>
+        {media?.kind === "video" && video && fileExtension(video) === "mov" && (
+          <p className="text-xs text-amber-300">
+            ⚠️ Kèk MOV (sitou sa iPhone fè an HEVC) pa jwe sou Android. Si w kapab, ekspòte l an MP4.
+          </p>
+        )}
+        </>
       ) : (
         <Field label="Lyen videyo YouTube">
           <input value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="https://youtube.com/watch?v=..." className={inputClass} />
@@ -152,7 +189,7 @@ export function PromoForm({ artists }: { artists: ArtistOption[] }) {
         disabled={pending}
         className="w-full rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
       >
-        {pending ? (kind === "video" && video ? `Ap monte videyo a... ${Math.round(progress * 100)}%` : "Ap ajoute...") : "🚀 Ajoute RPA a"}
+        {pending ? (kind === "video" && video ? `Ap monte fichye a... ${Math.round(progress * 100)}%` : "Ap ajoute...") : "🚀 Ajoute RPA a"}
       </button>
     </form>
   );
@@ -169,6 +206,9 @@ function PromoRow({ promo, first, last }: { promo: AdminPromo; first: boolean; l
       <div className="h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-zinc-950">
         {promo.videoUrl ? (
           <video src={promo.videoUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+        ) : promo.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={promo.imageUrl} alt="" className="h-full w-full object-cover" />
         ) : ytId ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={youtubeThumbnail(ytId)} alt="" className="h-full w-full object-cover" />
@@ -184,7 +224,7 @@ function PromoRow({ promo, first, last }: { promo: AdminPromo; first: boolean; l
           />
         </div>
         <p className="text-xs text-zinc-400">
-          🎤 {promo.artistName} · {promo.kind === "video" ? "🎬 Videyo" : "▶ YouTube"}
+          🎤 {promo.artistName} · {promo.kind === "video" ? "🎬 Videyo" : promo.kind === "image" ? "🖼️ Imaj" : "▶ YouTube"}
         </p>
         {error && <p className="text-xs text-red-300">{error}</p>}
         <div className="flex flex-wrap gap-1.5 pt-1">

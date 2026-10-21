@@ -21,7 +21,7 @@ export default async function AdminPromosPage() {
 
   const promos: AdminPromo[] = (rows ?? []).map((r) => {
     const p = toPromo(supabase, r);
-    return { id: p.id, title: p.title, artistName: p.artistName, kind: r.kind, videoUrl: p.videoUrl, youtubeUrl: p.youtubeUrl, isActive: r.is_active };
+    return { id: p.id, title: p.title, artistName: p.artistName, kind: r.kind, videoUrl: p.videoUrl, imageUrl: p.imageUrl, youtubeUrl: p.youtubeUrl, isActive: r.is_active };
   });
   const artists: ArtistOption[] = (artistRows ?? []).map((a) => ({ id: a.id, name: a.display_name }));
 
