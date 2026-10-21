@@ -20,11 +20,17 @@ function PodiumCard({ entry, queue }: { entry: TopEntry; queue: TopEntry[] }) {
 
   return (
     <article
-      className={`group relative rounded-3xl bg-zinc-900/80 p-4 shadow-2xl ring-1 transition hover:-translate-y-1 ${m.ring} ${m.glow} ${
-        first ? "md:-mt-8 md:p-5" : ""
+      className={`group relative isolate rounded-3xl bg-zinc-900/80 shadow-2xl ring-1 transition hover:-translate-y-1 ${m.ring} ${m.glow} ${
+        first ? "p-4 ring-2 md:-mt-8 md:p-5 md:ring-1" : "p-2.5 md:p-4"
       }`}
     >
-      <span className={`absolute -left-3 -top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br text-lg font-black shadow-lg ${m.badge}`}>
+      {/* Ti limyè lò dèyè #1 an (telefòn sèlman) */}
+      {first && <span className="pointer-events-none absolute -inset-3 -z-10 rounded-[2rem] bg-gradient-to-br from-amber-400/25 via-amber-500/5 to-fuchsia-500/20 blur-2xl md:hidden" />}
+      <span
+        className={`absolute -left-3 -top-3 z-10 flex items-center justify-center rounded-full bg-gradient-to-br font-black shadow-lg md:h-11 md:w-11 md:text-lg ${m.badge} ${
+          first ? "h-12 w-12 text-xl" : "h-9 w-9 text-base"
+        }`}
+      >
         {position}
       </span>
 
@@ -42,29 +48,29 @@ function PodiumCard({ entry, queue }: { entry: TopEntry; queue: TopEntry[] }) {
         )}
         <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         <span
-          className={`absolute bottom-3 right-3 flex h-14 w-14 items-center justify-center rounded-full bg-fuchsia-500 text-xl text-white shadow-xl transition ${
-            isCurrent ? "scale-100 opacity-100" : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"
-          }`}
+          className={`absolute bottom-2 right-2 flex items-center justify-center rounded-full bg-fuchsia-500 text-white shadow-xl transition md:bottom-3 md:right-3 md:h-14 md:w-14 md:text-xl ${
+            first ? "h-14 w-14 text-xl" : "h-10 w-10 text-base"
+          } ${isCurrent ? "scale-100 opacity-100" : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"}`}
         >
           {isCurrent && isPlaying ? "⏸" : "▶"}
         </span>
-        <span className="absolute left-3 top-3 text-3xl drop-shadow">{m.emoji}</span>
+        <span className={`absolute left-2 top-2 drop-shadow md:left-3 md:top-3 md:text-3xl ${first ? "text-4xl" : "text-2xl"}`}>{m.emoji}</span>
       </button>
 
-      <div className="mt-4 min-w-0">
-        <h3 className={`truncate font-extrabold ${first ? "text-2xl" : "text-lg"} ${isCurrent ? "text-fuchsia-400" : "text-white"}`}>
+      <div className={`min-w-0 md:mt-4 md:text-left ${first ? "mt-4 text-center" : "mt-3"}`}>
+        <h3 className={`truncate font-extrabold ${first ? "text-2xl sm:text-3xl md:text-2xl" : "text-sm md:text-lg"} ${isCurrent ? "text-fuchsia-400" : "text-white"}`}>
           <Link href={`/chante/${track.id}`} className="hover:underline">
             {track.title}
           </Link>
         </h3>
-        <p className="truncate text-sm text-zinc-400">
+        <p className={`truncate text-zinc-400 md:text-sm ${first ? "text-sm sm:text-base" : "text-xs"}`}>
           <Link href={`/atis/${track.artistId}`} className="hover:text-white hover:underline">
             {track.artistName}
             {track.artistVerified && <VerifiedBadge />}
           </Link>
           {track.genre ? ` · ${track.genre}` : ""}
         </p>
-        <p className="mt-2 text-xs font-medium text-zinc-500">🎧 {plays.toLocaleString("fr-HT")} ekout</p>
+        <p className={`font-medium text-zinc-500 md:mt-2 md:text-xs ${first ? "mt-2 text-sm" : "mt-1 text-[11px]"}`}>🎧 {plays.toLocaleString("fr-HT")} ekout</p>
       </div>
     </article>
   );
@@ -76,8 +82,8 @@ export function Top3Section({ entries, auto }: { entries: TopEntry[]; auto: bool
 
   const tracks = entries.map((e) => e.track);
   const playingTop = isPlaying && tracks.some((t) => t.id === current?.id);
-  // Sou gwo ekran: #2 a goch, #1 nan mitan, #3 a dwat (tankou yon podyòm)
-  const podiumOrder: Record<number, string> = { 1: "md:order-2", 2: "md:order-1", 3: "md:order-3" };
+  const sorted = [...entries].sort((a, b) => a.position - b.position);
+  const rest = sorted.slice(1, 3);
 
   return (
     <section className="relative mx-auto max-w-6xl px-4 pb-6 pt-12">
@@ -98,12 +104,21 @@ export function Top3Section({ entries, auto }: { entries: TopEntry[]; auto: bool
         </button>
       </div>
 
-      <div className="relative mt-12 grid items-end gap-8 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
-        {entries.map((e) => (
-          <div key={e.track.id} className={`${podiumOrder[e.position] ?? ""} ${e.position === 1 ? "sm:col-span-2 md:col-span-1" : ""}`}>
-            <PodiumCard entry={e} queue={entries} />
-          </div>
-        ))}
+      {/* TELEFÒN: #1 pou kont li anlè a, #2 ak #3 kot a kot anba l.
+          ÒDINATÈ (md+): podyòm #2 · #1 · #3 sou yon sèl liy. */}
+      <div className="relative mt-12 grid grid-cols-2 items-end gap-x-4 gap-y-8 md:grid-cols-3 md:gap-6">
+        {sorted.map((e) => {
+          const lone = e.position !== 1 && rest.length === 1; // pa gen #3: santre #2 sou telefòn
+          const cls =
+            e.position === 1
+              ? "col-span-2 mx-auto w-full max-w-sm md:order-2 md:col-span-1 md:max-w-none"
+              : `${e.position === 2 ? "md:order-1" : "md:order-3"} ${lone ? "col-span-2 mx-auto w-1/2 md:col-span-1 md:w-full" : ""}`;
+          return (
+            <div key={e.track.id} className={cls}>
+              <PodiumCard entry={e} queue={entries} />
+            </div>
+          );
+        })}
       </div>
     </section>
   );
