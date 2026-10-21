@@ -9,6 +9,7 @@ import { FormMessage, inputClass } from "@/components/auth/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Portal } from "@/components/Portal";
 import { ArtistContactBox } from "./ArtistContactBox";
+import { messageForStatus } from "@/lib/artistMessages";
 
 export type AdminRegistration = {
   id: string;
@@ -32,7 +33,10 @@ const BADGE = {
   rejected: { label: "❌ Rejte", cls: "bg-red-500/15 text-red-300 ring-red-500/30" },
 };
 
-function RegistrationCard({ r }: { r: AdminRegistration }) {
+// Desizyon admin nan sot pran: pou n louvri pop-up mesaj la (WhatsApp/imèl)
+type FollowUp = { r: AdminRegistration; decision: "verified" | "rejected"; reason: string | null };
+
+function RegistrationCard({ r, onReviewed }: { r: AdminRegistration; onReviewed: (f: FollowUp) => void }) {
   const [rejecting, setRejecting] = useState(false);
   const [note, setNote] = useState("");
   const [zoom, setZoom] = useState(false);
@@ -43,6 +47,7 @@ function RegistrationCard({ r }: { r: AdminRegistration }) {
     startTransition(async () => {
       const res = await reviewRegistration(r.id, approve, note);
       setError(res.error);
+      if (!res.error) onReviewed({ r, decision: approve ? "verified" : "rejected", reason: approve ? null : note.trim() });
     });
   }
 
@@ -136,7 +141,14 @@ function RegistrationCard({ r }: { r: AdminRegistration }) {
 
         {/* Kontak manyèl: imèl, WhatsApp oswa mesaj sou sit la */}
         <div className="pt-1">
-          <ArtistContactBox artistId={r.artistId} name={r.artistName} email={r.email} phone={r.phone} />
+          <ArtistContactBox
+            artistId={r.artistId}
+            name={r.artistName}
+            email={r.email}
+            phone={r.phone}
+            reason={r.adminNote}
+            defaultBody={messageForStatus(r.status, r.artistName, r.adminNote)}
+          />
         </div>
       </div>
 
@@ -152,20 +164,65 @@ function RegistrationCard({ r }: { r: AdminRegistration }) {
   );
 }
 
-export function RegistrationReview({ registrations }: { registrations: AdminRegistration[] }) {
-  if (registrations.length === 0) {
-    return (
-      <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
-        <p className="text-4xl">📭</p>
-        <p className="mt-3 text-zinc-400">Pa gen enskripsyon nan kategori sa a.</p>
-      </div>
-    );
-  }
+// Pop-up apre yon desizyon: mesaj la deja ekri dapre chwa a, admin nan jis voye l sou WhatsApp oswa imèl
+function FollowUpModal({ followUp, onClose }: { followUp: FollowUp; onClose: () => void }) {
+  const { r, decision, reason } = followUp;
+  const approved = decision === "verified";
   return (
-    <ul className="space-y-4">
-      {registrations.map((r) => (
-        <RegistrationCard key={r.id} r={r} />
-      ))}
-    </ul>
+    <Portal>
+      <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-zinc-800 bg-zinc-900 shadow-2xl sm:rounded-3xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={`px-6 py-5 ${approved ? "bg-gradient-to-br from-emerald-600 to-emerald-800" : "bg-gradient-to-br from-red-600 to-red-800"}`}>
+            <p className="text-3xl">{approved ? "✅" : "❌"}</p>
+            <h2 className="mt-1 text-xl font-extrabold text-white">
+              {approved ? `Kont ${r.artistName} apwouve!` : `Prèv ${r.artistName} rejte`}
+            </h2>
+            <p className="mt-1 text-sm text-white/80">🔔 Mesaj la deja voye otomatikman nan bwat mesaj atis la sou sit la.</p>
+          </div>
+          <div className="space-y-3 p-6">
+            <p className="text-sm text-zinc-300">Voye l tou sou WhatsApp oswa imèl, pou atis la wè l touswit:</p>
+            <ArtistContactBox
+              artistId={r.artistId}
+              name={r.artistName}
+              email={r.email}
+              phone={r.phone}
+              reason={reason}
+              defaultBody={messageForStatus(decision, r.artistName, reason)}
+              initiallyOpen
+              showInApp={false}
+              onClose={onClose}
+            />
+          </div>
+        </div>
+      </div>
+    </Portal>
+  );
+}
+
+export function RegistrationReview({ registrations }: { registrations: AdminRegistration[] }) {
+  // Kenbe desizyon an isit (pa nan kat la): apre l apwouve/rejte, kat la soti nan lis "Ap tann" lan
+  const [followUp, setFollowUp] = useState<FollowUp | null>(null);
+
+  return (
+    <>
+      {registrations.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
+          <p className="text-4xl">📭</p>
+          <p className="mt-3 text-zinc-400">Pa gen enskripsyon nan kategori sa a.</p>
+        </div>
+      ) : (
+        <ul className="space-y-4">
+          {registrations.map((r) => (
+            <RegistrationCard key={r.id} r={r} onReviewed={setFollowUp} />
+          ))}
+        </ul>
+      )}
+      {followUp && <FollowUpModal followUp={followUp} onClose={() => setFollowUp(null)} />}
+    </>
   );
 }
