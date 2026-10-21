@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 // viewportFit "cover": ba navigasyon anba a respekte zòn bouton iPhone yo
-export const viewport: Viewport = { themeColor: "#09090b", viewportFit: "cover" };
+export const viewport: Viewport = { themeColor: "#0B132B", viewportFit: "cover" };
 
 export default async function RootLayout({
   children,

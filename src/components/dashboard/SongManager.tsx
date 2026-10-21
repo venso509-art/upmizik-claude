@@ -181,7 +181,7 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
               <button
                 type="submit"
                 disabled={pending || !splits}
-                className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-2.5 font-semibold text-white disabled:opacity-60"
+                className="rounded-lg btn-primary px-4 py-2.5 font-semibold disabled:opacity-60"
               >
                 {pending ? "Ap sove..." : "Sove"}
               </button>

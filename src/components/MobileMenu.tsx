@@ -23,7 +23,7 @@ export function MobileMenu({ items, name, loggedIn }: { items: MenuItem[]; name:
 
   const tone = (t?: MenuItem["tone"]) =>
     t === "primary"
-      ? "bg-gradient-to-r from-fuchsia-500 to-violet-600 font-semibold text-white"
+      ? "btn-primary font-semibold"
       : t === "admin"
         ? "text-amber-300 hover:bg-zinc-800"
         : "text-zinc-200 hover:bg-zinc-800";

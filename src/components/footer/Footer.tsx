@@ -36,7 +36,7 @@ export async function Footer() {
         {/* Mak la + rezo sosyal */}
         <div>
           <Link href="/" className="text-2xl font-extrabold tracking-tight">
-            <span className="bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">Up</span>
+            <span className="bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent">Up</span>
             <span className="text-white">Mizik</span>
           </Link>
           <p className="mt-3 max-w-xs text-sm text-zinc-400">Platfòm mizik 100% ayisyen. Koute, sipòte atis yo, epi pataje bèl mizik nou an ak mond lan.</p>
@@ -103,7 +103,7 @@ export async function Footer() {
                 </Link>
                 <Link
                   href="/enskri"
-                  className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+                  className="rounded-lg btn-primary px-3 py-1.5 text-xs font-semibold transition"
                 >
                   Enskri
                 </Link>

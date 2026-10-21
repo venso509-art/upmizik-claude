@@ -71,7 +71,7 @@ export function OfflineLibrary() {
           <p className="mt-1 text-sm text-zinc-400">
             Peze bouton 📥 sou yon mizik pou w ka koute l menm lè w pa gen entènèt.
           </p>
-          <Link href="/" className="mt-6 inline-block rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white">
+          <Link href="/" className="mt-6 inline-block rounded-full btn-primary px-6 py-3 font-semibold">
             Chèche mizik
           </Link>
         </div>
@@ -80,7 +80,7 @@ export function OfflineLibrary() {
           <button
             type="button"
             onClick={() => (playingHere ? toggle() : playTrack(tracks[0], tracks))}
-            className="mt-6 rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-fuchsia-900/40 transition hover:opacity-90"
+            className="mt-6 rounded-full btn-primary px-6 py-3 font-semibold shadow-lg transition"
           >
             {playingHere ? "⏸ Poz" : "▶ Jwe tout"}
           </button>

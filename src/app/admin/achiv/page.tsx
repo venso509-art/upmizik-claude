@@ -142,7 +142,7 @@ export default async function AdminArchivePage({ searchParams }: { searchParams:
             key={t.key}
             href={`/admin/achiv?tip=${t.key}`}
             className={`rounded-full px-4 py-2 text-sm transition ${
-              tab.key === t.key ? "bg-fuchsia-500 font-semibold text-white" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+              tab.key === t.key ? "bg-citron-400 font-semibold text-zinc-950" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
             }`}
           >
             {t.label}

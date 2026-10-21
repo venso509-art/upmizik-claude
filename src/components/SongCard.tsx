@@ -36,7 +36,7 @@ export function SongCard({
             <div className="flex h-full items-center justify-center text-5xl">🎵</div>
           )}
           <span
-            className={`absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-fuchsia-500 text-white shadow-lg transition ${
+            className={`absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-citron-400 text-zinc-950 shadow-lg transition ${
               isCurrent ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
             }`}
           >

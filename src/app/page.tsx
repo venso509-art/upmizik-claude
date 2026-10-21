@@ -81,7 +81,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
             </span>
             <h1 style={{ animationDelay: "100ms" }} className="mt-6 motion-safe:animate-fade-up text-balance text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-6xl">
               Mizik ou merite{" "}
-              <span className="bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent">
                 tande.
               </span>
             </h1>
@@ -92,7 +92,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
             <div style={{ animationDelay: "300ms" }} className="mt-8 flex flex-wrap gap-3 motion-safe:animate-fade-up">
               <a
                 href="#nouvo"
-                className="rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-fuchsia-900/40 transition hover:opacity-90"
+                className="rounded-full btn-primary px-6 py-3 font-semibold shadow-lg transition"
               >
                 ▶ Kòmanse koute
               </a>
@@ -110,7 +110,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
             {bars.map((b, i) => (
               <span
                 key={i}
-                className={`${b.h} w-6 origin-bottom animate-equalizer rounded-full bg-gradient-to-t from-violet-600 to-fuchsia-400`}
+                className={`${b.h} w-6 origin-bottom animate-equalizer rounded-full bg-gradient-to-t from-fuchsia-700 via-fuchsia-500 to-citron-400`}
                 style={{ animationDelay: b.delay }}
               />
             ))}
@@ -160,7 +160,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
                   aria-current={active ? "page" : undefined}
                   className={`rounded-full border px-4 py-2 text-sm transition ${
                     active
-                      ? "border-fuchsia-500 bg-fuchsia-500 font-semibold text-white shadow-lg shadow-fuchsia-900/40"
+                      ? "border-fuchsia-500 bg-citron-400 font-semibold text-zinc-950 shadow-lg shadow-fuchsia-900/40"
                       : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-600 hover:text-white"
                   }`}
                 >
@@ -209,7 +209,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
           </ul>
           <Link
             href="/enskri"
-            className="relative mt-8 inline-block rounded-full bg-white px-6 py-3 font-semibold text-violet-700 transition hover:bg-zinc-100"
+            className="btn-primary relative mt-8 inline-block rounded-full px-6 py-3"
           >
             Kreye kont atis ou
           </Link>

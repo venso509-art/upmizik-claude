@@ -16,7 +16,7 @@ function ClickInvite() {
       </span>
 
       {/* Bouton "Klike la" ak flèch ki bouje */}
-      <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-black/40 ring-1 ring-white/30 motion-safe:animate-ad-press sm:bottom-4 sm:right-4 sm:px-4 sm:py-2 sm:text-sm">
+      <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full btn-primary px-3 py-1.5 text-xs font-bold shadow-lg shadow-black/40 ring-1 ring-white/30 motion-safe:animate-ad-press sm:bottom-4 sm:right-4 sm:px-4 sm:py-2 sm:text-sm">
         Klike la
         <svg viewBox="0 0 24 24" className="h-4 w-4 motion-safe:animate-ad-nudge" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 12h14M13 6l6 6-6 6" />

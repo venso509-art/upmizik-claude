@@ -165,7 +165,7 @@ export default async function DashboardPage() {
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
             <Link
               href="/upload"
-              className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-fuchsia-900/50 transition hover:scale-[1.02] hover:opacity-95"
+              className="flex items-center justify-center gap-2 rounded-2xl btn-primary px-8 py-4 text-lg font-bold shadow-xl transition hover:scale-[1.02] hover:opacity-95"
             >
               <span className="text-2xl leading-none">+</span> Pibliye yon nouvo chante
             </Link>
@@ -225,7 +225,7 @@ export default async function DashboardPage() {
           <p className="mt-2 text-zinc-400">Upload premye chante w la, e estatistik ou yo ap parèt isit la.</p>
           <Link
             href="/upload"
-            className="mt-6 inline-block rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white"
+            className="mt-6 inline-block rounded-full btn-primary px-6 py-3 font-semibold"
           >
             + Pibliye premye chante w
           </Link>

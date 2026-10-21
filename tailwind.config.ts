@@ -1,5 +1,64 @@
 import type { Config } from "tailwindcss";
 
+// ===== Tema "Karayib Nwit" =====
+// Nou redefini koulè Tailwind yo nan rasin lan, konsa TOUT paj yo chanje ansanm:
+//   zinc    → nwa ble (fon + tèks gri)       fon prensipal: #0B132B
+//   fuchsia → vèt Karayib (koulè prensipal)   vèt fonse:     #0A5C36
+//   violet  → vèt lanmè (pou gradyan yo)
+//   citron  → jòn sitwon (aksan, bouton prensipal yo, ak tèks nwa ladan yo)
+const navy = {
+  50: "#F3F5FA",
+  100: "#E4E8F2",
+  200: "#C8D0E2",
+  300: "#A7B2CC", // tèks gri klè
+  400: "#8592B0",
+  500: "#68769A",
+  600: "#46526F",
+  700: "#2D3854",
+  800: "#1C2642",
+  900: "#121B37",
+  950: "#0B132B", // fon an
+};
+
+const caribGreen = {
+  50: "#E9F9F0",
+  100: "#CBF1DC",
+  200: "#9BE3BA",
+  300: "#63CF91",
+  400: "#34B86F",
+  500: "#179A54",
+  600: "#0E7C43",
+  700: "#0A5C36", // vèt fonse prensipal la
+  800: "#08492B",
+  900: "#063821",
+  950: "#032015",
+};
+
+const seaGreen = {
+  50: "#E7F8F5",
+  100: "#C4EEE6",
+  200: "#8FDDCF",
+  300: "#55C6B2",
+  400: "#25A891",
+  500: "#108C78",
+  600: "#0B7062",
+  700: "#095A50",
+  800: "#08473F",
+  900: "#063631",
+  950: "#03211E",
+};
+
+const citron = {
+  50: "#FFFCE5",
+  100: "#FFF6B8",
+  200: "#FFEE85",
+  300: "#FFE34D",
+  400: "#FFD700", // jòn sitwon an
+  500: "#E6C000",
+  600: "#B89A00",
+  700: "#8A7300",
+};
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -8,6 +67,12 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        zinc: navy,
+        fuchsia: caribGreen,
+        violet: seaGreen,
+        citron,
+      },
       keyframes: {
         // Ba egalizè yo k ap monte desann nan hero a
         equalizer: {

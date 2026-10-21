@@ -170,7 +170,7 @@ export function PostComposer({ posts, artistId, artistName }: { posts: MyPost[];
               type="button"
               onClick={() => setMode(m)}
               className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                mode === m ? "bg-gradient-to-r from-fuchsia-500 to-violet-600 text-white shadow" : "text-zinc-400 hover:text-white"
+                mode === m ? "btn-primary shadow" : "text-zinc-400 hover:text-white"
               }`}
             >
               {label}
@@ -234,7 +234,7 @@ export function PostComposer({ posts, artistId, artistName }: { posts: MyPost[];
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-fuchsia-900/30 transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+          className="w-full rounded-xl btn-primary px-6 py-3 font-semibold shadow-lg shadow-fuchsia-900/30 transition disabled:cursor-wait disabled:opacity-60 sm:w-auto"
         >
           {pending ? "Ap pibliye…" : "📣 Pibliye"}
         </button>

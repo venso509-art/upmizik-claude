@@ -80,7 +80,7 @@ export function Comments({
             <button
               type="submit"
               disabled={pending}
-              className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-5 py-2.5 font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+              className="rounded-lg btn-primary px-5 py-2.5 font-semibold transition disabled:opacity-60"
             >
               {pending ? "Ap voye..." : "Voye kòmantè"}
             </button>

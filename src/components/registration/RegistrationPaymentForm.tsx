@@ -162,7 +162,7 @@ export function RegistrationPaymentForm({ userId }: { userId: string }) {
         type="button"
         onClick={submit}
         disabled={busy}
-        className="w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+        className="w-full rounded-xl btn-primary px-4 py-3 font-semibold transition disabled:opacity-60"
       >
         {busy ? "Ap voye..." : "Voye prèv peman an"}
       </button>

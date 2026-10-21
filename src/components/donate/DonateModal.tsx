@@ -23,7 +23,7 @@ import { methodNumber, usdToHtg } from "@/lib/settings";
 type Step = 1 | 2 | 3 | 4;
 
 const primary =
-  "w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-xl btn-primary px-4 py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
 const secondary = "rounded-xl px-4 py-3 font-medium text-zinc-400 transition hover:text-white";
 
 export function DonateModal({

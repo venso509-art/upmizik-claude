@@ -90,7 +90,7 @@ export function ArtistTable({ artists, currentUserId }: { artists: AdminArtist[]
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={`rounded-full px-3 py-1.5 text-sm transition ${
-                filter === f.key ? "bg-fuchsia-500 font-semibold text-white" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                filter === f.key ? "bg-citron-400 font-semibold text-zinc-950" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
               }`}
             >
               {f.label} <span className="opacity-70">({count})</span>

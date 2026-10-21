@@ -34,7 +34,7 @@ function ProgressBar({ label, value }: { label: string; value: number }) {
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 transition-all"
+          className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-citron-400 transition-all"
           style={{ width: `${value * 100}%` }}
         />
       </div>
@@ -169,7 +169,7 @@ export function UploadForm({ userId }: { userId: string }) {
         <p className="text-5xl">🎉</p>
         <FormMessage message="Chante w la pibliye! Li parèt sou paj akèy la kounye a." />
         <div className="flex justify-center gap-3">
-          <Link href="/" className="rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-2.5 font-semibold text-white">
+          <Link href="/" className="rounded-lg btn-primary px-4 py-2.5 font-semibold">
             Wè l sou paj akèy la
           </Link>
           <button
@@ -261,7 +261,7 @@ export function UploadForm({ userId }: { userId: string }) {
       <button
         type="submit"
         disabled={busy}
-        className="w-full rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+        className="w-full rounded-lg btn-primary px-4 py-3 font-semibold transition disabled:cursor-wait disabled:opacity-60"
       >
         {busy ? "Upload ap fèt..." : "Pibliye chante a"}
       </button>

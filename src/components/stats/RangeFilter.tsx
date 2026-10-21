@@ -9,7 +9,7 @@ export function RangeFilter({ basePath, current }: { basePath: string; current: 
         <Link
           key={r}
           href={`${basePath}?jou=${r}`}
-          className={`rounded-full px-4 py-1.5 text-sm transition ${current === r ? "bg-fuchsia-500 font-semibold text-white" : "text-zinc-300 hover:text-white"}`}
+          className={`rounded-full px-4 py-1.5 text-sm transition ${current === r ? "bg-citron-400 font-semibold text-zinc-950" : "text-zinc-300 hover:text-white"}`}
         >
           {r} jou
         </Link>

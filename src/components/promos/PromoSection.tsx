@@ -89,7 +89,7 @@ function PromoVideo({ id, src, title }: { id: string; src: string; title: string
         type="button"
         onClick={toggleSound}
         className={`absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md transition hover:scale-110 ${
-          muted ? "bg-black/55 text-white ring-1 ring-white/20" : "bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-900/50"
+          muted ? "bg-black/55 text-white ring-1 ring-white/20" : "bg-citron-400 text-zinc-950 shadow-lg shadow-fuchsia-900/50"
         }`}
         aria-label={muted ? "Mete son an" : "Koupe son an"}
         aria-pressed={!muted}

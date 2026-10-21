@@ -29,7 +29,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       </div>
 
       <div className="mt-6 flex justify-center gap-3">
-        <button onClick={reset} className="rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white">
+        <button onClick={reset} className="rounded-full btn-primary px-6 py-3 font-semibold">
           Eseye ankò
         </button>
         <Link href="/" className="rounded-full border border-zinc-700 px-6 py-3 font-semibold text-zinc-200 hover:border-zinc-500">

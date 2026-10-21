@@ -128,7 +128,7 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                 type="button"
                 onClick={() => setStep("payment")}
                 disabled={!accepted}
-                className="w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+                className="w-full rounded-xl btn-primary px-4 py-3 font-semibold transition disabled:opacity-40"
               >
                 Kontinye: peye frè enskripsyon an
               </button>
@@ -217,7 +217,7 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                   type="button"
                   onClick={submit}
                   disabled={pending}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                  className="flex-1 rounded-xl btn-primary px-4 py-3 font-semibold transition disabled:opacity-60"
                 >
                   {pending ? "Ap kreye kont ou..." : "Voye demann mwen"}
                 </button>
@@ -251,7 +251,7 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                   </p>
                 </div>
               </div>
-              <Link href="/" className="block w-full rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 text-center font-semibold text-white">
+              <Link href="/" className="block w-full rounded-xl btn-primary px-4 py-3 text-center font-semibold">
                 Retounen sou paj akèy la
               </Link>
             </div>

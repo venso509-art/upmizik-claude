@@ -11,7 +11,7 @@ export function PlayAllButton({ tracks, label = "▶ Jwe tout" }: { tracks: Trac
     <button
       type="button"
       onClick={() => (playingThisList ? toggle() : playTrack(tracks[0], tracks))}
-      className="rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white shadow-lg shadow-fuchsia-900/40 transition hover:opacity-90"
+      className="rounded-full btn-primary px-6 py-3 font-semibold shadow-lg transition"
     >
       {playingThisList ? "⏸ Poz" : label}
     </button>

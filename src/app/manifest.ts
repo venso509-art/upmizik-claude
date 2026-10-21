@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Platfòm mizik 100% ayisyen. Koute, sipòte atis yo, epi sove mizik pou koute san entènèt.",
     start_url: "/",
     display: "standalone",
-    background_color: "#09090b",
-    theme_color: "#09090b",
+    background_color: "#0B132B",
+    theme_color: "#0B132B",
     lang: "ht",
     icons: [
       { src: "/pwa-icon/192", sizes: "192x192", type: "image/png" },

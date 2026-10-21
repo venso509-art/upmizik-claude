@@ -73,7 +73,7 @@ export function SubmitButton({ children }: { children: React.ReactNode }) {
     <button
       type="submit"
       disabled={pending}
-      className="w-full rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+      className="w-full rounded-lg btn-primary px-4 py-3 font-semibold transition disabled:cursor-wait disabled:opacity-60"
     >
       {pending ? "Tann yon ti moman..." : children}
     </button>

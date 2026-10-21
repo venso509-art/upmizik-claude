@@ -179,7 +179,7 @@ export function PromoForm({ artists }: { artists: ArtistOption[] }) {
 
       {pending && kind === "video" && video && (
         <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
-          <div className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 transition-all" style={{ width: `${progress * 100}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-citron-400 transition-all" style={{ width: `${progress * 100}%` }} />
         </div>
       )}
 
@@ -187,7 +187,7 @@ export function PromoForm({ artists }: { artists: ArtistOption[] }) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+        className="w-full rounded-lg btn-primary px-4 py-3 font-semibold transition disabled:opacity-60"
       >
         {pending ? (kind === "video" && video ? `Ap monte fichye a... ${Math.round(progress * 100)}%` : "Ap ajoute...") : "🚀 Ajoute RPA a"}
       </button>

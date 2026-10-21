@@ -151,7 +151,7 @@ export default async function ArtistPage({ params }: Props) {
                 artistId={artist.id}
                 artistName={artist.display_name}
                 label={`Sipòte ${artist.display_name}`}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-full btn-primary px-4 py-2 text-sm font-semibold transition"
               />
               {isOwner && (
                 <Link href="/pwofil" className="rounded-full border border-dashed border-zinc-700 px-4 py-2 text-sm text-zinc-400 transition hover:text-white">
@@ -190,7 +190,7 @@ export default async function ArtistPage({ params }: Props) {
             {isOwner && (
               <Link
                 href="/upload"
-                className="mt-6 inline-block rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 px-6 py-3 font-semibold text-white"
+                className="mt-6 inline-block rounded-full btn-primary px-6 py-3 font-semibold"
               >
                 + Pibliye premye chante w
               </Link>

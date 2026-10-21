@@ -106,7 +106,7 @@ export default async function AdminPayoutsPage({ searchParams }: { searchParams:
             key={t.status}
             href={`/admin/retre?status=${t.status}`}
             className={`rounded-full px-3 py-1.5 text-sm transition ${
-              status === t.status ? "bg-fuchsia-500 font-semibold text-white" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+              status === t.status ? "bg-citron-400 font-semibold text-zinc-950" : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
             }`}
           >
             {t.label} <span className="opacity-70">({counts[i].count ?? 0})</span>

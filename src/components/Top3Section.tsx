@@ -48,7 +48,7 @@ function PodiumCard({ entry, queue }: { entry: TopEntry; queue: TopEntry[] }) {
         )}
         <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         <span
-          className={`absolute bottom-2 right-2 flex items-center justify-center rounded-full bg-fuchsia-500 text-white shadow-xl transition md:bottom-3 md:right-3 md:h-14 md:w-14 md:text-xl ${
+          className={`absolute bottom-2 right-2 flex items-center justify-center rounded-full bg-citron-400 text-zinc-950 shadow-xl transition md:bottom-3 md:right-3 md:h-14 md:w-14 md:text-xl ${
             first ? "h-14 w-14 text-xl" : "h-10 w-10 text-base"
           } ${isCurrent ? "scale-100 opacity-100" : "scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"}`}
         >
