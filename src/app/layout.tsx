@@ -5,6 +5,8 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/footer/Footer";
 import { SettingsProvider } from "@/components/SettingsProvider";
 import { BottomNav } from "@/components/BottomNav";
+import { SplashScreen } from "@/components/SplashScreen";
+import { SPLASH_HEAD_SCRIPT } from "@/lib/splash";
 import { getSettings } from "@/lib/settings-server";
 import { PlayerProvider } from "@/components/player/PlayerProvider";
 import { PlayerBar } from "@/components/player/PlayerBar";
@@ -40,10 +42,15 @@ export default async function RootLayout({
   const settings = await getSettings();
 
   return (
-    <html lang="ht">
+    // suppressHydrationWarning: script splash la ka ajoute yon klas sou <html> anvan React chaje
+    <html lang="ht" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_HEAD_SCRIPT }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-950 text-zinc-100 antialiased`}
       >
+        <SplashScreen />
         <SettingsProvider settings={settings}>
           <PlayerProvider>
             <Header />
