@@ -45,6 +45,11 @@ export function PaymentSettingsForm({ initial }: { initial: AppSettings }) {
               <input name="natcash_number" required maxLength={20} defaultValue={initial.natcashNumber} onChange={set("natcashNumber", false)} className={inputClass} />
             </Field>
           </div>
+          <div className="mt-4">
+            <Field label="👤 Non ki sou kont yo (moun yo ap wè l bò kote nimewo a)">
+              <input name="account_name" required minLength={2} maxLength={80} defaultValue={initial.accountName} onChange={set("accountName", false)} className={inputClass} />
+            </Field>
+          </div>
         </div>
 
         <div>
@@ -78,6 +83,7 @@ export function PaymentSettingsForm({ initial }: { initial: AppSettings }) {
           <Preview label="Frè mansyèl" value={`${formatUSD(s.monthlyFeeUsd)} = ${formatHTG(monthlyFeeHtg(s))}`} />
           <Preview label="MonCash" value={s.moncashNumber || "—"} />
           <Preview label="NatCash" value={s.natcashNumber || "—"} />
+          <Preview label="Non sou kont lan" value={s.accountName || "—"} />
         </div>
         <p className="mt-4 text-xs text-zinc-500">
           ℹ️ Don ak retrè ki deja fèt yo kenbe to yo te genyen jou yo te fèt la. Chak chanjman anrejistre nan 🔐 Jounal aktivite a.

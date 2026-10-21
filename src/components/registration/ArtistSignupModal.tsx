@@ -1,5 +1,6 @@
 "use client";
 
+import { AccountName, AccountNameHint } from "@/components/payment/AccountName";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { signupArtist, type ArtistSignupResult } from "@/app/auth/actions";
@@ -157,6 +158,7 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                         {DONATION_METHODS[key].label}
                       </span>
                       <span className="mt-2 block text-sm tabular-nums text-zinc-300">{methodNumber(settings, key)}</span>
+                    <AccountName compact />
                     </button>
                   ))}
                 </div>
@@ -170,6 +172,10 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                   <button type="button" onClick={copyNumber} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-700">
                     {copied ? "✓ Kopye" : "Kopye"}
                   </button>
+                </div>
+                <div className="mt-2 space-y-2">
+                  <AccountName />
+                  <AccountNameHint />
                 </div>
                 <p className="mt-2 text-xs text-zinc-500">Apre sa, pran yon foto ekran (screenshot) mesaj konfimasyon an.</p>
               </div>

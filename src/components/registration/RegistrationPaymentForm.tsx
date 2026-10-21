@@ -1,5 +1,6 @@
 "use client";
 
+import { AccountName, AccountNameHint } from "@/components/payment/AccountName";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -98,6 +99,7 @@ export function RegistrationPaymentForm({ userId }: { userId: string }) {
               {DONATION_METHODS[key].label}
             </span>
             <span className="mt-2 block text-sm tabular-nums text-zinc-300">{methodNumber(settings, key)}</span>
+                    <AccountName compact />
           </button>
         ))}
       </div>
@@ -112,6 +114,10 @@ export function RegistrationPaymentForm({ userId }: { userId: string }) {
             <button type="button" onClick={copyNumber} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-700">
               {copied ? "✓ Kopye" : "Kopye"}
             </button>
+          </div>
+          <div className="mt-2 space-y-2">
+            <AccountName />
+            <AccountNameHint />
           </div>
         </li>
         <li>

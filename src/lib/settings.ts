@@ -3,6 +3,7 @@ export type AppSettings = {
   htgPerUsd: number;
   moncashNumber: string;
   natcashNumber: string;
+  accountName: string; // non ki sou kont MonCash/NatCash la
   registrationFeeUsd: number;
   minDonationUsd: number;
   monthlyFeeUsd: number;
@@ -13,6 +14,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   htgPerUsd: 145,
   moncashNumber: "38 91 2317",
   natcashNumber: "35 37 1184",
+  accountName: "Clauvens EXAUS",
   registrationFeeUsd: 4.99,
   minDonationUsd: 5,
   monthlyFeeUsd: 0.99,
@@ -22,12 +24,14 @@ export type SettingsRow = {
   htg_per_usd: number;
   moncash_number: string;
   natcash_number: string;
+  account_name?: string;
   registration_fee_usd: number;
   min_donation_usd: number;
   monthly_fee_usd: number;
 };
 
-export const SETTINGS_SELECT = "htg_per_usd, moncash_number, natcash_number, registration_fee_usd, min_donation_usd, monthly_fee_usd";
+export const SETTINGS_SELECT_BASE = "htg_per_usd, moncash_number, natcash_number, registration_fee_usd, min_donation_usd, monthly_fee_usd";
+export const SETTINGS_SELECT = `${SETTINGS_SELECT_BASE}, account_name`;
 
 export function toSettings(row: SettingsRow | null | undefined): AppSettings {
   if (!row) return DEFAULT_SETTINGS;
@@ -35,6 +39,7 @@ export function toSettings(row: SettingsRow | null | undefined): AppSettings {
     htgPerUsd: Number(row.htg_per_usd),
     moncashNumber: row.moncash_number,
     natcashNumber: row.natcash_number,
+    accountName: row.account_name ?? DEFAULT_SETTINGS.accountName,
     registrationFeeUsd: Number(row.registration_fee_usd),
     minDonationUsd: Number(row.min_donation_usd),
     monthlyFeeUsd: Number(row.monthly_fee_usd),

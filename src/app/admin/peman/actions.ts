@@ -21,6 +21,8 @@ export async function updatePaymentSettings(_prev: SettingsState, formData: Form
   const monthlyFeeUsd = num(formData, "monthly_fee_usd");
   const moncash = String(formData.get("moncash_number") ?? "").trim();
   const natcash = String(formData.get("natcash_number") ?? "").trim();
+  const accountName = String(formData.get("account_name") ?? "").trim().replace(/\s+/g, " ");
+  if (accountName.length < 2 || accountName.length > 80) return { error: "Mete non ki sou kont lan (2 a 80 karaktè)." };
 
   if (!(htgPerUsd > 0 && htgPerUsd < 10000)) return { error: "To a dwe yon chif ant 1 ak 10 000." };
   if (!(registrationFeeUsd >= 0 && registrationFeeUsd <= 1000)) return { error: "Frè enskripsyon an pa valid." };
@@ -36,6 +38,7 @@ export async function updatePaymentSettings(_prev: SettingsState, formData: Form
       htg_per_usd: htgPerUsd,
       moncash_number: moncash,
       natcash_number: natcash,
+      account_name: accountName,
       registration_fee_usd: registrationFeeUsd,
       min_donation_usd: minDonationUsd,
       monthly_fee_usd: monthlyFeeUsd,

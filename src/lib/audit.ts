@@ -65,6 +65,7 @@ export function describeAudit(action: string, d: Details): { icon: string; text:
         htg_per_usd: "To",
         moncash_number: "MonCash",
         natcash_number: "NatCash",
+        account_name: "Non sou kont",
         registration_fee_usd: "Frè enskripsyon $",
         min_donation_usd: "Don minimòm $",
         monthly_fee_usd: "Frè mansyèl $",
