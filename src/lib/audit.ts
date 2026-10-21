@@ -38,6 +38,11 @@ export function describeAudit(action: string, d: Details): { icon: string; text:
       return { icon: "🎤", text: `Apwouve yon enskripsyon atis${htg}` };
     case "artist_registrations.rejected":
       return { icon: "🎤", text: `Rejte yon enskripsyon atis${htg}` };
+    case "song.updated":
+      return {
+        icon: "✏️",
+        text: `Modifye chante ${d.old_title && d.old_title !== d.title ? `« ${d.old_title} » → ${title}` : title}${d.cover_changed ? " (nouvo pochèt)" : ""}`,
+      };
     case "song.deleted":
       return { icon: "🗑️", text: `Efase chante ${title}` };
     case "top3.changed":
