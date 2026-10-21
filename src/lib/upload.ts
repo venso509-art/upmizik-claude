@@ -1,4 +1,5 @@
 import * as tus from "tus-js-client";
+import { supabaseEnv } from "@/lib/supabase/env";
 
 // Kalite fichye bucket yo aksepte (menm lis ak migration SQL la).
 // Nou deside kalite a dapre ekstansyon an, paske chak navigatè bay non diferan
@@ -43,12 +44,13 @@ export function uploadResumable({
 }) {
   return new Promise<string>((resolve, reject) => {
     let finalPath = path;
+    const { url, key } = supabaseEnv();
     const upload = new tus.Upload(file, {
-      endpoint: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/upload/resumable`,
+      endpoint: `${url}/storage/v1/upload/resumable`,
       retryDelays: [0, 3000, 5000, 10000, 20000, 30000, 60000],
       headers: {
         authorization: `Bearer ${accessToken}`,
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+        apikey: key,
         "x-upsert": "false",
       },
       uploadDataDuringCreation: true,

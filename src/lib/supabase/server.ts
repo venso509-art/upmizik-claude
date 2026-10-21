@@ -1,14 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { supabaseEnv } from "./env";
 
 // Kliyan Supabase pou kòd ki kouri sou sèvè a (Server Components, Server Actions, Route Handlers).
 // Li li/ekri sesyon itilizatè a nan cookies.
 export function createClient() {
   const cookieStore = cookies();
+  const { url, key } = supabaseEnv();
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    url,
+    key,
     {
       cookies: {
         getAll() {
