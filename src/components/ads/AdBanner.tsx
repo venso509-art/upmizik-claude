@@ -25,7 +25,7 @@ export function AdBanner({ ads }: { ads: PublicAd[] }) {
         href={`/pub/${ad.id}`}
         target="_blank"
         rel="noopener sponsored"
-        className="group relative block aspect-[4/1] min-h-[96px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
+        className="group relative block aspect-[4/1] min-h-[96px] w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
         title={ad.title}
       >
         {ads.map((a, i) => (

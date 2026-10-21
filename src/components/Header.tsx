@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/auth/actions";
 import { isAdmin } from "@/lib/admin";
 import { MobileMenu, type MenuItem } from "@/components/MobileMenu";
+import { HeaderSearch } from "@/components/search/HeaderSearch";
 
 function Bell({ unread }: { unread: number }) {
   return (
@@ -21,13 +22,6 @@ function Bell({ unread }: { unread: number }) {
   );
 }
 
-function SearchLink() {
-  return (
-    <Link href="/chache" className="rounded-lg px-2 py-1.5 text-lg transition hover:bg-zinc-800" aria-label="Chache" title="Chache">
-      🔍
-    </Link>
-  );
-}
 
 export async function Header() {
   const supabase = createClient();
@@ -58,16 +52,21 @@ export async function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="text-xl font-extrabold tracking-tight">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4">
+        <Link href="/" className="shrink-0 text-xl font-extrabold tracking-tight">
           <span className="bg-gradient-to-r from-fuchsia-400 to-violet-500 bg-clip-text text-transparent">Up</span>
           <span className="text-white">Mizik</span>
         </Link>
 
+        {/* Ba rechèch la nan mitan (òdinatè), oswa bouton 🔍 (telefòn) */}
+        <div className="flex min-w-0 flex-1 justify-end md:justify-center md:px-4 lg:px-6">
+          <HeaderSearch />
+        </div>
+
         {user ? (
           <>
             {/* ===== ÒDINATÈ (1024px+) ===== */}
-            <div className="hidden items-center gap-3 lg:flex">
+            <div className="hidden shrink-0 items-center gap-2 xl:gap-3 lg:flex">
               {admin && (
                 <Link href="/admin" className="rounded-lg px-3 py-1.5 text-sm font-medium text-amber-300 transition hover:bg-zinc-800">
                   🛡️ Admin
@@ -86,14 +85,13 @@ export async function Header() {
                   + Upload
                 </Link>
               )}
-              <SearchLink />
               <Link href="/telechaje" className="rounded-lg px-2 py-1.5 text-lg transition hover:bg-zinc-800" aria-label="Mizik offline" title="Mizik offline">
                 📥
               </Link>
               <Bell unread={unread ?? 0} />
               <Link
                 href={isArtist ? `/atis/${user.id}` : "/pwofil"}
-                className="max-w-[10rem] truncate text-sm text-zinc-300 transition hover:text-white"
+                className="max-w-[8rem] truncate text-sm text-zinc-300 transition hover:text-white"
               >
                 {isArtist ? "🎤" : "🎧"} {displayName}
               </Link>
@@ -105,15 +103,13 @@ export async function Header() {
             </div>
 
             {/* ===== TELEFÒN: 🔔 + meni ☰ ===== */}
-            <div className="flex items-center gap-1 lg:hidden">
-              <SearchLink />
+            <div className="flex shrink-0 items-center gap-1 lg:hidden">
               <Bell unread={unread ?? 0} />
               <MobileMenu items={menuItems} name={displayName} loggedIn />
             </div>
           </>
         ) : (
-          <nav className="flex items-center gap-1 sm:gap-2">
-            <SearchLink />
+          <nav className="flex shrink-0 items-center gap-1 sm:gap-2">
             <Link href="/konekte" className="rounded-lg px-3 py-1.5 text-sm text-zinc-300 transition hover:text-white">
               Konekte
             </Link>

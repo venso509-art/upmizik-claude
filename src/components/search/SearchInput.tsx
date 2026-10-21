@@ -35,7 +35,7 @@ export function SearchInput({ initial, autoFocus = false }: { initial: string; a
         autoFocus={autoFocus}
         placeholder="Chache yon chante, yon atis, yon jan…"
         aria-label="Chache"
-        className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 py-4 pl-12 pr-4 text-base text-white placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30"
+        className="w-full rounded-full border border-zinc-700 bg-zinc-900/80 py-4 pl-12 pr-5 text-base shadow-lg shadow-black/30 text-white placeholder:text-zinc-500 focus:border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30"
       />
     </form>
   );
