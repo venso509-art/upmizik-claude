@@ -97,13 +97,11 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
               Platfòm mizik 100% ayisyen
             </span>
             <h1 style={{ animationDelay: "100ms" }} className="mt-6 motion-safe:animate-fade-up text-balance text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-6xl">
-              {/* 3 liy sou telefòn; sou gwo ekran yo kole selon espas la */}
-              <span className="block sm:inline-block">Mizik nou.</span>{" "}
-              <span className="block sm:inline-block">Atis nou.</span>{" "}
-              <span className="block bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent sm:inline-block">Platfòm nou.</span>
+              Chak Ekout Pouse Yon{" "}
+              <span className="bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent">Atis Ayisyen</span>
             </h1>
             <p style={{ animationDelay: "200ms" }} className="mt-6 max-w-lg motion-safe:animate-fade-up text-lg text-zinc-400">
-              Premye platfòm mizik ki fèt pa Ayisyen, pou Ayisyen. Konpa, Rasin, Rabòday, Twoubadou: tout la a, gratis.
+              Platfòm difizyon kote fanatik sipòte atis dirèk pa MonCash ak NatCash. Atis la resevwa 85% chak don, dirèkteman sou kont li.
             </p>
             <div style={{ animationDelay: "300ms" }} className="mt-8 flex flex-wrap gap-3 motion-safe:animate-fade-up">
               <a
