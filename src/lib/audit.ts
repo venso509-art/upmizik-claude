@@ -85,6 +85,8 @@ export function describeAudit(action: string, d: Details): { icon: string; text:
       return { icon: "🔑", text: "Chanje modpas li (ak kòd sekrè)" };
     case "security.lockout":
       return { icon: "⛔", text: "3 tantativ echwe sou /sekirite: kont lan dekonekte epi bloke 30 minit" };
+    case "month.closed":
+      return { icon: "🗂️", text: `Fèmen relve mwa ${d.month ?? ""} (${d.artists ?? 0} atis)` };
     case "archive":
       return { icon: "🗄️", text: "Achive yon eleman" };
     case "restore":

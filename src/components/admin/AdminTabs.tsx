@@ -22,6 +22,8 @@ export async function AdminTabs() {
           { href: "/admin/enskripsyon", label: "🎤 Enskripsyon", badge: registrations },
           { href: "/admin/don", label: "💝 Don", badge: donations },
           { href: "/admin/retre", label: "💸 Retrè", badge: payouts },
+          { href: "/admin/kont", label: "💼 Kont atis" },
+          { href: "/admin/relve", label: "🗂️ Relve mwa" },
           { href: "/admin/peman", label: "💳 Peman" },
           { href: "/admin/pos", label: "🗞️ Jesyon Pòs" },
           { href: "/admin/top3", label: "🏆 Top 3" },
