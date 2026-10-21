@@ -21,6 +21,14 @@ function Bell({ unread }: { unread: number }) {
   );
 }
 
+function SearchLink() {
+  return (
+    <Link href="/chache" className="rounded-lg px-2 py-1.5 text-lg transition hover:bg-zinc-800" aria-label="Chache" title="Chache">
+      🔍
+    </Link>
+  );
+}
+
 export async function Header() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -78,6 +86,7 @@ export async function Header() {
                   + Upload
                 </Link>
               )}
+              <SearchLink />
               <Link href="/telechaje" className="rounded-lg px-2 py-1.5 text-lg transition hover:bg-zinc-800" aria-label="Mizik offline" title="Mizik offline">
                 📥
               </Link>
@@ -97,12 +106,14 @@ export async function Header() {
 
             {/* ===== TELEFÒN: 🔔 + meni ☰ ===== */}
             <div className="flex items-center gap-1 lg:hidden">
+              <SearchLink />
               <Bell unread={unread ?? 0} />
               <MobileMenu items={menuItems} name={displayName} loggedIn />
             </div>
           </>
         ) : (
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <SearchLink />
             <Link href="/konekte" className="rounded-lg px-3 py-1.5 text-sm text-zinc-300 transition hover:text-white">
               Konekte
             </Link>
