@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SongCard } from "@/components/SongCard";
@@ -13,6 +14,20 @@ import { Reveal } from "@/components/Reveal";
 import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 import { SocialStrip } from "@/components/social/SocialStrip";
 import { withImageUrls, type FeedPost } from "@/lib/posts";
+
+// SEO paj akèy la (ak aperçu lè yon moun pataje lyen an)
+const HOME_DESCRIPTION =
+  "Mizik nou. Atis nou. Platfòm nou. Premye platfòm mizik 100% ayisyen: koute ak sipòte atis ayisyen yo gratis.";
+
+export const metadata: Metadata = {
+  description: HOME_DESCRIPTION,
+  openGraph: {
+    title: "UpMizik — Mizik nou. Atis nou. Platfòm nou.",
+    description: HOME_DESCRIPTION,
+    siteName: "UpMizik",
+    type: "website",
+  },
+};
 
 // Wotè ak reta chak ba nan egalizè a (pou yo pa danse ansanm)
 const bars = [
@@ -82,21 +97,20 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
               Platfòm mizik 100% ayisyen
             </span>
             <h1 style={{ animationDelay: "100ms" }} className="mt-6 motion-safe:animate-fade-up text-balance text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-6xl">
-              Mizik ou merite{" "}
-              <span className="bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent">
-                tande.
-              </span>
+              {/* 3 liy sou telefòn; sou gwo ekran yo kole selon espas la */}
+              <span className="block sm:inline-block">Mizik nou.</span>{" "}
+              <span className="block sm:inline-block">Atis nou.</span>{" "}
+              <span className="block bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent sm:inline-block">Platfòm nou.</span>
             </h1>
             <p style={{ animationDelay: "200ms" }} className="mt-6 max-w-lg motion-safe:animate-fade-up text-lg text-zinc-400">
-              Koute nouvo son ki soti dirèkteman nan men atis yo. Oswa pataje pwòp mizik ou ak
-              tout mond lan, gratis.
+              Premye platfòm mizik ki fèt pa Ayisyen, pou Ayisyen. Konpa, Rasin, Rabòday, Twoubadou: tout la a, gratis.
             </p>
             <div style={{ animationDelay: "300ms" }} className="mt-8 flex flex-wrap gap-3 motion-safe:animate-fade-up">
               <a
                 href="#nouvo"
                 className="rounded-full btn-primary px-6 py-3 font-semibold shadow-lg transition"
               >
-                ▶ Kòmanse koute
+                ▶ Koute kounye a
               </a>
               <Link
                 href="/enskri"
