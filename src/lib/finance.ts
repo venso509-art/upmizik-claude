@@ -2,8 +2,7 @@
 export const ARTIST_SHARE_PERCENT = 85;
 export const PLATFORM_FEE_PERCENT = 15;
 export const MIN_PAYOUT_HTG = 500;
-export const MONTHLY_FEE_USD = 0.99;
-export const MONTHLY_FEE_HTG = 143.55; // $0.99 × 145
+// Frè mansyèl la ($0.99) ak to a nan paramèt yo kounye a: gade src/lib/settings.ts
 export const PAYOUT_WAIT_MONTHS = 3;
 
 export type PayoutStatus = "pending" | "paid" | "rejected";

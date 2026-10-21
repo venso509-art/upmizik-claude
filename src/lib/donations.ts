@@ -1,20 +1,16 @@
-// ===== Paramèt don yo: chanje yo isit la =====
-export const HTG_PER_USD = 145;
-export const MIN_DONATION_USD = 5;
+// To echanj la, nimewo MonCash/NatCash yo ak don minimòm lan nan baz done a kounye a
+// (tablo "settings", modifyab sou /admin/peman): gade src/lib/settings.ts.
 export const MAX_DONATION_USD = 10000;
 export const DONATION_PRESETS_USD = [5, 10, 20, 50, 100];
 
 export type DonationMethod = "moncash" | "natcash";
 export type ContactType = "email" | "whatsapp";
 
-export const DONATION_METHODS: Record<DonationMethod, { label: string; number: string; color: string }> = {
-  moncash: { label: "MonCash", number: "38 91 2317", color: "from-red-500 to-red-700" },
-  natcash: { label: "NatCash", number: "35 37 1184", color: "from-orange-500 to-amber-600" },
+// Non ak koulè chak metòd (nimewo yo soti nan paramèt yo: methodNumber())
+export const DONATION_METHODS: Record<DonationMethod, { label: string; color: string }> = {
+  moncash: { label: "MonCash", color: "from-red-500 to-red-700" },
+  natcash: { label: "NatCash", color: "from-orange-500 to-amber-600" },
 };
-
-export function toHTG(usd: number) {
-  return Math.round(usd * HTG_PER_USD * 100) / 100;
-}
 
 export function formatUSD(usd: number) {
   return `$${usd.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;

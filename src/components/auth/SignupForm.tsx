@@ -6,7 +6,7 @@ import { useFormState } from "react-dom";
 import { signup } from "@/app/auth/actions";
 import { Field, FormMessage, SubmitButton, inputClass } from "./ui";
 import { formatUSD } from "@/lib/donations";
-import { REGISTRATION_FEE_USD } from "@/lib/registration";
+import { useSettings } from "@/components/SettingsProvider";
 import { ArtistSignupModal } from "@/components/registration/ArtistSignupModal";
 
 const roles = [
@@ -18,6 +18,7 @@ const pinClass = `${inputClass} tracking-[0.5em]`;
 
 export function SignupForm() {
   const [state, formAction] = useFormState(signup, undefined);
+  const settings = useSettings();
   const [role, setRole] = useState<"listener" | "artist">("listener");
   const isArtist = role === "artist";
   const [artistInfo, setArtistInfo] = useState<FormData | null>(null);
@@ -61,7 +62,7 @@ export function SignupForm() {
                 <span className="block text-xs text-zinc-400">{r.hint}</span>
                 {r.value === "artist" && (
                   <span className="mt-1.5 block text-[11px] font-medium text-fuchsia-300">
-                    Frè enskripsyon: {formatUSD(REGISTRATION_FEE_USD)}
+                    Frè enskripsyon: {formatUSD(settings.registrationFeeUsd)}
                   </span>
                 )}
               </label>

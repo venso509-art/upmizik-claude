@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/footer/Footer";
+import { SettingsProvider } from "@/components/SettingsProvider";
+import { getSettings } from "@/lib/settings-server";
 import { PlayerProvider } from "@/components/player/PlayerProvider";
 import { PlayerBar } from "@/components/player/PlayerBar";
 import { ServiceWorkerRegister } from "@/components/offline/ServiceWorkerRegister";
@@ -27,23 +29,28 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#09090b" };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Paramèt peman yo (to, nimewo MonCash/NatCash, frè...) pou tout konpozan navigatè yo
+  const settings = await getSettings();
+
   return (
     <html lang="ht">
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-950 text-zinc-100 antialiased`}
       >
-        <PlayerProvider>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <PlayerBar />
-          <ServiceWorkerRegister />
-        </PlayerProvider>
+        <SettingsProvider settings={settings}>
+          <PlayerProvider>
+            <Header />
+            <main>{children}</main>
+            <Footer />
+            <PlayerBar />
+            <ServiceWorkerRegister />
+          </PlayerProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

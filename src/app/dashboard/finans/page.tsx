@@ -4,8 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { DONATION_METHODS, formatHTG, formatUSD, type DonationMethod } from "@/lib/donations";
 import {
   ARTIST_SHARE_PERCENT,
-  MONTHLY_FEE_HTG,
-  MONTHLY_FEE_USD,
   PAYOUT_BADGE,
   PAYOUT_WAIT_MONTHS,
   PLATFORM_FEE_PERCENT,
@@ -18,6 +16,8 @@ import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { PayoutForm } from "@/components/finance/PayoutForm";
 import { PinForm } from "@/components/finance/PinForm";
 import { StatusBadge } from "@/components/StatusBadge";
+import { getSettings } from "@/lib/settings-server";
+import { monthlyFeeHtg } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "Revni & Finans | UpMizik" };
 
@@ -76,7 +76,7 @@ export default async function FinancePage() {
   // Espas atis la (finans enkli) louvri sèlman apre admin nan valide kont lan
   if (profile?.role !== "artist" || profile.status !== "approved") redirect("/dashboard");
 
-  const [balanceRes, donationsRes, payoutsRes, privateRes] = await Promise.all([
+  const [balanceRes, donationsRes, payoutsRes, privateRes, settings] = await Promise.all([
     supabase.rpc("artist_balance", { p_artist_id: user.id }),
     supabase.rpc("my_donations"),
     supabase
@@ -86,6 +86,7 @@ export default async function FinancePage() {
       .order("created_at", { ascending: false })
       .returns<PayoutRow[]>(),
     supabase.rpc("my_private_info"),
+    getSettings(),
   ]);
 
   const balance = toBalance((balanceRes.data as BalanceRow[] | null)?.[0]);
@@ -129,7 +130,7 @@ export default async function FinancePage() {
         <ul className="mt-4 grid gap-2 text-sm text-zinc-400 sm:grid-cols-2">
           <li>💝 Chak don valide: {ARTIST_SHARE_PERCENT}% pataje ant ou menm ak moun ou bay royalties sou chante a.</li>
           <li>
-            📅 Chak mwa ou touche: {formatUSD(MONTHLY_FEE_USD)} ({formatHTG(MONTHLY_FEE_HTG)}) frè platfòm. Mwa ou pa touche, ou pa peye anyen.
+            📅 Chak mwa ou touche: {formatUSD(settings.monthlyFeeUsd)} ({formatHTG(monthlyFeeHtg(settings))}) frè platfòm. Mwa ou pa touche, ou pa peye anyen.
           </li>
           <li>🗓️ Lajan yon mwa vin disponib depi mwa a fini.</li>
           <li>⏳ Premye retrè posib {PAYOUT_WAIT_MONTHS} mwa apre kont ou apwouve. Apre sa, nenpòt ki lè.</li>
@@ -141,7 +142,7 @@ export default async function FinancePage() {
         <MoneyCard label="💵 Balans disponib" value={balance.availableHtg} hint="Sa ou ka retire kounye a" highlight />
         <MoneyCard label="🗓️ Mwa sa a" value={balance.currentMonthHtg} hint="Ap disponib depi mwa a fini" />
         <MoneyCard label="📈 Total touche" value={balance.earnedHtg} hint={`${balance.donationCount} don valide (pa w apre splits)`} />
-        <MoneyCard label="📅 Frè mansyèl yo" value={balance.feesHtg} hint={`${formatUSD(MONTHLY_FEE_USD)} pou chak mwa ou te touche`} />
+        <MoneyCard label="📅 Frè mansyèl yo" value={balance.feesHtg} hint={`${formatUSD(settings.monthlyFeeUsd)} pou chak mwa ou te touche`} />
         <MoneyCard label="✅ Deja peye" value={balance.paidHtg} />
         <MoneyCard label="⏳ Retrè an atant" value={balance.pendingHtg} />
       </section>

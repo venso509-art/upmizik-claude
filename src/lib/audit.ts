@@ -54,6 +54,21 @@ export function describeAudit(action: string, d: Details): { icon: string; text:
       return { icon: "🚀", text: `Modifye RPA ${title}` };
     case "artist_promos.delete":
       return { icon: "🚀", text: `Efase RPA ${title}` };
+    case "settings.updated": {
+      // details: { champ: [ansyen, nouvo] } → montre sèlman sa ki chanje
+      const labels: Record<string, string> = {
+        htg_per_usd: "To",
+        moncash_number: "MonCash",
+        natcash_number: "NatCash",
+        registration_fee_usd: "Frè enskripsyon $",
+        min_donation_usd: "Don minimòm $",
+        monthly_fee_usd: "Frè mansyèl $",
+      };
+      const changes = Object.entries(d)
+        .filter(([, v]) => Array.isArray(v) && String(v[0]) !== String(v[1]))
+        .map(([k, v]) => `${labels[k] ?? k}: ${(v as unknown[])[0]} → ${(v as unknown[])[1]}`);
+      return { icon: "💳", text: `Chanje paramèt peman yo${changes.length ? ` (${changes.join(", ")})` : ""}` };
+    }
     case "archive":
       return { icon: "🗄️", text: "Achive yon eleman" };
     case "restore":

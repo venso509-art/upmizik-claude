@@ -6,12 +6,9 @@ import { IMAGE_TYPES, MAX_IMAGE_BYTES, fileExtension } from "@/lib/upload";
 import {
   DONATION_METHODS,
   DONATION_PRESETS_USD,
-  HTG_PER_USD,
   MAX_DONATION_USD,
-  MIN_DONATION_USD,
   formatHTG,
   formatUSD,
-  toHTG,
   validateContact,
   type ContactType,
   type DonationMethod,
@@ -19,6 +16,8 @@ import {
 import { FormMessage, inputClass } from "@/components/auth/ui";
 import { DonateIcon } from "./DonateButton";
 import { Portal } from "@/components/Portal";
+import { useSettings } from "@/components/SettingsProvider";
+import { methodNumber, usdToHtg } from "@/lib/settings";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -39,6 +38,7 @@ export function DonateModal({
   songTitle: string | null;
   onClose: () => void;
 }) {
+  const settings = useSettings();
   const [step, setStep] = useState<Step>(1);
   const [preset, setPreset] = useState<number | null>(10);
   const [custom, setCustom] = useState("");
@@ -54,9 +54,9 @@ export function DonateModal({
   const [error, setError] = useState<string>();
 
   const amountUsd = preset ?? Number(custom.replace(",", "."));
-  const amountValid = Number.isFinite(amountUsd) && amountUsd >= MIN_DONATION_USD && amountUsd <= MAX_DONATION_USD;
-  const amountHtg = amountValid ? toHTG(amountUsd) : 0;
-  const m = DONATION_METHODS[method];
+  const amountValid = Number.isFinite(amountUsd) && amountUsd >= settings.minDonationUsd && amountUsd <= MAX_DONATION_USD;
+  const amountHtg = amountValid ? usdToHtg(amountUsd, settings) : 0;
+  const m = { ...DONATION_METHODS[method], number: methodNumber(settings, method) };
 
   // Fèmen ak bouton Escape, epi bloke paj ki dèyè a pou l pa woule
   useEffect(() => {
@@ -112,7 +112,7 @@ export function DonateModal({
         artist_id: artistId,
         song_id: songId,
         amount_usd: amountUsd,
-        exchange_rate: HTG_PER_USD,
+        exchange_rate: settings.htgPerUsd, // baz done a mete to ofisyèl la kanmenm
         amount_htg: amountHtg,
         method,
         donor_name: donorName.trim() || null,
@@ -197,7 +197,7 @@ export function DonateModal({
                     }`}
                   >
                     <span className="block text-lg font-bold">${v}</span>
-                    <span className="block text-[11px] text-zinc-400">{formatHTG(toHTG(v))}</span>
+                    <span className="block text-[11px] text-zinc-400">{formatHTG(usdToHtg(v, settings))}</span>
                   </button>
                 ))}
                 <label
@@ -228,9 +228,9 @@ export function DonateModal({
                     <p className="mt-1 text-fuchsia-300">= {formatHTG(amountHtg)}</p>
                   </>
                 ) : (
-                  <p className="text-sm text-zinc-400">Montan minimòm lan se {formatUSD(MIN_DONATION_USD)}.</p>
+                  <p className="text-sm text-zinc-400">Montan minimòm lan se {formatUSD(settings.minDonationUsd)}.</p>
                 )}
-                <p className="mt-2 text-xs text-zinc-500">To: 1 $ = {HTG_PER_USD} goud</p>
+                <p className="mt-2 text-xs text-zinc-500">To: 1 $ = {settings.htgPerUsd} goud</p>
               </div>
 
               <button type="button" disabled={!amountValid} onClick={() => setStep(2)} className={primary}>
@@ -256,7 +256,7 @@ export function DonateModal({
                     <span className={`inline-block rounded-lg bg-gradient-to-r px-2.5 py-1 text-sm font-bold text-white ${DONATION_METHODS[key].color}`}>
                       {DONATION_METHODS[key].label}
                     </span>
-                    <span className="mt-2 block text-sm tabular-nums text-zinc-300">{DONATION_METHODS[key].number}</span>
+                    <span className="mt-2 block text-sm tabular-nums text-zinc-300">{methodNumber(settings, key)}</span>
                   </button>
                 ))}
               </div>

@@ -5,7 +5,8 @@ import { useEffect, useState, useTransition } from "react";
 import { signupArtist, type ArtistSignupResult } from "@/app/auth/actions";
 import { DONATION_METHODS, formatHTG, formatUSD, type DonationMethod } from "@/lib/donations";
 import { IMAGE_TYPES, MAX_IMAGE_BYTES, fileExtension } from "@/lib/upload";
-import { REGISTRATION_FEE_HTG, REGISTRATION_FEE_USD } from "@/lib/registration";
+import { useSettings } from "@/components/SettingsProvider";
+import { methodNumber, registrationFeeHtg } from "@/lib/settings";
 import { FormMessage, inputClass } from "@/components/auth/ui";
 import { ArtistRules } from "./ArtistRules";
 import { Portal } from "@/components/Portal";
@@ -14,6 +15,8 @@ type Step = "rules" | "payment" | "done";
 
 // Pop-up enskripsyon atis: 1) règ yo  2) peman + prèv  3) mesaj final
 export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: () => void }) {
+  const settings = useSettings();
+  const feeHtg = registrationFeeHtg(settings);
   const [step, setStep] = useState<Step>("rules");
   const [accepted, setAccepted] = useState(false);
   const [method, setMethod] = useState<DonationMethod>("moncash");
@@ -24,7 +27,7 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
   const [error, setError] = useState<string>();
   const [result, setResult] = useState<ArtistSignupResult>();
   const [pending, startTransition] = useTransition();
-  const m = DONATION_METHODS[method];
+  const m = { ...DONATION_METHODS[method], number: methodNumber(settings, method) };
   const name = String(info.get("display_name") ?? "");
 
   useEffect(() => {
@@ -136,8 +139,8 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
             <div className="space-y-5">
               <div className="rounded-2xl bg-zinc-950 p-5 text-center">
                 <p className="text-sm text-zinc-400">Frè enskripsyon atis (yon sèl fwa)</p>
-                <p className="mt-1 text-4xl font-extrabold text-white">{formatUSD(REGISTRATION_FEE_USD)}</p>
-                <p className="mt-1 text-lg font-semibold text-fuchsia-300">= {formatHTG(REGISTRATION_FEE_HTG)}</p>
+                <p className="mt-1 text-4xl font-extrabold text-white">{formatUSD(settings.registrationFeeUsd)}</p>
+                <p className="mt-1 text-lg font-semibold text-fuchsia-300">= {formatHTG(feeHtg)}</p>
               </div>
 
               <div>
@@ -153,14 +156,14 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                       <span className={`inline-block rounded-lg bg-gradient-to-r px-2.5 py-1 text-sm font-bold text-white ${DONATION_METHODS[key].color}`}>
                         {DONATION_METHODS[key].label}
                       </span>
-                      <span className="mt-2 block text-sm tabular-nums text-zinc-300">{DONATION_METHODS[key].number}</span>
+                      <span className="mt-2 block text-sm tabular-nums text-zinc-300">{methodNumber(settings, key)}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-300">
-                Voye <span className="font-semibold text-white">{formatHTG(REGISTRATION_FEE_HTG)}</span> sou{" "}
+                Voye <span className="font-semibold text-white">{formatHTG(feeHtg)}</span> sou{" "}
                 <span className="font-semibold text-white">{m.label}</span> nan nimewo sa a:
                 <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-zinc-900 px-4 py-3">
                   <span className="text-2xl font-bold tracking-wider text-white tabular-nums">{m.number}</span>

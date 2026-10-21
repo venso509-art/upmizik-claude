@@ -1,5 +1,8 @@
-import { formatHTG, formatUSD, HTG_PER_USD } from "@/lib/donations";
-import { ARTIST_SHARE_PERCENT, MIN_PAYOUT_HTG, MONTHLY_FEE_USD, PAYOUT_WAIT_MONTHS, PLATFORM_FEE_PERCENT } from "@/lib/finance";
+"use client";
+
+import { formatHTG, formatUSD } from "@/lib/donations";
+import { useSettings } from "@/components/SettingsProvider";
+import { ARTIST_SHARE_PERCENT, MIN_PAYOUT_HTG, PAYOUT_WAIT_MONTHS, PLATFORM_FEE_PERCENT } from "@/lib/finance";
 import { DONATION_LEVELS, PLAQUE_MIN_DONATIONS_USD, PLAY_LEVELS, formatPlays } from "@/lib/levels";
 
 function Block({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
@@ -15,6 +18,7 @@ function Block({ icon, title, children }: { icon: string; title: string; childre
 
 // Tout sa yon atis dwe konnen anvan l enskri: lajan, don, frè, nivo, plak
 export function ArtistRules() {
+  const settings = useSettings();
   return (
     <div className="space-y-3">
       <Block icon="💰" title="Kijan ou touche">
@@ -31,7 +35,7 @@ export function ArtistRules() {
 
       <Block icon="📅" title="Frè ak retrè">
         <p>
-          Chak mwa ou touche: {formatUSD(MONTHLY_FEE_USD)} frè platfòm. Mwa ou pa touche anyen, ou pa peye anyen.
+          Chak mwa ou touche: {formatUSD(settings.monthlyFeeUsd)} frè platfòm. Mwa ou pa touche anyen, ou pa peye anyen.
         </p>
         <p>Lajan yon mwa vin disponib depi mwa a fini.</p>
         <p>
@@ -55,7 +59,7 @@ export function ArtistRules() {
         </p>
       </Block>
 
-      <p className="text-center text-xs text-zinc-500">To: 1 $ = {HTG_PER_USD} goud</p>
+      <p className="text-center text-xs text-zinc-500">To: 1 $ = {settings.htgPerUsd} goud</p>
     </div>
   );
 }
