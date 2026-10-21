@@ -20,14 +20,16 @@ export type EditableProfile = {
   vision: string | null;
   youtube_url: string | null;
   instagram_url: string | null;
+  tiktok_url?: string | null;
+  whatsapp_url?: string | null;
 };
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const MAX_BANNER_BYTES = 5 * 1024 * 1024;
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function Section({ id, title, hint, children }: { id?: string; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <fieldset className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+    <fieldset id={id} className="scroll-mt-24 space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
       <legend className="sr-only">{title}</legend>
       <div>
         <h2 className="text-lg font-bold text-white">{title}</h2>
@@ -138,7 +140,7 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
   return (
     <div className="space-y-6">
       {/* ===== FOTO ===== */}
-      <Section title="Foto pwofil">
+      <Section id="foto" title="Foto pwofil">
         <div className="flex items-center gap-5">
           <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700">
             {avatarUrl ? (
@@ -163,7 +165,7 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
 
       {/* ===== BANYÈ (atis sèlman) ===== */}
       {isArtist && (
-        <Section title="🖼️ Banyè" hint="Gwo foto ki parèt anlè paj atis ou. Pi bon fòma a: 1500 × 500 (laj).">
+        <Section id="kouveti" title="🖼️ Foto kouvèti (banyè)" hint="Gwo foto ki parèt anlè paj atis ou. Pi bon fòma a: 1500 × 500 (laj).">
           <div className="relative aspect-[3/1] w-full overflow-hidden rounded-xl bg-gradient-to-br from-fuchsia-900/60 via-violet-950/50 to-zinc-900">
             {bannerUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -190,7 +192,7 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
 
       <form action={formAction} className="space-y-6">
         {/* ===== ENFÒMASYON ===== */}
-        <Section title="Enfòmasyon">
+        <Section id="bio" title="Enfòmasyon">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={isArtist ? "Non atis" : "Non"}>
               <input name="display_name" defaultValue={profile.display_name} required maxLength={80} className={inputClass} />
@@ -213,7 +215,7 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
         {isArtist && (
           <>
             {/* ===== MIZIK MWEN ===== */}
-            <Section title="Mizik mwen" hint="Ede fanatik ou yo konprann kiyès ou ye kòm atis.">
+            <Section id="mizik" title="Mizik mwen" hint="Ede fanatik ou yo konprann kiyès ou ye kòm atis.">
               <Field label="🌟 Atis ki enspire m">
                 <TextArea
                   name="influences"
@@ -235,12 +237,24 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
             </Section>
 
             {/* ===== LYEN ===== */}
-            <Section title="Lyen" hint="Lyen sa yo ap parèt sou paj atis ou ak sou kat chante ou yo.">
+            <Section id="lyen" title="Lyen" hint="Lyen sa yo ap parèt sou paj atis ou ak sou kat chante ou yo.">
               <Field label="▶ Chanèl YouTube">
                 <input name="youtube_url" defaultValue={profile.youtube_url ?? ""} placeholder="youtube.com/@non-ou" className={inputClass} />
               </Field>
               <Field label="📸 Instagram">
                 <input name="instagram_url" defaultValue={profile.instagram_url ?? ""} placeholder="instagram.com/non-ou" className={inputClass} />
+              </Field>
+              <Field label="🎵 TikTok">
+                <input name="tiktok_url" defaultValue={profile.tiktok_url ?? ""} placeholder="tiktok.com/@non-ou" className={inputClass} />
+              </Field>
+              <Field label="💬 WhatsApp (nimewo)">
+                <input
+                  name="whatsapp_url"
+                  inputMode="tel"
+                  defaultValue={profile.whatsapp_url ? `+${profile.whatsapp_url.replace("https://wa.me/", "")}` : ""}
+                  placeholder="+509 3891 2317"
+                  className={inputClass}
+                />
               </Field>
             </Section>
           </>

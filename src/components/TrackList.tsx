@@ -58,7 +58,14 @@ export function TrackList({ tracks, plays }: { tracks: Track[]; plays: Record<st
               </span>
               <span className="min-w-0">
                 <span className={`block truncate font-medium ${isCurrent ? "text-fuchsia-400" : "text-white"}`}>{t.title}</span>
-                {t.genre && <span className="block truncate text-xs text-zinc-500">{t.genre}</span>}
+                <span className="block truncate text-xs text-zinc-500">
+                  {t.genre}
+                  {/* Sou telefòn kolòn koute a kache: montre l isit la */}
+                  <span className="sm:hidden">
+                    {t.genre ? " · " : ""}
+                    {(plays[t.id] ?? 0).toLocaleString("fr-HT")} koute
+                  </span>
+                </span>
               </span>
               <span className="hidden text-right text-sm tabular-nums text-zinc-500 sm:block">
                 {(plays[t.id] ?? 0).toLocaleString("fr-HT")} koute

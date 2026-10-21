@@ -18,7 +18,11 @@ export default async function ProfilePage() {
     .single<Omit<EditableProfile, "banner_url">>();
   if (!profile) redirect("/");
   // Apa, pou paj la mache menm si migration banyè a poko kouri
-  const { data: banner } = await supabase.from("profiles").select("banner_url").eq("id", user.id).maybeSingle<{ banner_url: string | null }>();
+  const { data: banner } = await supabase
+    .from("profiles")
+    .select("banner_url, tiktok_url, whatsapp_url")
+    .eq("id", user.id)
+    .maybeSingle<{ banner_url: string | null; tiktok_url: string | null; whatsapp_url: string | null }>();
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -33,7 +37,9 @@ export default async function ProfilePage() {
           </Link>
         )}
       </div>
-      <ProfileForm profile={{ ...profile, banner_url: banner?.banner_url ?? null }} />
+      <ProfileForm
+        profile={{ ...profile, banner_url: banner?.banner_url ?? null, tiktok_url: banner?.tiktok_url ?? null, whatsapp_url: banner?.whatsapp_url ?? null }}
+      />
     </div>
   );
 }
