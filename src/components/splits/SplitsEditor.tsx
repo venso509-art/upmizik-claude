@@ -4,10 +4,20 @@ import { MAX_SPLITS, SPLIT_ROLES, emptySplit, splitsTotal, type Split } from "@/
 
 const small = "w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition focus:border-fuchsia-500";
 
-export function SplitsEditor({ splits, onChange, disabled }: { splits: Split[]; onChange: (s: Split[]) => void; disabled?: boolean }) {
+export function SplitsEditor({
+  splits,
+  onChange,
+  disabled,
+  reserved = 0,
+}: {
+  splits: Split[];
+  onChange: (s: Split[]) => void;
+  disabled?: boolean;
+  reserved?: number; // pousantaj ki deja bay atis featuring yo
+}) {
   const total = splitsTotal(splits);
-  const artistShare = Math.max(0, Math.round((100 - total) * 100) / 100);
-  const over = total > 100;
+  const artistShare = Math.max(0, Math.round((100 - total - reserved) * 100) / 100);
+  const over = total + reserved > 100;
 
   function update(i: number, patch: Partial<Split>) {
     onChange(splits.map((s, j) => (j === i ? { ...s, ...patch } : s)));

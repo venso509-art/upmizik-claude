@@ -1,3 +1,4 @@
+import { FeaturingLinks } from "@/components/FeaturingLinks";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -88,6 +89,7 @@ export default async function SongPage({ params }: Props) {
               {track.artistName}
               {track.artistVerified && <VerifiedBadge />}
             </Link>
+            <FeaturingLinks artists={extras[song.id]?.featuring} className="font-semibold text-white" />
             {track.genre && <> · {track.genre}</>} · {formatDuration(track.durationSeconds)} ·{" "}
             {song.play_count.toLocaleString("fr-HT")} koute
           </p>

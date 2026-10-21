@@ -16,8 +16,9 @@ import {
 } from "@/lib/upload";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
 import { SplitsEditor } from "@/components/splits/SplitsEditor";
+import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
 import { normalizeUrl } from "@/lib/links";
-import { validateSplits, type Split } from "@/lib/splits";
+import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 
 type Status = "idle" | "uploading" | "done";
 
@@ -52,6 +53,9 @@ export function UploadForm({ userId }: { userId: string }) {
   const [coverProgress, setCoverProgress] = useState(0);
   const [error, setError] = useState<string>();
   const [splits, setSplits] = useState<Split[]>([]);
+  const [featuring, setFeaturing] = useState<Featuring[]>([]);
+  // Featuring + kolaboratè pa ka depase 100% (owner a jwenn sa ki rete a)
+  const sharesOver = featuringTotal(featuring) + splitsTotal(splits) > 100;
 
   // Montre yon apèsi imaj kouvèti a, epi libere memwa a apre
   useEffect(() => {
@@ -89,6 +93,7 @@ export function UploadForm({ userId }: { userId: string }) {
     if (youtubeUrl === undefined) return setError("Lyen YouTube la pa valid.");
     const splitsError = validateSplits(splits);
     if (splitsError) return setError(splitsError);
+    if (sharesOver) return setError("Total pousantaj yo (featuring + kolaboratè) depase 100%.");
 
     setError(undefined);
     setStatus("uploading");
@@ -153,6 +158,18 @@ export function UploadForm({ userId }: { userId: string }) {
         }
       }
 
+      if (featuring.length > 0) {
+        const { error: featError } = await supabase.rpc("set_song_artists", {
+          p_song_id: song.id,
+          p_artists: featuring.map((f) => ({ artist_id: f.artistId, percentage: f.percentage || 0 })),
+        });
+        if (featError) {
+          // Pa kite yon chante pibliye san featuring li yo
+          await supabase.from("songs").delete().eq("id", song.id);
+          throw new Error(`Featuring yo pa sove: ${featError.message}`);
+        }
+      }
+
       setStatus("done");
       router.refresh();
     } catch (err) {
@@ -178,6 +195,7 @@ export function UploadForm({ userId }: { userId: string }) {
               setAudio(null);
               setCover(null);
               setSplits([]);
+              setFeaturing([]);
             }}
             className="rounded-lg border border-zinc-700 px-4 py-2.5 text-zinc-200 hover:border-zinc-500"
           >
@@ -254,16 +272,18 @@ export function UploadForm({ userId }: { userId: string }) {
         <input name="youtube_url" disabled={busy} placeholder="Egz: lyen videyo klip la sou YouTube" className={inputClass} />
       </Field>
 
-      <SplitsEditor splits={splits} onChange={setSplits} disabled={busy} />
+      <FeaturingEditor value={featuring} onChange={setFeaturing} otherTotal={splitsTotal(splits)} disabled={busy} />
+
+      <SplitsEditor splits={splits} onChange={setSplits} disabled={busy} reserved={featuringTotal(featuring)} />
 
       <FormMessage error={error} />
 
       <button
         type="submit"
-        disabled={busy}
-        className="w-full rounded-lg btn-primary px-4 py-3 font-semibold transition disabled:cursor-wait disabled:opacity-60"
+        disabled={busy || sharesOver}
+        className="w-full rounded-lg btn-primary px-4 py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {busy ? "Upload ap fèt..." : "Pibliye chante a"}
+        {busy ? "Upload ap fèt..." : sharesOver ? "⛔ Total pousantaj yo depase 100%" : "Pibliye chante a"}
       </button>
     </form>
   );

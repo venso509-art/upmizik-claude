@@ -38,9 +38,32 @@ function refresh(artistId: string) {
   revalidatePath(`/atis/${artistId}`);
 }
 
+export type FeaturingInput = { artistId: string; percentage: number };
+
+// Featuring chante a (pou fenèt Modifye a): RLS la kite sèlman owner a li yo
+export async function getSongFeaturing(songId: string) {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("song_artists")
+    .select("artist_id, split_percentage, created_at, profiles!song_artists_artist_id_fkey(display_name, avatar_url, is_verified)")
+    .eq("song_id", songId)
+    .order("created_at");
+  type P = { display_name: string; avatar_url: string | null; is_verified: boolean };
+  return ((data ?? []) as { artist_id: string; split_percentage: number; profiles: P | P[] | null }[]).map((r) => {
+    const p = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+    return {
+      artistId: r.artist_id,
+      name: p?.display_name ?? "Atis",
+      avatarUrl: p?.avatar_url ?? null,
+      verified: p?.is_verified ?? false,
+      percentage: Number(r.split_percentage),
+    };
+  });
+}
+
 export async function updateSong(
   songId: string,
-  input: { title: string; genre: string; youtubeUrl: string; splits: Split[] },
+  input: { title: string; genre: string; youtubeUrl: string; splits: Split[]; featuring?: FeaturingInput[] },
 ): Promise<SongActionResult> {
   const cleanTitle = input.title.trim();
   if (!cleanTitle || cleanTitle.length > 200) return { error: "Tit la dwe gen ant 1 ak 200 karaktè." };
@@ -60,8 +83,35 @@ export async function updateSong(
     .eq("id", songId);
   if (error) return { error: friendlyDbError("Modifikasyon an echwe", error) };
 
+  if (input.featuring) {
+    const totalShares =
+      input.featuring.reduce((s, f) => s + (Number(f.percentage) || 0), 0) + input.splits.reduce((s, x) => s + (Number(x.percentage) || 0), 0);
+    if (totalShares > 100) return { error: "Total pousantaj yo (featuring + kolaboratè) depase 100%." };
+  }
+
+  // Lòd la enpòtan: nou vide featuring yo anvan, pou baz done a pa refize kolaboratè yo
+  // pandan owner a ap deplase pousantaj soti nan youn pou ale nan lòt.
+  const previous = input.featuring ? await getSongFeaturing(songId) : [];
+  const toRpc = (list: FeaturingInput[]) => list.map((f) => ({ artist_id: f.artistId, percentage: Number(f.percentage) || 0 }));
+  if (input.featuring) {
+    const { error: clearErr } = await supabase.rpc("set_song_artists", { p_song_id: songId, p_artists: [] });
+    if (clearErr) return { error: friendlyDbError("Featuring yo pa sove", clearErr) };
+  }
+
   const { error: rpcError } = await supabase.rpc("set_song_splits", { p_song_id: songId, p_splits: input.splits });
-  if (rpcError) return { error: friendlyDbError("Pataj royalties la pa sove", rpcError) };
+  if (rpcError) {
+    if (input.featuring) await supabase.rpc("set_song_artists", { p_song_id: songId, p_artists: toRpc(previous) });
+    return { error: friendlyDbError("Pataj royalties la pa sove", rpcError) };
+  }
+
+  if (input.featuring) {
+    const { error: featErr } = await supabase.rpc("set_song_artists", { p_song_id: songId, p_artists: toRpc(input.featuring) });
+    if (featErr) {
+      // Remete ansyen featuring yo pou pèsonn pa pèdi pa l
+      await supabase.rpc("set_song_artists", { p_song_id: songId, p_artists: toRpc(previous) });
+      return { error: friendlyDbError("Featuring yo pa sove", featErr) };
+    }
+  }
 
   refresh(user.id);
   return {};

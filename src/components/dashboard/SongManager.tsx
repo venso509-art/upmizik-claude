@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { deleteSong, getSongSplits, updateSong } from "@/app/dashboard/actions";
+import { deleteSong, getSongFeaturing, getSongSplits, updateSong } from "@/app/dashboard/actions";
+import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
 import { GENRES } from "@/lib/genres";
-import { validateSplits, type Split } from "@/lib/splits";
+import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { formatDuration } from "@/lib/songs";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
@@ -58,33 +59,40 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
   const [deleting, setDeleting] = useState<ManagedSong | null>(null);
   const [error, setError] = useState<string>();
   const [splits, setSplits] = useState<Split[] | null>(null);
+  const [featuring, setFeaturing] = useState<Featuring[] | null>(null);
+  const sharesOver = !!splits && !!featuring && featuringTotal(featuring) + splitsTotal(splits) > 100;
   const [pending, startTransition] = useTransition();
 
   function close() {
     setEditing(null);
     setDeleting(null);
     setSplits(null);
+    setFeaturing(null);
     setError(undefined);
   }
 
   function openEdit(song: ManagedSong) {
     setEditing(song);
     setSplits(null);
+    setFeaturing(null);
     getSongSplits(song.id).then(setSplits);
+    getSongFeaturing(song.id).then(setFeaturing);
   }
 
   function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!editing || !splits) return;
+    if (!editing || !splits || !featuring) return;
     const form = new FormData(e.currentTarget);
     const splitsError = validateSplits(splits);
     if (splitsError) return setError(splitsError);
+    if (sharesOver) return setError("Total pousantaj yo (featuring + kolaboratè) depase 100%.");
     startTransition(async () => {
       const res = await updateSong(editing.id, {
         title: String(form.get("title") ?? ""),
         genre: String(form.get("genre") ?? ""),
         youtubeUrl: String(form.get("youtube_url") ?? ""),
         splits,
+        featuring: featuring.map((f) => ({ artistId: f.artistId, percentage: f.percentage })),
       });
       if (res.error) setError(res.error);
       else close();
@@ -168,10 +176,13 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
             <Field label="▶ Lyen YouTube (opsyonèl)">
               <input name="youtube_url" defaultValue={editing.youtubeUrl ?? ""} placeholder="Lyen videyo klip la" className={inputClass} />
             </Field>
-            {splits ? (
-              <SplitsEditor splits={splits} onChange={setSplits} disabled={pending} />
+            {splits && featuring ? (
+              <>
+                <FeaturingEditor value={featuring} onChange={setFeaturing} otherTotal={splitsTotal(splits)} disabled={pending} />
+                <SplitsEditor splits={splits} onChange={setSplits} disabled={pending} reserved={featuringTotal(featuring)} />
+              </>
             ) : (
-              <p className="rounded-xl border border-zinc-800 p-4 text-sm text-zinc-500">Ap chaje pataj royalties yo...</p>
+              <p className="rounded-xl border border-zinc-800 p-4 text-sm text-zinc-500">Ap chaje featuring ak pataj royalties yo...</p>
             )}
             <FormMessage error={error} />
             <div className="flex justify-end gap-2 pt-2">
@@ -180,10 +191,10 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
               </button>
               <button
                 type="submit"
-                disabled={pending || !splits}
-                className="rounded-lg btn-primary px-4 py-2.5 font-semibold disabled:opacity-60"
+                disabled={pending || !splits || !featuring || sharesOver}
+                className="rounded-lg btn-primary px-4 py-2.5 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {pending ? "Ap sove..." : "Sove"}
+                {pending ? "Ap sove..." : sharesOver ? "⛔ Depase 100%" : "Sove"}
               </button>
             </div>
           </form>

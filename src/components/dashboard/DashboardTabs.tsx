@@ -7,6 +7,7 @@ export function DashboardTabs() {
         tabs={[
           { href: "/dashboard", label: "📊 Apèsi" },
           { href: "/dashboard/estatistik", label: "📈 Estatistik" },
+          { href: "/dashboard/revni", label: "💵 Revni mwen" },
           { href: "/dashboard/finans", label: "💰 Revni & Finans" },
         ]}
       />

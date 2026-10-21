@@ -1,5 +1,6 @@
 "use client";
 
+import { FeaturingLinks } from "@/components/FeaturingLinks";
 import Link from "next/link";
 import { usePlayer, type Track } from "@/components/player/PlayerProvider";
 import { SongActions } from "@/components/SongActions";
@@ -62,6 +63,7 @@ export function SongCard({
           {song.artistName}
           {song.artistVerified && <VerifiedBadge />}
         </Link>
+        <FeaturingLinks artists={extras?.featuring} />
         {song.genre ? ` · ${song.genre}` : ""}
       </p>
       <div className="-mx-2 mt-2">

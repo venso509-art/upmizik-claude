@@ -37,12 +37,15 @@ export function toTrack(supabase: SupabaseClient, s: SongRow): Track {
   };
 }
 
+export type FeaturedArtist = { id: string; name: string; verified: boolean };
+
 export type SongExtras = {
   likeCount: number;
   liked: boolean;
   commentCount: number;
   songYoutubeUrl: string | null; // lyen chante a li menm
   youtubeUrl: string | null; // lyen chante a, oswa chanèl atis la
+  featuring: FeaturedArtist[]; // atis featuring yo (non sèlman, san pousantaj)
 };
 
 type ProfileLinks = { youtube_url: string | null };
@@ -56,18 +59,23 @@ export async function getSongExtras(
   userId: string | null,
 ): Promise<Record<string, SongExtras>> {
   const result: Record<string, SongExtras> = Object.fromEntries(
-    songIds.map((id) => [id, { likeCount: 0, liked: false, commentCount: 0, songYoutubeUrl: null, youtubeUrl: null }]),
+    songIds.map((id) => [id, { likeCount: 0, liked: false, commentCount: 0, songYoutubeUrl: null, youtubeUrl: null, featuring: [] }]),
   );
   if (songIds.length === 0) return result;
 
-  const [likes, comments, links, mine] = await Promise.all([
+  const [likes, comments, links, mine, feat] = await Promise.all([
     supabase.from("songs").select("id, song_likes(count)").in("id", songIds),
     supabase.from("songs").select("id, comments(count)").in("id", songIds),
     supabase.from("songs").select("id, youtube_url, profiles!songs_artist_id_fkey(youtube_url)").in("id", songIds),
     userId
       ? supabase.from("song_likes").select("song_id").eq("user_id", userId).in("song_id", songIds)
       : Promise.resolve({ data: [] as { song_id: string }[] }),
+    supabase.rpc("song_featuring", { p_song_ids: songIds }),
   ]);
+
+  for (const row of (feat.data ?? []) as { song_id: string; artist_id: string; display_name: string; is_verified: boolean }[]) {
+    result[row.song_id]?.featuring.push({ id: row.artist_id, name: row.display_name, verified: row.is_verified });
+  }
 
   for (const row of (likes.data ?? []) as { id: string; song_likes: { count: number }[] }[]) {
     result[row.id].likeCount = row.song_likes?.[0]?.count ?? 0;
