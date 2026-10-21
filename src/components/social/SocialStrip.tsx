@@ -11,7 +11,7 @@ export function SocialStrip({ posts, now }: { posts: FeedPost[]; now: number }) 
         <div>
           <p className="text-sm font-medium uppercase tracking-widest text-fuchsia-300">UpMizik Sosyal</p>
           <h2 id="sosyal-titre" className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            💬 Sa atis yo ap di
+            💬 Sa k ap fèt Atis
           </h2>
           <p className="mt-1 text-sm text-zinc-400">Nouvèl, evènman ak nouvo pwojè, dirèkteman nan men atis yo.</p>
         </div>

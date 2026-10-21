@@ -4,6 +4,7 @@ import { logout } from "@/app/auth/actions";
 import { isAdmin } from "@/lib/admin";
 import { MobileMenu, type MenuItem } from "@/components/MobileMenu";
 import { HeaderSearch } from "@/components/search/HeaderSearch";
+import { NotificationListener } from "@/components/inbox/NotificationListener";
 
 function Bell({ unread }: { unread: number }) {
   return (
@@ -52,6 +53,8 @@ export async function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-zinc-950/55 shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl backdrop-saturate-150">
+      {/* Nouvo mesaj an dirèk: son + ti kat (pou tout moun ki konekte) */}
+      {user && <NotificationListener userId={user.id} />}
       {/* Ti liy limyè anba header a: vèt → jòn sitwon → vèt */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-citron-400/40 to-transparent" aria-hidden />
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4">

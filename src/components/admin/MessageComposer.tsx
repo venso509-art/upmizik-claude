@@ -7,9 +7,15 @@ import { Field, FormMessage, SubmitButton, inputClass } from "@/components/auth/
 
 export type Recipient = { id: string; name: string; email: string };
 
-export function MessageComposer({ artists }: { artists: Recipient[] }) {
+export function MessageComposer({ artists, listeners = [] }: { artists: Recipient[]; listeners?: Recipient[] }) {
   const [state, formAction] = useFormState(sendAdminMessage, undefined);
-  const [to, setTo] = useState("all");
+  const [to, setTo] = useState("artists");
+  const groupSize: Record<string, number> = {
+    artists: artists.length,
+    listeners: listeners.length,
+    everyone: artists.length + listeners.length,
+  };
+  const groupName: Record<string, string> = { artists: "atis", listeners: "koutè", everyone: "moun" };
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
 
@@ -25,14 +31,18 @@ export function MessageComposer({ artists }: { artists: Recipient[] }) {
     <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <form
         action={(formData) => {
-          if (to === "all" && !confirm(`Voye mesaj sa a bay TOUT ${artists.length} atis yo?`)) return;
+          if (to in groupSize && !confirm(`Voye mesaj sa a bay TOUT ${groupSize[to]} ${groupName[to]} yo?`)) return;
           formAction(formData);
         }}
         className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6"
       >
         <Field label="Pou kiyès?">
           <select name="to" value={to} onChange={(e) => setTo(e.target.value)} className={inputClass}>
-            <option value="all">📢 Tout atis yo ({artists.length})</option>
+            <optgroup label="Yon gwoup">
+              <option value="artists">🎤 Tout atis yo ({artists.length})</option>
+              <option value="listeners">🎧 Tout koutè yo ({listeners.length})</option>
+              <option value="everyone">🌍 Tout moun ({artists.length + listeners.length})</option>
+            </optgroup>
             <optgroup label="Yon sèl atis">
               {artists.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -40,6 +50,15 @@ export function MessageComposer({ artists }: { artists: Recipient[] }) {
                 </option>
               ))}
             </optgroup>
+            {listeners.length > 0 && (
+              <optgroup label="Yon sèl koutè">
+                {listeners.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} — {a.email}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </Field>
         <Field label="Tit">

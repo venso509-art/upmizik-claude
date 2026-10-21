@@ -14,10 +14,14 @@ export default async function AdminMessagesPage() {
   if (!(await isAdmin(supabase, user.id))) redirect("/");
 
   const { data } = await supabase.rpc("admin_list_users");
-  const artists: Recipient[] = ((data ?? []) as { id: string; display_name: string; email: string; role: string }[])
-    .filter((u) => u.role === "artist")
-    .map((u) => ({ id: u.id, name: u.display_name, email: u.email }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const users = (data ?? []) as { id: string; display_name: string; email: string; role: string }[];
+  const byRole = (role: string): Recipient[] =>
+    users
+      .filter((u) => u.role === role)
+      .map((u) => ({ id: u.id, name: u.display_name, email: u.email }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  const artists = byRole("artist");
+  const listeners = byRole("listener");
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -25,11 +29,12 @@ export default async function AdminMessagesPage() {
 
       <h1 className="text-3xl font-extrabold tracking-tight text-white">📣 Voye yon mesaj</h1>
       <p className="mt-1 text-zinc-400">
-        Kominike ofisyèl, avètisman oswa nouvèl. Mesaj la ap parèt nan bwat 🔔 atis yo.
+        Kominike ofisyèl, avètisman oswa nouvèl pou atis yo, koutè yo, oswa tout moun. Mesaj la parèt nan bwat 🔔 yo, epi l
+        sonnen pou moun ki konekte.
       </p>
 
       <div className="mt-8">
-        <MessageComposer artists={artists} />
+        <MessageComposer artists={artists} listeners={listeners} />
       </div>
     </div>
   );
