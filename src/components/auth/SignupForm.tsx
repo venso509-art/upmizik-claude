@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useFormState } from "react-dom";
 import { signup } from "@/app/auth/actions";
 import { LocationSelect } from "@/components/LocationSelect";
+import { PasswordField } from "@/components/auth/PasswordField";
+import { passwordProblem } from "@/lib/password";
 import { Field, FormMessage, SubmitButton, inputClass } from "./ui";
 import { formatUSD } from "@/lib/donations";
 import { useSettings } from "@/components/SettingsProvider";
@@ -28,7 +30,8 @@ export function SignupForm() {
   // Atis: tcheke enfòmasyon yo, epi louvri pop-up règ + peman an (kont lan kreye nan pop-up a)
   function continueAsArtist(fd: FormData) {
     const pin = String(fd.get("pin") ?? "");
-    if (String(fd.get("password") ?? "").length < 8) return setLocalError("Modpas la dwe gen omwen 8 karaktè.");
+    const pwProblem = passwordProblem(String(fd.get("password") ?? ""));
+    if (pwProblem) return setLocalError(pwProblem);
     if (String(fd.get("phone") ?? "").replace(/\D/g, "").length < 8) return setLocalError("Mete yon nimewo telefòn/WhatsApp valid.");
     if (!/^\d{4,6}$/.test(pin)) return setLocalError("PIN nan dwe gen 4 a 6 chif.");
     if (pin !== fd.get("pin_confirm")) return setLocalError("2 PIN yo pa menm.");
@@ -41,7 +44,16 @@ export function SignupForm() {
 
   return (
     <>
-      <form action={(fd) => (isArtist ? continueAsArtist(fd) : formAction(fd))} className="space-y-5">
+      <form
+        action={(fd) => {
+          // Modpas fèb: di l touswit, ANVAN nou kontinye (koutè) oswa louvri etap peman an (atis)
+          const pwProblem = passwordProblem(String(fd.get("password") ?? ""));
+          if (pwProblem) return setLocalError(pwProblem);
+          setLocalError(undefined);
+          return isArtist ? continueAsArtist(fd) : formAction(fd);
+        }}
+        className="space-y-5"
+      >
         <fieldset>
           <legend className="mb-2 text-sm font-medium text-zinc-300">Kisa w ye?</legend>
           <div className="grid grid-cols-2 gap-3">
@@ -88,7 +100,7 @@ export function SignupForm() {
           <input name="email" type="email" required autoComplete="email" placeholder="ou@egzanp.com" className={inputClass} />
         </Field>
         <Field label="Modpas (pou konekte)">
-          <input name="password" type="password" required minLength={8} autoComplete="new-password" placeholder="Omwen 8 karaktè" className={inputClass} />
+          <PasswordField placeholder="Egz: Konpa2026 (lèt ak chif)" showStrength />
         </Field>
 
         {isArtist && (
@@ -124,7 +136,7 @@ export function SignupForm() {
           </div>
         )}
 
-        <FormMessage error={isArtist ? localError : state?.error} />
+        <FormMessage error={localError ?? state?.error} />
         <SubmitButton>{isArtist ? "Kontinye →" : "Kreye kont mwen"}</SubmitButton>
 
         <p className="text-center text-sm text-zinc-400">

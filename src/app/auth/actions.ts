@@ -1,5 +1,6 @@
 "use server";
 
+import { passwordProblem } from "@/lib/password";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -35,7 +36,8 @@ export async function signup(_prev: AuthState, formData: FormData): Promise<Auth
   const displayName = String(formData.get("display_name") ?? "").trim();
 
   if (!email || !displayName) return { error: "Ranpli tout chan yo." };
-  if (password.length < 8) return { error: "Modpas la dwe gen omwen 8 karaktè." };
+  const pwProblem = passwordProblem(password);
+  if (pwProblem) return { error: pwProblem };
 
   const origin = headers().get("origin") ?? "";
   const supabase = createClient();
@@ -80,7 +82,8 @@ export async function signupArtist(formData: FormData): Promise<ArtistSignupResu
   const proof = formData.get("proof");
 
   if (!email || !displayName) return { error: "Ranpli tout chan yo." };
-  if (password.length < 8) return { error: "Modpas la dwe gen omwen 8 karaktè." };
+  const pwProblem = passwordProblem(password);
+  if (pwProblem) return { error: pwProblem };
   if (phone.replace(/\D/g, "").length < 8) return { error: "Mete yon nimewo telefòn/WhatsApp valid." };
   if (!/^\d{4,6}$/.test(pin)) return { error: "PIN nan dwe gen 4 a 6 chif." };
   if (pin !== pinConfirm) return { error: "2 PIN yo pa menm." };

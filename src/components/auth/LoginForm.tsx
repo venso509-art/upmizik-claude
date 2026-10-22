@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordField } from "@/components/auth/PasswordField";
 import Link from "next/link";
 import { useFormState } from "react-dom";
 import { login } from "@/app/auth/actions";
@@ -16,7 +17,7 @@ export function LoginForm({ notice }: { notice?: string }) {
         <input name="email" type="email" required autoComplete="email" placeholder="ou@egzanp.com" className={inputClass} />
       </Field>
       <Field label="Modpas">
-        <input name="password" type="password" required autoComplete="current-password" className={inputClass} />
+        <PasswordField autoComplete="current-password" />
       </Field>
 
       <FormMessage error={state?.error} />
