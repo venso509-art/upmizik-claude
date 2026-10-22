@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/footer/Footer";
 import { SettingsProvider } from "@/components/SettingsProvider";
 import { BottomNav } from "@/components/BottomNav";
+import { ListenerAuthPrompt } from "@/components/auth/ListenerAuthPrompt";
 import { SplashScreen } from "@/components/SplashScreen";
 import { NoZoom } from "@/components/NoZoom";
 import { SPLASH_HEAD_SCRIPT } from "@/lib/splash";
@@ -71,6 +72,7 @@ export default async function RootLayout({
             </div>
             <PlayerBar />
             <BottomNav />
+            <ListenerAuthPrompt />
             <ServiceWorkerRegister />
           </PlayerProvider>
         </SettingsProvider>

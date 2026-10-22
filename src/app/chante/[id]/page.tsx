@@ -47,10 +47,10 @@ export default async function SongPage({ params }: Props) {
     loadComments(supabase, { type: "song", id: song.id }, user?.id ?? null),
     isAdmin(supabase, user?.id),
     // EP / Mixtape / Album chante a fè pati (si migration piblikasyon an poko kouri, data = null)
-    supabase.from("songs").select("track_number, release:releases(id, title, kind)").eq("id", song.id).maybeSingle(),
+    supabase.from("songs").select("track_number, streams, release:releases(id, title, kind)").eq("id", song.id).maybeSingle(),
   ]);
   type Rel = { id: string; title: string; kind: ReleaseKind };
-  const relRow = rel as { track_number: number | null; release: Rel | Rel[] | null } | null;
+  const relRow = rel as { track_number: number | null; streams?: number; release: Rel | Rel[] | null } | null;
   const release = relRow ? (Array.isArray(relRow.release) ? relRow.release[0] : relRow.release) : null;
 
   return (
@@ -84,6 +84,7 @@ export default async function SongPage({ params }: Props) {
             <FeaturingLinks artists={extras[song.id]?.featuring} className="font-semibold text-white" />
             {track.genre && <> · {track.genre}</>} · {formatDuration(track.durationSeconds)} ·{" "}
             {song.play_count.toLocaleString("fr-HT")} koute
+            {typeof relRow?.streams === "number" && relRow.streams > 0 && <> · {relRow.streams.toLocaleString("fr-HT")} streams</>}
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
             <PlayAllButton tracks={[track]} label="▶ Jwe" />

@@ -46,6 +46,20 @@ export function usePlayer() {
 // Yon ekout "reyèl" = omwen 5 segonn koute vre
 const REAL_PLAY_SECONDS = 5;
 
+// ID sesyon navigatè a (pou streams yo): menm onglè = menm sesyon, kidonk yon chante konte yon fwa
+function streamSessionId(): string | null {
+  try {
+    let id = sessionStorage.getItem("upmizik-stream-session");
+    if (!id) {
+      id = crypto.randomUUID();
+      sessionStorage.setItem("upmizik-stream-session", id);
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 type PlaySession = {
   trackId: string | null;
   playId: Promise<string | null> | null; // ID start_play la retounen
@@ -176,8 +190,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     play.listened += delta;
     if (play.listened >= REAL_PLAY_SECONDS && !play.confirmed && play.playId) {
       play.confirmed = true;
-      play.playId.then((id) => {
-        if (id) createClient().rpc("confirm_play", { p_play_id: id }).then(() => {});
+      play.playId.then(async (id) => {
+        if (!id) return;
+        const supabase = createClient();
+        await supabase.rpc("confirm_play", { p_play_id: id });
+        // Stream: +1 pou NENPÒT moun (menm san kont), yon sèl fwa pa sesyon pou chak chante
+        const session = streamSessionId();
+        if (session) await supabase.rpc("record_stream", { p_play_id: id, p_session: session });
       });
     }
   }
