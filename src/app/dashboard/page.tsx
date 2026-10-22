@@ -98,11 +98,21 @@ export default async function DashboardPage() {
     );
   }
 
-  type DashboardSong = SongRow & { created_at: string; archived_at?: string | null; comments?: { count: number }[] };
+  type RelRef = { kind: "ep" | "mixtape" | "album" };
+  type DashboardSong = SongRow & {
+    created_at: string;
+    archived_at?: string | null;
+    comments?: { count: number }[];
+    release_id?: string | null;
+    track_number?: number | null;
+    release?: RelRef | RelRef[] | null;
+  };
   const query = (columns: string) =>
     supabase.from("songs").select(columns).eq("artist_id", user.id).order("created_at", { ascending: false }).returns<DashboardSong[]>();
 
-  let { data: rows, error } = await query(`${SONG_SELECT}, created_at, archived_at, comments(count)`);
+  // Ak piblikasyon an (album/EP/mixtape); si yon migration manke, eseye ak mwens kolòn
+  let { data: rows, error } = await query(`${SONG_SELECT}, created_at, archived_at, comments(count), release_id, track_number, release:releases(kind)`);
+  if (error) ({ data: rows, error } = await query(`${SONG_SELECT}, created_at, archived_at, comments(count)`));
   if (error) {
     // Si tablo comments la poko egziste, chaje chante yo san kòmantè
     ({ data: rows, error } = await query(`${SONG_SELECT}, created_at, archived_at`));
@@ -139,6 +149,9 @@ export default async function DashboardPage() {
     youtubeUrl: extras[s.id]?.songYoutubeUrl ?? null,
     createdAt: s.created_at,
     archived: Boolean(s.archived_at),
+    releaseId: s.release_id ?? null,
+    releaseKind: (Array.isArray(s.release) ? s.release[0] : s.release)?.kind ?? null,
+    trackNumber: s.track_number ?? null,
   }));
 
   // Grafik 1: koute pa chante (top 8)
@@ -258,7 +271,7 @@ export default async function DashboardPage() {
           {/* ===== CHANTE YO ===== */}
           <div className="mt-6">
             <Panel title="Chante ou yo" subtitle={`${songs.length} chante sou platfòm lan`}>
-              <SongManager songs={managed} />
+              <SongManager songs={managed} artistId={user.id} />
             </Panel>
           </div>
         </>

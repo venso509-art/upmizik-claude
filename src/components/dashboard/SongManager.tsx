@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteSong, getSongFeaturing, getSongSplits, updateSong } from "@/app/dashboard/actions";
 import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
+import { EMPTY_RELEASE, ReleasePicker, type ReleaseValue } from "@/components/upload/ReleasePicker";
 import { GenreSelect } from "@/components/GenreSelect";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 import { SplitsEditor } from "@/components/splits/SplitsEditor";
@@ -22,6 +23,9 @@ export type ManagedSong = {
   youtubeUrl: string | null;
   createdAt: string;
   archived?: boolean; // admin nan achive l: li pa parèt sou sit la
+  releaseId?: string | null;
+  releaseKind?: "ep" | "mixtape" | "album" | null;
+  trackNumber?: number | null;
 };
 
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
@@ -54,12 +58,13 @@ function Cover({ url }: { url: string | null }) {
   );
 }
 
-export function SongManager({ songs }: { songs: ManagedSong[] }) {
+export function SongManager({ songs, artistId }: { songs: ManagedSong[]; artistId: string }) {
   const [editing, setEditing] = useState<ManagedSong | null>(null);
   const [deleting, setDeleting] = useState<ManagedSong | null>(null);
   const [error, setError] = useState<string>();
   const [splits, setSplits] = useState<Split[] | null>(null);
   const [featuring, setFeaturing] = useState<Featuring[] | null>(null);
+  const [release, setRelease] = useState<ReleaseValue>(EMPTY_RELEASE);
   const sharesOver = !!splits && !!featuring && featuringTotal(featuring) + splitsTotal(splits) > 100;
   const [pending, startTransition] = useTransition();
 
@@ -77,6 +82,12 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
     setFeaturing(null);
     getSongSplits(song.id).then(setSplits);
     getSongFeaturing(song.id).then(setFeaturing);
+    // Piblikasyon chante a kounye a (Single si li pa nan okenn album)
+    setRelease(
+      song.releaseId && song.releaseKind
+        ? { kind: song.releaseKind, releaseId: song.releaseId, newTitle: "", trackNumber: song.trackNumber ? String(song.trackNumber) : "" }
+        : EMPTY_RELEASE,
+    );
   }
 
   function handleEdit(e: React.FormEvent<HTMLFormElement>) {
@@ -93,6 +104,7 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
         youtubeUrl: String(form.get("youtube_url") ?? ""),
         splits,
         featuring: featuring.map((f) => ({ artistId: f.artistId, percentage: f.percentage })),
+        release: { kind: release.kind, releaseId: release.releaseId, newTitle: release.newTitle, trackNumber: release.trackNumber ? Number(release.trackNumber) : null },
       });
       if (res.error) setError(res.error);
       else close();
@@ -171,6 +183,7 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
             </Field>
             {splits && featuring ? (
               <>
+                <ReleasePicker artistId={artistId} value={release} onChange={setRelease} disabled={pending} />
                 <FeaturingEditor value={featuring} onChange={setFeaturing} otherTotal={splitsTotal(splits)} disabled={pending} />
                 <SplitsEditor splits={splits} onChange={setSplits} disabled={pending} reserved={featuringTotal(featuring)} />
               </>

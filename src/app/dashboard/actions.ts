@@ -36,6 +36,7 @@ function refresh(artistId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/");
   revalidatePath(`/atis/${artistId}`);
+  revalidatePath("/albom/[id]", "page");
 }
 
 export type FeaturingInput = { artistId: string; percentage: number };
@@ -63,7 +64,14 @@ export async function getSongFeaturing(songId: string) {
 
 export async function updateSong(
   songId: string,
-  input: { title: string; genre: string; youtubeUrl: string; splits: Split[]; featuring?: FeaturingInput[] },
+  input: {
+    title: string;
+    genre: string;
+    youtubeUrl: string;
+    splits: Split[];
+    featuring?: FeaturingInput[];
+    release?: { kind: "single" | "ep" | "mixtape" | "album"; releaseId: string | null; newTitle: string; trackNumber: number | null };
+  },
 ): Promise<SongActionResult> {
   const cleanTitle = input.title.trim();
   if (!cleanTitle || cleanTitle.length > 200) return { error: "Tit la dwe gen ant 1 ak 200 karaktè." };
@@ -112,6 +120,31 @@ export async function updateSong(
       await supabase.rpc("set_song_artists", { p_song_id: songId, p_artists: toRpc(previous) });
       return { error: friendlyDbError("Featuring yo pa sove", featErr) };
     }
+  }
+
+  // Piblikasyon: Single (okenn), oswa yon EP / Mixtape / Album (ki egziste deja oswa nouvo)
+  if (input.release) {
+    const r = input.release;
+    let releaseId: string | null = null;
+    if (r.kind !== "single") {
+      if (r.releaseId) releaseId = r.releaseId;
+      else {
+        const title = r.newTitle.trim();
+        if (!title || title.length > 120) return { error: "Mete non piblikasyon an (1 a 120 karaktè)." };
+        const { data: created } = await supabase.from("releases").insert({ artist_id: user.id, title, kind: r.kind }).select("id").maybeSingle();
+        if (created) releaseId = created.id;
+        else {
+          // Li deja egziste ak menm non an: pran li
+          const { data: same } = await supabase.from("releases").select("id").eq("artist_id", user.id).eq("kind", r.kind).eq("title", title).maybeSingle();
+          if (!same) return { error: "Piblikasyon an pa kreye." };
+          releaseId = same.id;
+        }
+      }
+    }
+    const track = releaseId && r.trackNumber && r.trackNumber >= 1 && r.trackNumber <= 99 ? Math.floor(r.trackNumber) : null;
+    // Baz done a verifye piblikasyon an se pou atis la, epi l mete nimewo a otomatikman si l vid
+    const { error: relErr } = await supabase.from("songs").update({ release_id: releaseId, track_number: track }).eq("id", songId);
+    if (relErr) return { error: friendlyDbError("Piblikasyon an pa sove", relErr) };
   }
 
   refresh(user.id);
