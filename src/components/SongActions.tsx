@@ -6,6 +6,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { SongExtras } from "@/lib/songs";
 import { DonateButton } from "@/components/donate/DonateButton";
+import { recordShare, shareLink } from "@/lib/share";
 import { DownloadButton } from "@/components/offline/DownloadButton";
 import type { Track } from "@/components/player/PlayerProvider";
 
@@ -53,6 +54,7 @@ export function SongActions({
   const [likeCount, setLikeCount] = useState(extras.likeCount);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareCount, setShareCount] = useState(extras.shareCount ?? 0);
   const cls = size === "lg" ? `${btn} px-3 py-2 text-sm` : btn;
 
   async function toggleLike() {
@@ -74,20 +76,16 @@ export function SongActions({
     setBusy(false);
   }
 
+  // Pataje chante a, epi ogmante kontè pataj la (yon fwa pa moun, pa sesyon)
   async function share() {
-    const url = `${window.location.origin}/chante/${songId}`;
-    const text = `Koute « ${title} » pa ${artistName} sou UpMizik 🎶`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, text, url });
-      } catch {
-        // Itilizatè a fèmen meni pataj la
-      }
-      return;
+    const res = await shareLink(`/chante/${songId}`, title, `Koute « ${title} » pa ${artistName} sou UpMizik 🎶`);
+    if (!res) return;
+    if (res === "copied") {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const total = await recordShare("song", songId);
+    if (total !== null) setShareCount(total);
   }
 
   // TOP 3: sèlman ekout, like, kòmante, ak bouton don an k ap bat tankou yon kè
@@ -137,8 +135,8 @@ export function SongActions({
       <Link href={`/chante/${songId}#komante`} className={cls} aria-label="Kòmante">
         💬 <span className="tabular-nums">{extras.commentCount}</span>
       </Link>
-      <button type="button" onClick={share} className={cls} aria-label="Pataje">
-        🔗 {copied ? "Kopye!" : size === "lg" ? "Pataje" : ""}
+      <button type="button" onClick={share} className={cls} aria-label={`Pataje (${shareCount} pataj)`}>
+        🔗 {copied ? "Kopye!" : shareCount > 0 ? <span className="tabular-nums">{shareCount}</span> : size === "lg" ? "Pataje" : ""}
       </button>
       {track && <DownloadButton track={track} currentUserId={currentUserId} className={cls} showLabel={size === "lg"} />}
       <DonateButton

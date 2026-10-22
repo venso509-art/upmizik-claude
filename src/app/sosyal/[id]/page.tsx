@@ -5,9 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { PostCard } from "@/components/social/PostCard";
 import { Comments } from "@/components/Comments";
-import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
-import { loadComments } from "@/lib/comments";
-import { postImageUrl, type FeedPost } from "@/lib/posts";
+import { countComments, loadComments } from "@/lib/comments";
+import { loadPostLikes, loadPostShares, postImageUrl, type FeedPost } from "@/lib/posts";
 
 type Props = { params: { id: string } };
 
@@ -72,9 +71,11 @@ export default async function PostPage({ params }: Props) {
 
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const [comments, admin] = await Promise.all([
+  const [comments, admin, likes, shares] = await Promise.all([
     loadComments(supabase, { type: "post", id: post.id }, user?.id ?? null),
     isAdmin(supabase, user?.id),
+    loadPostLikes(supabase, [post.id], user?.id ?? null),
+    loadPostShares(supabase, [post.id]),
   ]);
 
   return (
@@ -83,10 +84,8 @@ export default async function PostPage({ params }: Props) {
         ← Tout pòs yo
       </Link>
       <div className="mt-4">
-        <PostCard post={post} now={Date.now()} />
-      </div>
-      <div className="mt-3 flex justify-end">
-        <ShareLinkButton path={`/sosyal/${post.id}`} label="🔗 Pataje pòs la" title={`${post.artist_name} sou UpMizik`} />
+        {/* Ranje aksyon an: ❤️ like, 💬 kòmante, 🔗 pataje */}
+        <PostCard post={post} now={Date.now()} commentCount={countComments(comments)} likes={likes.get(post.id)} shareCount={shares.get(post.id) ?? 0} currentUserId={user?.id ?? null} />
       </div>
       <div id="komante" className="mt-8 scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
         <Comments

@@ -24,6 +24,30 @@ export type FeedPost = {
   artist_verified: boolean;
 };
 
+// Like pòs yo: kantite + èske moun ki konekte a like yo (vid si migration post_likes poko kouri)
+export async function loadPostLikes(supabase: SupabaseClient, postIds: string[], userId: string | null) {
+  const result = new Map<string, { count: number; liked: boolean }>();
+  for (const id of postIds) result.set(id, { count: 0, liked: false });
+  if (postIds.length === 0) return result;
+  const { data } = await supabase.from("post_likes").select("post_id, user_id").in("post_id", postIds).limit(10000);
+  for (const l of (data ?? []) as { post_id: string; user_id: string }[]) {
+    const r = result.get(l.post_id);
+    if (!r) continue;
+    r.count++;
+    if (l.user_id === userId) r.liked = true;
+  }
+  return result;
+}
+
+// Kantite pataj chak pòs (vid si migration kontè pataj la poko kouri)
+export async function loadPostShares(supabase: SupabaseClient, postIds: string[]) {
+  const result = new Map<string, number>();
+  if (postIds.length === 0) return result;
+  const { data } = await supabase.from("posts").select("id, share_count").in("id", postIds);
+  for (const r of (data ?? []) as { id: string; share_count: number }[]) result.set(r.id, r.share_count);
+  return result;
+}
+
 // Ajoute lyen piblik imaj la sou chak pòs
 export function withImageUrls(supabase: SupabaseClient, posts: FeedPost[]): FeedPost[] {
   return posts.map((p) => ({ ...p, image_url: postImageUrl(supabase, p.image_path) }));

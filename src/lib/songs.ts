@@ -47,6 +47,7 @@ export type SongExtras = {
   songYoutubeUrl: string | null; // lyen chante a li menm
   youtubeUrl: string | null; // lyen chante a, oswa chanèl atis la
   featuring: FeaturedArtist[]; // atis featuring yo (non sèlman, san pousantaj)
+  shareCount?: number; // kantite fwa moun pataje chante a
 };
 
 type ProfileLinks = { youtube_url: string | null };
@@ -64,7 +65,7 @@ export async function getSongExtras(
   );
   if (songIds.length === 0) return result;
 
-  const [likes, comments, links, mine, feat] = await Promise.all([
+  const [likes, comments, links, mine, feat, shares] = await Promise.all([
     supabase.from("songs").select("id, song_likes(count)").in("id", songIds),
     supabase.from("songs").select("id, comments(count)").in("id", songIds),
     supabase.from("songs").select("id, youtube_url, profiles!songs_artist_id_fkey(youtube_url)").in("id", songIds),
@@ -72,7 +73,13 @@ export async function getSongExtras(
       ? supabase.from("song_likes").select("song_id").eq("user_id", userId).in("song_id", songIds)
       : Promise.resolve({ data: [] as { song_id: string }[] }),
     supabase.rpc("song_featuring", { p_song_ids: songIds }),
+    // Kantite pataj (si migration kontè pataj la poko kouri, li rete 0)
+    supabase.from("songs").select("id, share_count").in("id", songIds),
   ]);
+
+  for (const row of (shares.data ?? []) as { id: string; share_count: number }[]) {
+    if (result[row.id]) result[row.id].shareCount = row.share_count;
+  }
 
   for (const row of (feat.data ?? []) as { song_id: string; artist_id: string; display_name: string; is_verified: boolean }[]) {
     result[row.song_id]?.featuring.push({ id: row.artist_id, name: row.display_name, verified: row.is_verified });

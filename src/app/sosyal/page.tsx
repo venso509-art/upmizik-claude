@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SearchInput } from "@/components/search/SearchInput";
 import { RefreshButton } from "@/components/social/RefreshButton";
 import { PostCard } from "@/components/social/PostCard";
-import { withImageUrls, type FeedPost } from "@/lib/posts";
+import { loadPostLikes, loadPostShares, withImageUrls, type FeedPost } from "@/lib/posts";
 
 export const metadata: Metadata = { title: "Sosyal | UpMizik", description: "Nouvèl, evènman ak nouvo pwojè atis UpMizik yo." };
 
@@ -26,6 +26,11 @@ export default async function SocialPage({ searchParams }: { searchParams: { q?:
   const posts = rows.slice(0, PAGE_SIZE);
   const hasMore = rows.length > PAGE_SIZE;
   const now = Date.now();
+
+  const [postLikes, postShares] = await Promise.all([
+    loadPostLikes(supabase, posts.map((p) => p.id), user?.id ?? null),
+    loadPostShares(supabase, posts.map((p) => p.id)),
+  ]);
 
   // Kantite kòmantè chak pòs (si migration kòmantè pòs yo poko kouri, tout se 0)
   const commentCounts = new Map<string, number>();
@@ -88,7 +93,15 @@ export default async function SocialPage({ searchParams }: { searchParams: { q?:
             {q && <p className="mt-4 text-sm text-zinc-400">{posts.length}{hasMore ? "+" : ""} pòs pou « {q} »</p>}
             <div className="mt-4 space-y-4">
               {posts.map((p) => (
-                <PostCard key={p.id} post={p} now={now} commentCount={commentCounts.get(p.id) ?? 0} />
+                <PostCard
+                  key={p.id}
+                  post={p}
+                  now={now}
+                  commentCount={commentCounts.get(p.id) ?? 0}
+                  likes={postLikes.get(p.id)}
+                  shareCount={postShares.get(p.id) ?? 0}
+                  currentUserId={user?.id ?? null}
+                />
               ))}
             </div>
             <div className="mt-8 flex justify-center gap-3">
