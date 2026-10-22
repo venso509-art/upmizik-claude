@@ -7,6 +7,8 @@ import { DONATION_METHODS, formatHTG, type DonationMethod } from "@/lib/donation
 import { PAYOUT_BADGE, formatDate, type PayoutStatus } from "@/lib/finance";
 import { FormMessage, inputClass } from "@/components/auth/ui";
 import { StatusBadge } from "@/components/StatusBadge";
+import { REJECT_REASONS, payoutPaidTemplates, payoutRejectedTemplates } from "@/lib/adminTemplates";
+import { ReasonChips, SendMessageBox } from "./SendMessageBox";
 
 export type AdminPayout = {
   id: string;
@@ -24,6 +26,7 @@ export type AdminPayout = {
 
 function PayoutCard({ p }: { p: AdminPayout }) {
   const [mode, setMode] = useState<"idle" | "pay" | "reject">("idle");
+  const [messaging, setMessaging] = useState(false);
   const [text, setText] = useState("");
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
@@ -116,6 +119,7 @@ function PayoutCard({ p }: { p: AdminPayout }) {
               autoFocus
             />
           )}
+          {mode === "reject" && <ReasonChips reasons={REJECT_REASONS.payout} onPick={setText} />}
           <FormMessage error={error} />
           <div className="flex justify-end gap-2">
             <button onClick={() => setMode("idle")} disabled={pending} className="rounded-lg px-4 py-2 text-sm text-zinc-400 hover:text-white">
@@ -131,6 +135,30 @@ function PayoutCard({ p }: { p: AdminPayout }) {
               {pending ? "Ap sove..." : mode === "pay" ? "Konfime peman an" : "Konfime rejè a"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Apre desizyon an: voye yon mesaj bay atis la (resi peman an oswa rezon refi a) */}
+      {p.status !== "pending" && (
+        <div className="mt-4 space-y-3">
+          <button
+            onClick={() => setMessaging((v) => !v)}
+            className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-200 transition hover:border-zinc-500 hover:text-white"
+          >
+            {p.status === "paid" ? "💬 Voye resi a bay atis la" : "✉️ Voye rezon an bay atis la"}
+          </button>
+          {messaging && (
+            <SendMessageBox
+              title={p.status === "paid" ? "💸 Mesaj peman" : "❌ Mesaj refi"}
+              templates={
+                p.status === "paid"
+                  ? payoutPaidTemplates({ artistName: p.artistName, amountHtg: p.amountHtg, method: DONATION_METHODS[p.method].label, reference: p.reference })
+                  : payoutRejectedTemplates({ artistName: p.artistName, amountHtg: p.amountHtg, method: DONATION_METHODS[p.method].label }, p.adminNote)
+              }
+              whatsapp={p.phone}
+              subject="UpMizik: retrè ou a"
+            />
+          )}
         </div>
       )}
     </li>

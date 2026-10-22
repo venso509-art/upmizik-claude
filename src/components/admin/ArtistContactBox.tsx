@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { sendDirectMessage } from "@/app/admin/mesaj/actions";
 import { whatsappLink } from "@/lib/donations";
-import { approvedMessage, rejectedMessage } from "@/lib/artistMessages";
+import { registrationApprovedTemplates, registrationRejectedTemplates, type Template } from "@/lib/adminTemplates";
 import { FormMessage, inputClass } from "@/components/auth/ui";
 
 // Bwat pou admin nan kontakte yon atis manyèlman: imèl, WhatsApp, oswa mesaj sou sit la.
@@ -18,6 +18,7 @@ export function ArtistContactBox({
   initiallyOpen = false,
   showInApp = true,
   onClose,
+  templates: customTemplates,
 }: {
   artistId: string;
   name: string;
@@ -28,6 +29,7 @@ export function ArtistContactBox({
   initiallyOpen?: boolean;
   showInApp?: boolean; // fo lè mesaj sou sit la deja voye otomatikman
   onClose?: () => void;
+  templates?: Template[]; // modèl pou desizyon sa a sèlman
 }) {
   const [open, setOpen] = useState(initiallyOpen);
   const [body, setBody] = useState(defaultBody);
@@ -50,10 +52,12 @@ export function ArtistContactBox({
   }
 
   const canSend = body.trim().length > 0;
-  const templates = [
-    { label: "✅ Kont apwouve", text: approvedMessage(name) },
-    { label: "❌ Prèv rejte", text: rejectedMessage(name, reason) },
-  ];
+  // Modèl yo: sa paran an bay la, oswa tout modèl apwobasyon + refi yo
+  const templates =
+    customTemplates ?? [
+      ...registrationApprovedTemplates(name).map((t) => ({ ...t, label: `✅ ${t.label}` })),
+      ...registrationRejectedTemplates(name, reason).map((t) => ({ ...t, label: `❌ ${t.label}` })),
+    ];
 
   return (
     <div className="w-full space-y-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4">

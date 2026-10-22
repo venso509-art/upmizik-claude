@@ -9,6 +9,8 @@ import { FormMessage, inputClass } from "@/components/auth/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Portal } from "@/components/Portal";
 import { ArtistContactBox } from "./ArtistContactBox";
+import { ReasonChips } from "./SendMessageBox";
+import { REJECT_REASONS, registrationApprovedTemplates, registrationRejectedTemplates } from "@/lib/adminTemplates";
 import { messageForStatus } from "@/lib/artistMessages";
 
 export type AdminRegistration = {
@@ -124,6 +126,8 @@ function RegistrationCard({ r, onReviewed }: { r: AdminRegistration; onReviewed:
               placeholder="Poukisa w rejte l? (egz: montan an pa kòrèk, foto a pa lizib...)"
               className={`${inputClass} resize-none`}
             />
+            <p className="text-xs text-zinc-500">Rezon tou pare (klike pou chwazi, ou ka modifye l apre):</p>
+            <ReasonChips reasons={REJECT_REASONS.registration} onPick={setNote} />
             <div className="flex justify-end gap-2">
               <button onClick={() => setRejecting(false)} disabled={pending} className="rounded-lg px-4 py-2 text-sm text-zinc-400 hover:text-white">
                 Anile
@@ -168,6 +172,8 @@ function RegistrationCard({ r, onReviewed }: { r: AdminRegistration; onReviewed:
 function FollowUpModal({ followUp, onClose }: { followUp: FollowUp; onClose: () => void }) {
   const { r, decision, reason } = followUp;
   const approved = decision === "verified";
+  // Plizyè modèl pou desizyon sa a: remèsiman si l apwouve, rezon an si l rejte
+  const followTemplates = approved ? registrationApprovedTemplates(r.artistName) : registrationRejectedTemplates(r.artistName, reason);
   return (
     <Portal>
       <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
@@ -192,7 +198,8 @@ function FollowUpModal({ followUp, onClose }: { followUp: FollowUp; onClose: () 
               email={r.email}
               phone={r.phone}
               reason={reason}
-              defaultBody={messageForStatus(decision, r.artistName, reason)}
+              defaultBody={followTemplates[0].text}
+              templates={followTemplates}
               initiallyOpen
               showInApp={false}
               onClose={onClose}

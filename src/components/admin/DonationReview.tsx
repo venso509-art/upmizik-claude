@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { markThanked, reviewDonation } from "@/app/admin/don/actions";
-import { DONATION_METHODS, formatHTG, formatUSD, thankYouMessage, whatsappLink, type DonationMethod } from "@/lib/donations";
+import { DONATION_METHODS, formatHTG, formatUSD, type DonationMethod } from "@/lib/donations";
+import { REJECT_REASONS, donationRejectedTemplates, donationThanksTemplates } from "@/lib/adminTemplates";
+import { ReasonChips, SendMessageBox } from "./SendMessageBox";
 import { FormMessage } from "@/components/auth/ui";
 import { Portal } from "@/components/Portal";
 
@@ -17,6 +19,7 @@ export type AdminDonation = {
   message: string | null;
   status: "pending" | "verified" | "rejected";
   thankedAt: string | null;
+  adminNote?: string | null;
   createdAt: string;
   artistName: string;
   songTitle: string | null;
@@ -28,17 +31,10 @@ function DonationCard({ d }: { d: AdminDonation }) {
   const [error, setError] = useState<string>();
   const [zoom, setZoom] = useState(false);
 
-  const thanks = thankYouMessage({
-    donorName: d.donorName,
-    amountUsd: d.amountUsd,
-    amountHtg: d.amountHtg,
-    artistName: d.artistName,
-    songTitle: d.songTitle,
-  });
-  const thankHref =
-    d.contactType === "whatsapp"
-      ? whatsappLink(d.contactValue, thanks)
-      : `mailto:${d.contactValue}?subject=${encodeURIComponent("Mèsi pou don ou an sou UpMizik 🙏")}&body=${encodeURIComponent(thanks)}`;
+  const [rejecting, setRejecting] = useState(false);
+  const [note, setNote] = useState("");
+  const [messaging, setMessaging] = useState(false);
+  const ctx = { donorName: d.donorName, amountUsd: d.amountUsd, amountHtg: d.amountHtg, artistName: d.artistName, songTitle: d.songTitle };
 
   function run(action: () => Promise<{ error?: string }>) {
     startTransition(async () => {
@@ -92,7 +88,7 @@ function DonationCard({ d }: { d: AdminDonation }) {
         <FormMessage error={error} />
 
         <div className="flex flex-wrap gap-2 pt-1">
-          {d.status === "pending" && (
+          {d.status === "pending" && !rejecting && (
             <>
               <button
                 onClick={() => run(() => reviewDonation(d.id, "verified"))}
@@ -102,7 +98,7 @@ function DonationCard({ d }: { d: AdminDonation }) {
                 ✅ Approve
               </button>
               <button
-                onClick={() => confirm("Rejte don sa a?") && run(() => reviewDonation(d.id, "rejected"))}
+                onClick={() => setRejecting(true)}
                 disabled={pending}
                 className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition hover:border-red-800 hover:text-red-300 disabled:opacity-60"
               >
@@ -111,18 +107,56 @@ function DonationCard({ d }: { d: AdminDonation }) {
             </>
           )}
 
+          {/* Rezon refi a (li sove, epi li antre nan mesaj pou donatè a) */}
+          {d.status === "pending" && rejecting && (
+            <div className="w-full space-y-2">
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={500}
+                rows={2}
+                autoFocus
+                placeholder="Poukisa w rejte don sa a?"
+                className="w-full resize-none rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-red-500"
+              />
+              <ReasonChips reasons={REJECT_REASONS.donation} onPick={setNote} />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setRejecting(false)} disabled={pending} className="rounded-lg px-4 py-2 text-sm text-zinc-400 hover:text-white">
+                  Anile
+                </button>
+                <button
+                  onClick={() => run(() => reviewDonation(d.id, "rejected", note))}
+                  disabled={pending || !note.trim()}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                >
+                  {pending ? "Ap sove..." : "Konfime rejè a"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {d.status === "rejected" && (
+            <>
+              {d.adminNote && <p className="w-full text-sm text-red-300">Rezon: {d.adminNote}</p>}
+              <button
+                onClick={() => setMessaging((v) => !v)}
+                className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-200 transition hover:text-white"
+              >
+                ✉️ Voye rezon an bay donatè a
+              </button>
+            </>
+          )}
+
           {d.status === "verified" && (
             <>
-              <a
-                href={thankHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 ${
-                  d.contactType === "whatsapp" ? "bg-[#25D366] text-zinc-950" : "bg-sky-600"
+              <button
+                onClick={() => setMessaging((v) => !v)}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition hover:opacity-90 ${
+                  d.contactType === "whatsapp" ? "bg-[#25D366] text-zinc-950" : "bg-sky-600 text-white"
                 }`}
               >
                 {d.contactType === "whatsapp" ? "💬 Voye mèsi sou WhatsApp" : "✉️ Voye mèsi pa imèl"}
-              </a>
+              </button>
               {d.thankedAt ? (
                 <span className="self-center text-sm text-emerald-400">✓ Mèsi voye</span>
               ) : (
@@ -137,6 +171,20 @@ function DonationCard({ d }: { d: AdminDonation }) {
             </>
           )}
         </div>
+
+        {/* Mesaj pou donatè a: mèsi (valide) oswa rezon an (rejte), ak plizyè modèl */}
+        {messaging && d.status !== "pending" && (
+          <SendMessageBox
+            title={d.status === "verified" ? "🙏 Mesaj remèsiman" : "❌ Mesaj refi"}
+            templates={d.status === "verified" ? donationThanksTemplates(ctx) : donationRejectedTemplates(ctx, d.adminNote ?? null)}
+            whatsapp={d.contactType === "whatsapp" ? d.contactValue : null}
+            email={d.contactType === "email" ? d.contactValue : null}
+            subject={d.status === "verified" ? "Mèsi pou don ou an sou UpMizik 🙏" : "UpMizik: don ou an"}
+            onSent={() => {
+              if (d.status === "verified" && !d.thankedAt) run(() => markThanked(d.id));
+            }}
+          />
+        )}
       </div>
 
       {zoom && d.proofUrl && (
