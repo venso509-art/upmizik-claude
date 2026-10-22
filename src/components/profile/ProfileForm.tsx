@@ -7,6 +7,7 @@ import { updateProfile } from "@/app/pwofil/actions";
 import { createClient } from "@/lib/supabase/client";
 import { IMAGE_TYPES, fileExtension } from "@/lib/upload";
 import { Field, FormMessage, SubmitButton, inputClass } from "@/components/auth/ui";
+import { LocationSelect } from "@/components/LocationSelect";
 
 export type EditableProfile = {
   id: string;
@@ -197,8 +198,8 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
             <Field label={isArtist ? "Non atis" : "Non"}>
               <input name="display_name" defaultValue={profile.display_name} required maxLength={80} className={inputClass} />
             </Field>
-            <Field label="Kote w ye">
-              <input name="location" defaultValue={profile.location ?? ""} maxLength={100} placeholder="Egz: Pòtoprens, Ayiti" className={inputClass} />
+            <Field label="📍 Zòn ou (vil, depatman oswa peyi)">
+              <LocationSelect defaultValue={profile.location} />
             </Field>
           </div>
           <Field label={isArtist ? "Biyografi" : "Kèk mo sou ou"}>

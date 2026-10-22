@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useFormState } from "react-dom";
 import { signup } from "@/app/auth/actions";
+import { LocationSelect } from "@/components/LocationSelect";
 import { Field, FormMessage, SubmitButton, inputClass } from "./ui";
 import { formatUSD } from "@/lib/donations";
 import { useSettings } from "@/components/SettingsProvider";
@@ -76,6 +77,11 @@ export function SignupForm() {
         {isArtist && (
           <Field label="📱 Telefòn / WhatsApp">
             <input name="phone" type="tel" required autoComplete="tel" placeholder="Egz: +509 3412 3456" className={inputClass} />
+          </Field>
+        )}
+        {isArtist && (
+          <Field label="📍 Zòn ou (l ap parèt sou paj atis ou)">
+            <LocationSelect required />
           </Field>
         )}
         <Field label="Imèl">
