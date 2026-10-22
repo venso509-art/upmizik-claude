@@ -27,6 +27,13 @@ export default async function SocialPage({ searchParams }: { searchParams: { q?:
   const hasMore = rows.length > PAGE_SIZE;
   const now = Date.now();
 
+  // Kantite kòmantè chak pòs (si migration kòmantè pòs yo poko kouri, tout se 0)
+  const commentCounts = new Map<string, number>();
+  if (posts.length) {
+    const { data: cRows } = await supabase.from("comments").select("post_id").in("post_id", posts.map((p) => p.id)).limit(5000);
+    for (const c of (cRows ?? []) as { post_id: string }[]) commentCounts.set(c.post_id, (commentCounts.get(c.post_id) ?? 0) + 1);
+  }
+
   // Atis apwouve yo wè yon lyen pou pibliye
   const { data: me } = user
     ? await supabase.from("profiles").select("role, status").eq("id", user.id).maybeSingle()
@@ -81,7 +88,7 @@ export default async function SocialPage({ searchParams }: { searchParams: { q?:
             {q && <p className="mt-4 text-sm text-zinc-400">{posts.length}{hasMore ? "+" : ""} pòs pou « {q} »</p>}
             <div className="mt-4 space-y-4">
               {posts.map((p) => (
-                <PostCard key={p.id} post={p} now={now} />
+                <PostCard key={p.id} post={p} now={now} commentCount={commentCounts.get(p.id) ?? 0} />
               ))}
             </div>
             <div className="mt-8 flex justify-center gap-3">

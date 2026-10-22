@@ -54,7 +54,7 @@ export function SocialStrip({ posts, now }: { posts: FeedPost[]; now: number }) 
                 </div>
 
                 <p className="mt-3 line-clamp-3 flex-1 whitespace-pre-line break-words text-sm text-zinc-300">{p.content}</p>
-                <Link href={`/sosyal#${p.id}`} className="mt-3 text-xs font-semibold text-fuchsia-300 hover:text-fuchsia-200">
+                <Link href={`/sosyal/${p.id}`} className="mt-3 text-xs font-semibold text-fuchsia-300 hover:text-fuchsia-200">
                   Li tout pòs la →
                 </Link>
               </article>

@@ -7,6 +7,7 @@ import { PlayAllButton, TrackList } from "@/components/TrackList";
 import { DonateButton } from "@/components/donate/DonateButton";
 import { SafeImage } from "@/components/SafeImage";
 import { ArtistSocialLinks } from "@/components/artist/ArtistSocialLinks";
+import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { computeTrophies, type TrophyStats } from "@/lib/trophies";
 import { formatPlays } from "@/lib/levels";
 
@@ -246,6 +247,17 @@ export default async function ArtistPage({ params }: Props) {
           />
           <ArtistSocialLinks
             links={{ youtube: artist.youtube_url, instagram: artist.instagram_url, tiktok: artist.tiktok_url, whatsapp: artist.whatsapp_url }}
+          />
+          {/* Pataje lyen pwofil la (WhatsApp, Instagram... sou telefòn; kopye sou òdinatè) */}
+          <ShareLinkButton
+            path={`/atis/${artist.id}`}
+            label={isOwner ? "🔗 Pataje pwofil mwen" : "🔗 Pataje"}
+            title={`${name} sou UpMizik`}
+            className={
+              isOwner
+                ? "btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm"
+                : "inline-flex h-11 items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/70 px-4 text-sm font-medium text-zinc-200 transition hover:border-citron-400 hover:text-white"
+            }
           />
           {isOwner && !hasSocial && (
             <Link href="/pwofil#lyen" className="rounded-full border border-dashed border-zinc-600 px-4 py-2 text-sm text-zinc-400 hover:text-white">

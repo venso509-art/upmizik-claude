@@ -1,3 +1,4 @@
+import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import Link from "next/link";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { daysLeft, daysLeftLabel, linkInfo, timeAgo, type FeedPost } from "@/lib/posts";
@@ -76,7 +77,7 @@ export function PostImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
-export function PostCard({ post, now }: { post: FeedPost; now: number }) {
+export function PostCard({ post, now, commentCount }: { post: FeedPost; now: number; commentCount?: number }) {
   const left = daysLeft(post.expires_at, now);
   // Koulè kontè a: vèt → jòn lè l prèske fini
   const tone = left <= 3 ? "border-amber-500/40 bg-amber-500/10 text-amber-300" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
@@ -112,6 +113,23 @@ export function PostCard({ post, now }: { post: FeedPost; now: number }) {
         <div className="mt-4">
           <LinkCard url={post.link_url} />
         </div>
+      )}
+      {/* Aksyon yo (feed la): kòmante ak pataje */}
+      {typeof commentCount === "number" && (
+        <footer className="mt-4 flex items-center gap-2 border-t border-zinc-800 pt-3">
+          <Link
+            href={`/sosyal/${post.id}#komante`}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+          >
+            💬 {commentCount > 0 ? `${commentCount} kòmantè` : "Kòmante"}
+          </Link>
+          <ShareLinkButton
+            path={`/sosyal/${post.id}`}
+            label="🔗 Pataje"
+            title={`${post.artist_name} sou UpMizik`}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+          />
+        </footer>
       )}
     </article>
   );

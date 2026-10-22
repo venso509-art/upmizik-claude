@@ -6,7 +6,7 @@ import { deleteNotification, markAllRead } from "@/app/mesaj/actions";
 
 export type InboxItem = {
   id: string;
-  type: "account" | "registration" | "donation" | "payout" | "admin_message" | "new_song" | "new_post";
+  type: "account" | "registration" | "donation" | "payout" | "admin_message" | "new_song" | "new_post" | "comment";
   title: string;
   body: string;
   link: string | null;
@@ -22,6 +22,7 @@ const TYPE_LABEL: Record<InboxItem["type"], string> = {
   admin_message: "📣 Ekip UpMizik",
   new_song: "🎵 Nouvo chante",
   new_post: "💬 Sosyal",
+  comment: "💬 Kòmantè",
 };
 
 function timeAgo(iso: string) {

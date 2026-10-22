@@ -7,7 +7,9 @@ import { SONG_SELECT, formatDuration, getSongExtras, toTrack, type SongRow } fro
 import { PlayAllButton } from "@/components/TrackList";
 import { SongActions } from "@/components/SongActions";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { Comments, type CommentItem } from "@/components/Comments";
+import { Comments } from "@/components/Comments";
+import { loadComments } from "@/lib/comments";
+import { isAdmin } from "@/lib/admin";
 
 type Props = { params: { id: string } };
 
@@ -31,14 +33,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${song.title} – ${toTrack(createClient(), song).artistName} | UpMizik` };
 }
 
-type CommentRow = {
-  id: string;
-  body: string;
-  created_at: string;
-  user_id: string;
-  profiles: { display_name: string; role: string } | { display_name: string; role: string }[] | null;
-};
-
 export default async function SongPage({ params }: Props) {
   const song = await getSong(params.id);
   if (!song) notFound();
@@ -46,29 +40,12 @@ export default async function SongPage({ params }: Props) {
   const supabase = createClient();
   const track = toTrack(supabase, song);
 
-  const [{ data: commentRows }, { data: { user } }] = await Promise.all([
-    supabase
-      .from("comments")
-      .select("id, body, created_at, user_id, profiles(display_name, role)")
-      .eq("song_id", song.id)
-      .order("created_at", { ascending: false })
-      .limit(200)
-      .returns<CommentRow[]>(),
-    supabase.auth.getUser(),
+  const { data: { user } } = await supabase.auth.getUser();
+  const [extras, comments, admin] = await Promise.all([
+    getSongExtras(supabase, [song.id], user?.id ?? null),
+    loadComments(supabase, { type: "song", id: song.id }, user?.id ?? null),
+    isAdmin(supabase, user?.id),
   ]);
-  const extras = await getSongExtras(supabase, [song.id], user?.id ?? null);
-
-  const comments: CommentItem[] = (commentRows ?? []).map((c) => {
-    const p = Array.isArray(c.profiles) ? c.profiles[0] : c.profiles;
-    return {
-      id: c.id,
-      body: c.body,
-      createdAt: c.created_at,
-      userId: c.user_id,
-      authorName: p?.display_name ?? "Itilizatè",
-      authorIsArtist: p?.role === "artist",
-    };
-  });
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
@@ -111,10 +88,11 @@ export default async function SongPage({ params }: Props) {
 
       <div id="komante" className="mt-14 scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
         <Comments
-          songId={song.id}
+          target={{ type: "song", id: song.id }}
           comments={comments}
           currentUserId={user?.id ?? null}
-          isSongOwner={user?.id === song.artist_id}
+          canModerate={user?.id === song.artist_id || admin}
+          placeholder="Kisa w panse de chante sa a?"
         />
       </div>
     </div>

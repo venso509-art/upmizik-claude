@@ -11,6 +11,7 @@ type Incoming = { id: string; type: string; title: string; body: string; link: s
 const ICONS: Record<string, string> = {
   new_song: "🎵",
   new_post: "📣",
+  comment: "💬",
   admin_message: "🛡️",
   donation: "💝",
   payout: "💸",
