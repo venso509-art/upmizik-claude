@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { VerifyToggle } from "@/components/admin/VerifyToggle";
 import { formatHTG } from "@/lib/donations";
 import { currentMonthIso, monthLabel } from "@/lib/accounting";
 
@@ -106,6 +107,7 @@ export default async function AdminArtistAccountsPage() {
                   <p className="flex items-center gap-2 font-semibold text-white">
                     <span className="truncate">{r.display_name}</span>
                     {r.is_verified && <VerifiedBadge />}
+                    {r.status === "approved" && <VerifyToggle artistId={r.artist_id} name={r.display_name} verified={r.is_verified} />}
                     {STATUS[r.status] && <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] text-zinc-300">{STATUS[r.status]}</span>}
                   </p>
                   <p className="text-xs text-zinc-500">

@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/admin";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { MonthBreakdown } from "@/components/admin/MonthBreakdown";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { VerifyToggle } from "@/components/admin/VerifyToggle";
 import { formatHTG } from "@/lib/donations";
 import { MONEY_KEYS, currentMonthIso, monthLabel, monthParam, parseMonthParam, toNumbers, type MonthRow } from "@/lib/accounting";
 
@@ -134,6 +135,11 @@ export default async function AdminArtistAccountPage({ params, searchParams }: {
             {artist.display_name}
             {artist.is_verified && <VerifiedBadge size="lg" />}
           </h1>
+          {artist.status === "approved" && (
+            <div className="mt-1">
+              <VerifyToggle artistId={artist.id} name={artist.display_name} verified={artist.is_verified} />
+            </div>
+          )}
           <p className="text-sm text-zinc-400">
             <Link href={`/atis/${artist.id}`} className="hover:text-white hover:underline">
               Paj piblik →

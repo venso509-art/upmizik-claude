@@ -59,6 +59,7 @@ export default async function AdminPage() {
     { count: pendingPayoutCount },
     { data: revenueRows },
     { data: feeRows },
+    { data: verifiedRows },
   ] = await Promise.all([
     supabase.rpc("admin_list_users"),
     loadAdminDonations(supabase, "pending", 20),
@@ -66,6 +67,7 @@ export default async function AdminPage() {
     supabase.from("payouts").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("donations").select("platform_share_htg").eq("status", "verified"),
     supabase.from("artist_registrations").select("amount_htg").eq("status", "verified"),
+    supabase.from("profiles").select("id, is_verified").eq("role", "artist"),
   ]);
   // Revni platfòm = 15% don yo + 100% frè enskripsyon atis yo
   const donationRevenue = (revenueRows ?? []).reduce((sum, r) => sum + Number(r.platform_share_htg), 0);
@@ -73,6 +75,7 @@ export default async function AdminPage() {
   const platformRevenue = donationRevenue + feeRevenue;
 
   const users = (userData ?? []) as UserRow[];
+  const verifiedIds = new Set(((verifiedRows ?? []) as { id: string; is_verified: boolean }[]).filter((v) => v.is_verified).map((v) => v.id));
   const artists: AdminArtist[] = users
     .filter((u) => u.role === "artist")
     .map((u) => ({
@@ -81,6 +84,7 @@ export default async function AdminPage() {
       email: u.email,
       status: u.status,
       isAdmin: u.is_admin,
+      verified: verifiedIds.has(u.id),
       createdAt: u.created_at,
       songCount: Number(u.song_count),
     }));

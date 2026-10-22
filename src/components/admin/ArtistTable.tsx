@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { setUserStatus, type AccountStatus } from "@/app/admin/actions";
 import { FormMessage } from "@/components/auth/ui";
+import { VerifyToggle } from "@/components/admin/VerifyToggle";
 
 export type AdminArtist = {
   id: string;
@@ -11,6 +12,7 @@ export type AdminArtist = {
   email: string;
   status: AccountStatus;
   isAdmin: boolean;
+  verified?: boolean;
   createdAt: string;
   songCount: number;
 };
@@ -123,6 +125,11 @@ export function ArtistTable({ artists, currentUserId }: { artists: AdminArtist[]
                       {a.displayName}
                     </Link>
                     {a.isAdmin && <span className="ml-2 text-xs text-amber-300">🛡️ admin</span>}
+                    {a.status === "approved" && (
+                      <span className="ml-2 inline-block align-middle">
+                        <VerifyToggle artistId={a.id} name={a.displayName} verified={!!a.verified} />
+                      </span>
+                    )}
                     <p className="truncate text-xs text-zinc-500">{a.email}</p>
                   </td>
                   <td className="text-zinc-300 md:px-4 md:py-3">

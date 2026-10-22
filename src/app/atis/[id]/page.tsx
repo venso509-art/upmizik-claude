@@ -6,6 +6,7 @@ import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 import { PlayAllButton, TrackList } from "@/components/TrackList";
 import { DonateButton } from "@/components/donate/DonateButton";
 import { SafeImage } from "@/components/SafeImage";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { ArtistSocialLinks } from "@/components/artist/ArtistSocialLinks";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { computeTrophies, type TrophyStats } from "@/lib/trophies";
@@ -239,12 +240,15 @@ export default async function ArtistPage({ params }: Props) {
           </div>
           <div className="min-w-0">
             {artist.is_verified && (
-              <p className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 px-3 py-1 text-xs font-semibold text-sky-300 ring-1 ring-sky-400/30">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-sky-500 text-[10px] font-black text-white">✓</span>
-                Atis verifye
+              <p className="inline-flex items-center gap-1 rounded-full bg-[#1D9BF0]/15 px-3 py-1 text-xs font-semibold text-sky-200 ring-1 ring-[#1D9BF0]/40">
+                <VerifiedBadge className="!ml-0" /> Kont verifye
               </p>
             )}
-            <h1 className="mt-2 break-words text-4xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">{name}</h1>
+            <h1 className="mt-2 break-words text-4xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
+              {name}
+              {/* Badj la bò kote non an, tankou sou gwo rezo sosyal yo */}
+              {artist.is_verified && <VerifiedBadge size="lg" className="ml-2 align-middle" />}
+            </h1>
             <p className="mt-3 text-sm text-zinc-300 sm:text-base">
               <span className="font-semibold text-white">{totalPlays.toLocaleString("fr-HT")}</span> koute total
               {artist.location && <> · 📍 {artist.location}</>}
