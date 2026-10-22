@@ -18,9 +18,13 @@ html {
 }
 html,
 body {
-  /* Okenn eleman pa ka fè paj la glise agoch/adwat ("clip" pa kraze header sticky a, kontrèman ak "hidden") */
-  overflow-x: clip;
-  overscroll-behavior-x: none;
+  /* Pa gen "rebondi" lè w rive anlè/anba nèt: paj la ak ba anba a pa bouje (demann Venso).
+     NB: pa mete overflow-x sou html/body: sou iPhone sa fè eleman "fixed" yo (ba anba a) deplase ak paj la.
+     Se anvlòp .up-page la (layout la) ki anpeche paj la glise sou kote. */
+  overscroll-behavior: none;
+}
+.up-page {
+  overflow-x: clip; /* "clip" pa kraze header sticky a, kontrèman ak "hidden" */
 }
 html,
 body {

@@ -47,7 +47,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navigasyon prensipal"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-white/5 bg-zinc-950/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 transform-gpu border-t border-white/5 bg-zinc-950/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
     >
       <ul className="mx-auto grid h-16 max-w-md grid-cols-3">
         {ITEMS.map(({ href, label, Icon, match }) => {

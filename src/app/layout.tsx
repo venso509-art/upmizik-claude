@@ -63,9 +63,12 @@ export default async function RootLayout({
         <NoZoom />
         <SettingsProvider settings={settings}>
           <PlayerProvider>
-            <Header />
-            <main>{children}</main>
-            <Footer />
+            {/* Anvlòp kontni an: anpeche paj la glise sou kote, SAN touche ba fixed yo anba a */}
+            <div className="up-page">
+              <Header />
+              <main>{children}</main>
+              <Footer />
+            </div>
             <PlayerBar />
             <BottomNav />
             <ServiceWorkerRegister />
