@@ -10,6 +10,31 @@
   --carib-citron: #ffd700;
 }
 
+/* ===== Telefòn: sit la pa dwe zoume poukont li ni glise sou kote ===== */
+html {
+  /* Pa kite telefòn nan gwosi tèks la poukont li lè w vire l */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html,
+body {
+  /* Okenn eleman pa ka fè paj la glise agoch/adwat ("clip" pa kraze header sticky a, kontrèman ak "hidden") */
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
+body {
+  /* Retire zoom "de kout dwèt rapid" la (double-tap), men moun ki bezwen zoume ak 2 dwèt toujou kapab */
+  touch-action: manipulation;
+}
+/* iPhone zoume otomatikman lè w klike nan yon bwat tèks ki gen lèt pi piti pase 16px: nou anpeche sa */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   background-color: var(--carib-navy);
