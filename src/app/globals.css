@@ -22,9 +22,10 @@ body {
   overflow-x: clip;
   overscroll-behavior-x: none;
 }
+html,
 body {
-  /* Retire zoom "de kout dwèt rapid" la (double-tap), men moun ki bezwen zoume ak 2 dwèt toujou kapab */
-  touch-action: manipulation;
+  /* Pa gen zoom ditou (ni double-tap, ni 2 dwèt): moun nan ka sèlman woule paj la (demann Venso) */
+  touch-action: pan-x pan-y;
 }
 /* iPhone zoume otomatikman lè w klike nan yon bwat tèks ki gen lèt pi piti pase 16px: nou anpeche sa */
 @media (max-width: 767px) {

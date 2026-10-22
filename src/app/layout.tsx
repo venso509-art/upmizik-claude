@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer/Footer";
 import { SettingsProvider } from "@/components/SettingsProvider";
 import { BottomNav } from "@/components/BottomNav";
 import { SplashScreen } from "@/components/SplashScreen";
+import { NoZoom } from "@/components/NoZoom";
 import { SPLASH_HEAD_SCRIPT } from "@/lib/splash";
 import { getSettings } from "@/lib/settings-server";
 import { PlayerProvider } from "@/components/player/PlayerProvider";
@@ -31,7 +32,15 @@ export const metadata: Metadata = {
 };
 
 // viewportFit "cover": ba navigasyon anba a respekte zòn bouton iPhone yo
-export const viewport: Viewport = { themeColor: "#0B132B", viewportFit: "cover" };
+// Sit la toujou adapte ak lajè telefòn nan, e li pa ka zoume (demann Venso)
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#0B132B",
+  viewportFit: "cover",
+};
 
 export default async function RootLayout({
   children,
@@ -51,6 +60,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-950 text-zinc-100 antialiased`}
       >
         <SplashScreen />
+        <NoZoom />
         <SettingsProvider settings={settings}>
           <PlayerProvider>
             <Header />
