@@ -58,7 +58,20 @@ export function SplitsEditor({
       {splits.length > 0 && (
         <ul className="mt-4 space-y-3">
           {splits.map((s, i) => (
-            <li key={i} className="grid grid-cols-2 gap-2 rounded-lg border border-zinc-800 p-3 sm:grid-cols-[1fr_9rem_6rem_auto]">
+            <li key={i} className="grid grid-cols-2 gap-2 rounded-lg border border-zinc-800 p-3 sm:grid-cols-[1fr_9rem_6rem]">
+              {/* Tit + bouton pou retire kolaboratè a (si atis la fè erè oswa li pa vle ba l pa ankò) */}
+              <div className="col-span-2 flex items-center justify-between sm:col-span-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Kolaboratè #{i + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => onChange(splits.filter((_, j) => j !== i))}
+                  disabled={disabled}
+                  className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300 transition hover:bg-red-500/20 hover:text-red-200"
+                  aria-label={`Retire kolaboratè #${i + 1}`}
+                >
+                  ✕ Retire
+                </button>
+              </div>
               <input
                 value={s.name}
                 onChange={(e) => update(i, { name: e.target.value })}
@@ -91,15 +104,6 @@ export function SplitsEditor({
                 />
                 <span className="pointer-events-none absolute right-3 top-2 text-sm text-zinc-500">%</span>
               </div>
-              <button
-                type="button"
-                onClick={() => onChange(splits.filter((_, j) => j !== i))}
-                disabled={disabled}
-                className="col-span-2 rounded-lg px-2 py-2 text-sm text-zinc-500 transition hover:bg-red-950/50 hover:text-red-300 sm:col-span-1"
-                aria-label={`Retire kolaboratè #${i + 1}`}
-              >
-                ✕ <span className="sm:hidden">Retire</span>
-              </button>
               {/* Kote UpMizik ap voye pa kolaboratè a */}
               <select
                 value={s.method}

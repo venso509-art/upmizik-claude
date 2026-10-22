@@ -168,10 +168,11 @@ export function FeaturingEditor({
                 type="button"
                 onClick={() => onChange(value.filter((_, j) => j !== i))}
                 disabled={disabled}
-                className="rounded-md px-2 py-1 text-zinc-500 transition hover:bg-zinc-800 hover:text-red-400"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-300 transition hover:bg-red-500/20 hover:text-red-200"
                 aria-label={`Retire ${f.name}`}
+                title={`Retire ${f.name}`}
               >
-                ✕
+                ✕ <span className="hidden sm:inline">Retire</span>
               </button>
             </li>
           ))}
