@@ -18,6 +18,8 @@ import {
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
 import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
+import { EMPTY_RELEASE, ReleasePicker, type ReleaseValue } from "@/components/upload/ReleasePicker";
+import { RELEASE_LABELS } from "@/lib/releases";
 import { normalizeUrl } from "@/lib/links";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 
@@ -55,6 +57,7 @@ export function UploadForm({ userId }: { userId: string }) {
   const [error, setError] = useState<string>();
   const [splits, setSplits] = useState<Split[]>([]);
   const [featuring, setFeaturing] = useState<Featuring[]>([]);
+  const [release, setRelease] = useState<ReleaseValue>(EMPTY_RELEASE);
   // Featuring + kolaboratè pa ka depase 100% (owner a jwenn sa ki rete a)
   const sharesOver = featuringTotal(featuring) + splitsTotal(splits) > 100;
 
@@ -96,6 +99,9 @@ export function UploadForm({ userId }: { userId: string }) {
     const splitsError = validateSplits(splits);
     if (splitsError) return setError(splitsError);
     if (sharesOver) return setError("Total pousantaj yo (featuring + kolaboratè) depase 100%.");
+    const releaseLabel = RELEASE_LABELS[release.kind].label;
+    if (release.kind !== "single" && !release.releaseId && !release.newTitle.trim())
+      return setError(`Mete non ${releaseLabel} a, oswa chwazi youn ou te deja kreye.`);
 
     setError(undefined);
     setStatus("uploading");
@@ -136,6 +142,36 @@ export function UploadForm({ userId }: { userId: string }) {
       });
       uploaded.push({ bucket: "audio", path: audioPath });
 
+      // EP / Mixtape / Album: itilize piblikasyon an, oswa kreye l si se yon nouvo
+      let releaseId: string | null = null;
+      let createdRelease = false;
+      if (release.kind !== "single") {
+        if (release.releaseId) releaseId = release.releaseId;
+        else {
+          const relTitle = release.newTitle.trim();
+          const { data: rel, error: relError } = await supabase
+            .from("releases")
+            .insert({ artist_id: userId, title: relTitle, kind: release.kind })
+            .select("id")
+            .single();
+          if (rel) {
+            releaseId = rel.id;
+            createdRelease = true;
+          } else {
+            // Li deja egziste ak menm non an: pran li
+            const { data: same } = await supabase
+              .from("releases")
+              .select("id")
+              .eq("artist_id", userId)
+              .eq("kind", release.kind)
+              .eq("title", relTitle)
+              .maybeSingle();
+            if (!same) throw new Error(`${releaseLabel} a pa kreye: ${relError?.message ?? "erè"}`);
+            releaseId = same.id;
+          }
+        }
+      }
+
       const { data: song, error: insertError } = await supabase
         .from("songs")
         .insert({
@@ -146,10 +182,15 @@ export function UploadForm({ userId }: { userId: string }) {
           audio_path: audioPath,
           cover_path: coverPath,
           duration_seconds: duration,
+          ...(releaseId ? { release_id: releaseId, track_number: release.trackNumber ? Number(release.trackNumber) : null } : {}),
         })
         .select("id")
         .single();
-      if (insertError) throw new Error(insertError.message);
+      if (insertError) {
+        // Pa kite yon piblikasyon vid si chante a pa pase
+        if (createdRelease && releaseId) await supabase.from("releases").delete().eq("id", releaseId);
+        throw new Error(insertError.message);
+      }
 
       if (splits.length > 0) {
         const { error: splitsError } = await supabase.rpc("set_song_splits", { p_song_id: song.id, p_splits: splits });
@@ -198,6 +239,7 @@ export function UploadForm({ userId }: { userId: string }) {
               setCover(null);
               setSplits([]);
               setFeaturing([]);
+              setRelease(EMPTY_RELEASE);
             }}
             className="rounded-lg border border-zinc-700 px-4 py-2.5 text-zinc-200 hover:border-zinc-500"
           >
@@ -266,6 +308,8 @@ export function UploadForm({ userId }: { userId: string }) {
       <Field label="▶ Lyen YouTube (opsyonèl)">
         <input name="youtube_url" disabled={busy} placeholder="Egz: lyen videyo klip la sou YouTube" className={inputClass} />
       </Field>
+
+      <ReleasePicker artistId={userId} value={release} onChange={setRelease} disabled={busy} />
 
       <FeaturingEditor value={featuring} onChange={setFeaturing} otherTotal={splitsTotal(splits)} disabled={busy} />
 

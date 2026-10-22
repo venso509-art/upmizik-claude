@@ -10,6 +10,7 @@ import { ArtistSocialLinks } from "@/components/artist/ArtistSocialLinks";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { computeTrophies, type TrophyStats } from "@/lib/trophies";
 import { formatPlays } from "@/lib/levels";
+import { RELEASE_LABELS, type ReleaseKind } from "@/lib/releases";
 
 type Props = { params: { id: string } };
 
@@ -119,7 +120,7 @@ export default async function ArtistPage({ params }: Props) {
   if (!artist) notFound();
 
   const supabase = createClient();
-  const [{ data: rows }, { data: { user } }, { data: trophyRows }] = await Promise.all([
+  const [{ data: rows }, { data: { user } }, { data: trophyRows }, { data: releaseRows }] = await Promise.all([
     supabase
       .from("songs")
       .select(SONG_SELECT)
@@ -130,7 +131,29 @@ export default async function ArtistPage({ params }: Props) {
     supabase.auth.getUser(),
     // Si migration trofe a poko kouri, data = null epi seksyon an montre mesaj vid la
     supabase.rpc("artist_trophy_stats", { p_artist: artist.id }),
+    // Diskografi: EP, Mixtape, Album (vid si migration piblikasyon an poko kouri)
+    supabase
+      .from("releases")
+      .select("id, title, kind, created_at, songs(cover_path, track_number, archived_at)")
+      .eq("artist_id", artist.id)
+      .order("created_at", { ascending: false }),
   ]);
+
+  type RelSong = { cover_path: string | null; track_number: number | null; archived_at: string | null };
+  const discography = ((releaseRows ?? []) as { id: string; title: string; kind: ReleaseKind; created_at: string; songs: RelSong[] }[])
+    .map((r) => {
+      const live = (r.songs ?? []).filter((s) => !s.archived_at).sort((a, b) => (a.track_number ?? 99) - (b.track_number ?? 99));
+      const coverPath = live.find((s) => s.cover_path)?.cover_path ?? null;
+      return {
+        id: r.id,
+        title: r.title,
+        kind: r.kind,
+        year: new Date(r.created_at).getFullYear(),
+        count: live.length,
+        coverUrl: coverPath ? supabase.storage.from("covers").getPublicUrl(coverPath).data.publicUrl : null,
+      };
+    })
+    .filter((r) => r.count > 0);
 
   const songs = rows ?? [];
   const tracks = songs.map((s) => toTrack(supabase, s));
@@ -304,6 +327,37 @@ export default async function ArtistPage({ params }: Props) {
                 </details>
               )}
             </section>
+
+            {/* DISKOGRAFI: EP, Mixtape, Album */}
+            {discography.length > 0 && (
+              <section>
+                <h2 className="text-2xl font-extrabold tracking-tight text-white">💿 Diskografi</h2>
+                <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  {discography.map((r) => (
+                    <li key={r.id}>
+                      <Link href={`/albom/${r.id}`} className="group block rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 transition hover:border-citron-400/40 hover:bg-zinc-900">
+                        <span className="block aspect-square overflow-hidden rounded-xl">
+                          <SafeImage
+                            src={r.coverUrl}
+                            alt={r.title}
+                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                            fallback={
+                              <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-fuchsia-700 to-violet-900 text-4xl">
+                                {RELEASE_LABELS[r.kind].icon}
+                              </span>
+                            }
+                          />
+                        </span>
+                        <span className="mt-2 block truncate font-semibold text-white">{r.title}</span>
+                        <span className="block text-xs text-zinc-500">
+                          {RELEASE_LABELS[r.kind].label} · {r.year} · {r.count} chante
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             {/* 4. BIYOGRAFI: tèks la sou foto atis la, ak yon fon fonse */}
             <section>

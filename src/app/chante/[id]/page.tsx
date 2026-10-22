@@ -10,6 +10,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { Comments } from "@/components/Comments";
 import { loadComments } from "@/lib/comments";
 import { isAdmin } from "@/lib/admin";
+import { RELEASE_LABELS, type ReleaseKind } from "@/lib/releases";
 
 type Props = { params: { id: string } };
 
@@ -41,11 +42,16 @@ export default async function SongPage({ params }: Props) {
   const track = toTrack(supabase, song);
 
   const { data: { user } } = await supabase.auth.getUser();
-  const [extras, comments, admin] = await Promise.all([
+  const [extras, comments, admin, { data: rel }] = await Promise.all([
     getSongExtras(supabase, [song.id], user?.id ?? null),
     loadComments(supabase, { type: "song", id: song.id }, user?.id ?? null),
     isAdmin(supabase, user?.id),
+    // EP / Mixtape / Album chante a fè pati (si migration piblikasyon an poko kouri, data = null)
+    supabase.from("songs").select("track_number, release:releases(id, title, kind)").eq("id", song.id).maybeSingle(),
   ]);
+  type Rel = { id: string; title: string; kind: ReleaseKind };
+  const relRow = rel as { track_number: number | null; release: Rel | Rel[] | null } | null;
+  const release = relRow ? (Array.isArray(relRow.release) ? relRow.release[0] : relRow.release) : null;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
@@ -59,7 +65,16 @@ export default async function SongPage({ params }: Props) {
           )}
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium uppercase tracking-widest text-fuchsia-300">Chante</p>
+          <p className="text-sm font-medium uppercase tracking-widest text-fuchsia-300">{release ? "Chante" : "🎵 Single"}</p>
+          {release && (
+            <Link
+              href={`/albom/${release.id}`}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-citron-400/40 bg-citron-400/10 px-3 py-1 text-xs font-semibold text-citron-200 transition hover:bg-citron-400/20"
+            >
+              {RELEASE_LABELS[release.kind].icon} {RELEASE_LABELS[release.kind].label}: {release.title}
+              {relRow?.track_number ? ` · #${relRow.track_number}` : ""} →
+            </Link>
+          )}
           <h1 className="mt-2 break-words text-4xl font-extrabold tracking-tight text-white sm:text-5xl">{track.title}</h1>
           <p className="mt-3 text-zinc-300">
             <Link href={`/atis/${track.artistId}`} className="font-semibold text-white hover:underline">
