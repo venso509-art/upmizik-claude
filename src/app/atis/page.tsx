@@ -3,10 +3,21 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { SearchInput } from "@/components/search/SearchInput";
+import { ScrollRow } from "@/components/ScrollRow";
 
 export const metadata: Metadata = { title: "Atis | UpMizik", description: "Tout atis UpMizik yo." };
 
-type ArtistRow = { id: string; display_name: string; avatar_url: string | null; is_verified: boolean; location: string | null };
+// San rechèch: yon sèl ranje orizontal pou moun nan glise. Ak rechèch: rezilta yo an griy.
+function ArtistList({ searching, count, children }: { searching: boolean; count: number; children: React.ReactNode }) {
+  if (searching) return <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">{children}</ul>;
+  return (
+    <ScrollRow label="Atis UpMizik yo" caption={`${count} atis`}>
+      {children}
+    </ScrollRow>
+  );
+}
+
+type ArtistRow ={ id: string; display_name: string; avatar_url: string | null; is_verified: boolean; location: string | null };
 
 export default async function ArtistsPage({ searchParams }: { searchParams: { q?: string } }) {
   const q = (searchParams.q ?? "").trim().slice(0, 100);
@@ -55,9 +66,10 @@ export default async function ArtistsPage({ searchParams }: { searchParams: { q?
             <p className="mt-4 text-lg font-semibold text-white">{q ? `Pa gen atis pou « ${q} »` : "Poko gen atis"}</p>
           </div>
         ) : (
-          <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          <div className="mt-8">
+          <ArtistList searching={!!q} count={artists.length}>
             {artists.map((a) => (
-              <li key={a.id}>
+              <li key={a.id} className={q ? "" : "w-40 shrink-0 snap-start sm:w-44"}>
                 <Link
                   href={`/atis/${a.id}`}
                   className="group flex flex-col items-center rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 text-center transition hover:-translate-y-0.5 hover:border-fuchsia-500/40 hover:bg-zinc-900"
@@ -84,7 +96,8 @@ export default async function ArtistsPage({ searchParams }: { searchParams: { q?
                 </Link>
               </li>
             ))}
-          </ul>
+          </ArtistList>
+          </div>
         )}
       </div>
     </div>
