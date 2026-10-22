@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { GENRES } from "@/lib/genres";
+import { GenreSelect } from "@/components/GenreSelect";
+import { normalizeGenre } from "@/lib/genres";
 import {
   AUDIO_TYPES,
   IMAGE_TYPES,
@@ -85,7 +86,8 @@ export function UploadForm({ userId }: { userId: string }) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const title = String(form.get("title") ?? "").trim();
-    const genre = String(form.get("genre") ?? "") || null;
+    const genre = normalizeGenre(String(form.get("genre") ?? ""));
+    if (genre === undefined) return setError("Jan mizik la pa valid (2 a 40 lèt).");
     const youtubeUrl = normalizeUrl(String(form.get("youtube_url") ?? ""));
 
     if (!title) return setError("Mete tit chante a.");
@@ -215,14 +217,7 @@ export function UploadForm({ userId }: { userId: string }) {
       </Field>
 
       <Field label="Jan mizik">
-        <select name="genre" disabled={busy} defaultValue="" className={inputClass}>
-          <option value="">Chwazi yon jan (opsyonèl)</option>
-          {GENRES.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-        </select>
+        <GenreSelect disabled={busy} />
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-[140px_1fr]">

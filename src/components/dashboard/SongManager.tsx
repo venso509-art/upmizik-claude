@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteSong, getSongFeaturing, getSongSplits, updateSong } from "@/app/dashboard/actions";
 import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
-import { GENRES } from "@/lib/genres";
+import { GenreSelect } from "@/components/GenreSelect";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { formatDuration } from "@/lib/songs";
@@ -164,14 +164,7 @@ export function SongManager({ songs }: { songs: ManagedSong[] }) {
               <input name="title" defaultValue={editing.title} required maxLength={200} className={inputClass} />
             </Field>
             <Field label="Jan mizik">
-              <select name="genre" defaultValue={editing.genre ?? ""} className={inputClass}>
-                <option value="">San jan</option>
-                {GENRES.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
+              <GenreSelect defaultValue={editing.genre} emptyLabel="San jan" />
             </Field>
             <Field label="▶ Lyen YouTube (opsyonèl)">
               <input name="youtube_url" defaultValue={editing.youtubeUrl ?? ""} placeholder="Lyen videyo klip la" className={inputClass} />

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { GENRES } from "@/lib/genres";
+import { normalizeGenre } from "@/lib/genres";
 import { normalizeUrl } from "@/lib/links";
 import { validateSplits, type Split } from "@/lib/splits";
 
@@ -67,7 +67,8 @@ export async function updateSong(
 ): Promise<SongActionResult> {
   const cleanTitle = input.title.trim();
   if (!cleanTitle || cleanTitle.length > 200) return { error: "Tit la dwe gen ant 1 ak 200 karaktè." };
-  if (input.genre && !GENRES.includes(input.genre)) return { error: "Jan mizik sa a pa valid." };
+  const genre = normalizeGenre(input.genre);
+  if (genre === undefined) return { error: "Jan mizik la pa valid (2 a 40 lèt)." };
   const youtubeUrl = normalizeUrl(input.youtubeUrl);
   if (youtubeUrl === undefined) return { error: "Lyen YouTube la pa valid." };
   const splitsError = validateSplits(input.splits);
@@ -79,7 +80,7 @@ export async function updateSong(
 
   const { error } = await supabase
     .from("songs")
-    .update({ title: cleanTitle, genre: input.genre || null, youtube_url: youtubeUrl })
+    .update({ title: cleanTitle, genre, youtube_url: youtubeUrl })
     .eq("id", songId);
   if (error) return { error: friendlyDbError("Modifikasyon an echwe", error) };
 

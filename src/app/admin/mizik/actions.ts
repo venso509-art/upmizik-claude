@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
-import { GENRES } from "@/lib/genres";
+import { normalizeGenre } from "@/lib/genres";
 import { normalizeUrl } from "@/lib/links";
 
 type Result = { error?: string };
@@ -31,7 +31,8 @@ export async function adminUpdateSong(
 
   const title = input.title.trim();
   if (!title || title.length > 200) return { error: "Tit la dwe gen ant 1 ak 200 karaktè." };
-  if (input.genre && !GENRES.includes(input.genre)) return { error: "Jan mizik sa a pa valid." };
+  const genre = normalizeGenre(input.genre);
+  if (genre === undefined) return { error: "Jan mizik la pa valid (2 a 40 lèt)." };
   const youtubeUrl = normalizeUrl(input.youtubeUrl);
   if (youtubeUrl === undefined) return { error: "Lyen YouTube la pa valid." };
 
@@ -39,7 +40,7 @@ export async function adminUpdateSong(
   if (!song) return { error: "Chante sa a pa jwenn." };
   if (input.coverPath && !input.coverPath.startsWith(`${song.artist_id}/`)) return { error: "Pochèt la pa valid." };
 
-  const update: Record<string, string | null> = { title, genre: input.genre || null, youtube_url: youtubeUrl };
+  const update: Record<string, string | null> = { title, genre, youtube_url: youtubeUrl };
   if (input.coverPath) update.cover_path = input.coverPath;
 
   const { data, error } = await supabase.from("songs").update(update).eq("id", songId).select("id");

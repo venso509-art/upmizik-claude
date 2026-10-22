@@ -10,16 +10,44 @@ const abroad = (flag: string, country: string, cities: string[]) => ({
 });
 
 export const LOCATION_GROUPS: LocationGroup[] = [
-  haiti("Lwès", ["Pòtoprens", "Dèlma", "Petyonvil", "Kafou", "Tabarre", "Kwadebouke", "Leyogàn", "Akayè", "Lagonav"]),
-  haiti("Nò", ["Okap", "Limonad", "Plèndinò", "Milo", "Lenbe"]),
-  haiti("Nòdès", ["Fòlibète", "Wanament", "Twou dinò"]),
-  haiti("Nòdwès", ["Pòdepè", "Senlwidinò", "Mòl Sen Nikola"]),
-  haiti("Latibonit", ["Gonayiv", "Senmak", "Dèsalin", "Gwomòn", "Lestè"]),
-  haiti("Sant", ["Ench", "Mibalè", "Laskawobas"]),
-  haiti("Sid", ["Okay", "Kanperen", "Akin", "Pòsali"]),
-  haiti("Sidès", ["Jakmèl", "Bèlans", "Kayjakmèl"]),
-  haiti("Grandans", ["Jeremi", "Danmari", "Ansdeno"]),
-  haiti("Nip", ["Miragwàn", "Ansavo", "Baradè"]),
+  // Omwen 10 vil pa depatman (komin prensipal yo, pi gwo yo an premye)
+  haiti("Lwès", [
+    "Pòtoprens", "Dèlma", "Kafou", "Petyonvil", "Site Solèy", "Tabarre", "Kwadebouke", "Leyogàn",
+    "Tigwav", "Grangwav", "Akayè", "Gantye", "Kenskòf", "Gresye", "Lagonav", "Kònay",
+  ]),
+  haiti("Nò", [
+    "Okap", "Limonad", "Plèndinò", "Milo", "Lenbe", "Akil dinò", "Gran Rivyè dinò", "Plezans",
+    "Pòmago", "Bòg", "Senrafayèl", "Dondon", "Pilat", "Katye Moren",
+  ]),
+  haiti("Nòdès", [
+    "Fòlibète", "Wanament", "Twou dinò", "Teryewouj", "Karakòl", "Valyè", "Mon Òganize", "Kapotil",
+    "Mobenkwochi", "Fèye", "Karis", "Pèch",
+  ]),
+  haiti("Nòdwès", [
+    "Pòdepè", "Senlwidinò", "Jan Rabèl", "Mòl Sen Nikola", "Bonbadopolis", "Bedèn", "Latòti", "Ansafolè",
+    "Basenble", "Chansòl",
+  ]),
+  haiti("Latibonit", [
+    "Gonayiv", "Senmak", "Dèsalin", "Gwomòn", "Lestè", "Ti Rivyè Latibonit", "Verèt", "Sen Michèl Latalay",
+    "Ennri", "Mamlad", "Lachapèl", "Answouj", "Tènèv", "Grann Salin", "Lyankou",
+  ]),
+  haiti("Sant", [
+    "Ench", "Mibalè", "Laskawobas", "Beladè", "Boukankare", "Sodo", "Mayisad", "Tomond", "Tomasik",
+    "Sèka Lasous", "Sèka Kavajal", "Savanèt",
+  ]),
+  haiti("Sid", [
+    "Okay", "Kanperen", "Akin", "Pòsali", "Kavayon", "Tòbèk", "Senlwidisid", "Koto", "Pòtapiman",
+    "Chantal", "Tibiwon", "Chadonyè", "Manich", "Zanglè", "Ilavach",
+  ]),
+  haiti("Sidès", ["Jakmèl", "Bèlans", "Kayjakmèl", "Marigo", "Bennèt", "Kòt Defè", "Gran Gozye", "Tyòt", "Anspit", "Lavale"]),
+  haiti("Grandans", [
+    "Jeremi", "Danmari", "Ansdeno", "Abriko", "Koray", "Pestèl", "Wozo", "Bomon", "Mowon", "Chanbelan",
+    "Lezirwa", "Twou Bonbon", "Mafran",
+  ]),
+  haiti("Nip", [
+    "Miragwàn", "Ansavo", "Baradè", "Fondènèg", "Ti Rivyè Nip", "Plezans disid", "Ti Twou Nip", "Gran Boukan",
+    "Ano", "Lazil", "Payan",
+  ]),
   abroad("🇺🇸", "Etazini", ["Miami", "Nòt Miyami", "Fò Lodèdal", "Orlando", "Nouyòk (Brooklyn)", "Nouyòk (Queens)", "Boston", "Newark", "Atlanta", "Filadèlfi"]),
   abroad("🇨🇦", "Kanada", ["Monreyal", "Laval", "Otawa", "Toronto"]),
   abroad("🇫🇷", "Lafrans", ["Pari", "Lil-de-Frans"]),

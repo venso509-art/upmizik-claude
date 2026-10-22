@@ -8,7 +8,7 @@ import { usePlayer, type Track } from "@/components/player/PlayerProvider";
 import { Portal } from "@/components/Portal";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
 import { createClient } from "@/lib/supabase/client";
-import { GENRES } from "@/lib/genres";
+import { GenreSelect } from "@/components/GenreSelect";
 import { IMAGE_TYPES, fileExtension } from "@/lib/upload";
 import { formatDuration } from "@/lib/songs";
 
@@ -116,14 +116,7 @@ function EditSong({ song, onClose }: { song: AdminSong; onClose: () => void }) {
           <input value={title} onChange={(e) => setTitle(e.target.value)} required maxLength={200} className={inputClass} />
         </Field>
         <Field label="Jan mizik">
-          <select value={genre} onChange={(e) => setGenre(e.target.value)} className={inputClass}>
-            <option value="">— San jan —</option>
-            {GENRES.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
+          <GenreSelect defaultValue={genre} onChange={setGenre} emptyLabel="— San jan —" />
         </Field>
         <Field label="Lyen YouTube (si genyen)">
           <input value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="https://youtube.com/watch?v=..." className={inputClass} />

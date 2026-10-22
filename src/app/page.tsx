@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SongCard } from "@/components/SongCard";
-import { GENRES } from "@/lib/genres";
+import { GENRES, normalizeGenre } from "@/lib/genres";
 import { getTop10, getTop3 } from "@/lib/top";
 import { Top10Section } from "@/components/Top10Section";
 import { AdBanner, type PublicAd } from "@/components/ads/AdBanner";
@@ -42,7 +42,8 @@ const bars = [
 
 export default async function Home({ searchParams }: { searchParams: { jan?: string } }) {
   // ?jan=Konpa → montre sèlman chante jan sa a (jiska 24); san jan → 8 dènye chante yo
-  const genre = GENRES.find((g) => g === searchParams.jan) ?? null;
+  // Jan nan lis la OSWA yon jan atis yo ekri yo menm (egz: ?jan=Dancehall)
+  const genre = normalizeGenre(searchParams.jan) ?? null;
   const supabase = createClient();
   let songsQuery = supabase.from("songs").select(SONG_SELECT).is("archived_at", null).order("created_at", { ascending: false });
   if (genre) songsQuery = songsQuery.eq("genre", genre);
