@@ -162,10 +162,8 @@ async function artistLoginBlock(
   return null; // prèv rejte oswa pa janm voye: li ka konekte pou l voye yon nouvo prèv
 }
 
-export async function login(_prev: AuthState, formData: FormData): Promise<AuthState> {
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-
+// Koneksyon ak imèl + modpas, san redireksyon (paj login nan ak pop-up koutè a itilize l)
+async function passwordLogin(email: string, password: string): Promise<{ error?: string; role?: string }> {
   if (!email || !password) return { error: "Ranpli imèl ak modpas ou." };
 
   const supabase = createClient();
@@ -198,8 +196,52 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
     return { error: blocked };
   }
 
+  return { role: profile?.role };
+}
+
+export async function login(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const res = await passwordLogin(String(formData.get("email") ?? "").trim(), String(formData.get("password") ?? ""));
+  if (res.error) return { error: res.error };
   revalidatePath("/", "layout");
-  redirect(profile?.role === "artist" ? "/dashboard" : "/");
+  redirect(res.role === "artist" ? "/dashboard" : "/");
+}
+
+// ===== Pop-up koutè a (ListenerAuthPrompt): moun nan rete sou paj la, mizik la kontinye =====
+export type QuickAuthResult = { error?: string; ok?: boolean; message?: string };
+
+export async function quickLogin(formData: FormData): Promise<QuickAuthResult> {
+  const res = await passwordLogin(String(formData.get("email") ?? "").trim(), String(formData.get("password") ?? ""));
+  if (res.error) return { error: res.error };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function quickSignup(formData: FormData): Promise<QuickAuthResult> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const displayName = String(formData.get("display_name") ?? "").trim().replace(/\s+/g, " ");
+
+  if (displayName.length < 2 || displayName.length > 60) return { error: "Mete non ou (2 a 60 karaktè)." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Mete yon imèl valid." };
+  const pwProblem = passwordProblem(password);
+  if (pwProblem) return { error: pwProblem };
+
+  const origin = headers().get("origin") ?? "";
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { display_name: displayName, role: "listener" }, emailRedirectTo: `${origin}/auth/callback` },
+  });
+  if (error) return { error: translateError(error) };
+  if (data.user && data.user.identities?.length === 0) return { error: "Gen yon kont ki deja egziste ak imèl sa a. Klike « Mwen gen kont deja »." };
+
+  // "Confirm email" dezaktive: moun nan konekte touswit
+  if (data.session) {
+    revalidatePath("/", "layout");
+    return { ok: true };
+  }
+  return { message: `Nou voye yon lyen konfimasyon bay ${email}. Klike sou li pou w aktive kont ou.` };
 }
 
 export async function logout() {
