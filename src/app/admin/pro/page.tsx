@@ -9,7 +9,9 @@ import { ProReview, type AdminProRequest } from "@/components/admin/ProReview";
 export const metadata: Metadata = { title: "Admin: Pro | UpMizik" };
 
 const TABS = [
+  { status: "pending", label: "⏳ Ap tann" },
   { status: "active", label: "⭐ Aktif" },
+  { status: "rejected", label: "❌ Rejte" },
   { status: "revoked", label: "🚫 Retire" },
 ] as const;
 
@@ -22,21 +24,21 @@ type Row = {
   amount_usd: number;
   amount_htg: number;
   months: number;
-  status: "active" | "revoked";
+  status: AdminProRequest["status"];
   admin_note: string | null;
   created_at: string;
   reviewed_at: string | null;
   artist: { display_name: string; pro_until: string | null } | { display_name: string; pro_until: string | null }[] | null;
 };
 
-// Atis yo vin Pro TOUSWIT lè yo voye prèv la: admin tcheke prèv yo isit la, e li retire Pro a si peman an pa vre
+// Atis yo voye prèv peman Pro a; yo vin Pro SÈLMAN lè admin apwouve demann nan isit la
 export default async function AdminProPage({ searchParams }: { searchParams: { status?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
   if (!(await isAdmin(supabase, user.id))) redirect("/");
 
-  const status = TABS.find((t) => t.status === searchParams.status)?.status ?? "active";
+  const status = TABS.find((t) => t.status === searchParams.status)?.status ?? "pending";
   const [{ data, error }, ...counts] = await Promise.all([
     supabase
       .from("pro_requests")
@@ -82,7 +84,7 @@ export default async function AdminProPage({ searchParams }: { searchParams: { s
 
       <h1 className="text-3xl font-extrabold tracking-tight text-white">⭐ Atis Pro yo</h1>
       <p className="mt-1 text-zinc-400">
-        Atis yo vin Pro touswit lè yo voye prèv peman an. Tcheke prèv yo: si yon peman pa vre, retire Pro a ak 1 klik.
+        Verifye prèv peman an (montan, non, nimewo tranzaksyon) anvan w apwouve. Badj PRO a parèt sou pwofil atis la sèlman apre w apwouve l.
       </p>
 
       <nav className="mt-6 flex flex-wrap gap-2">

@@ -20,14 +20,26 @@ const priceUsd = (n: number) => `$${n.toFixed(2)}`;
 
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString("fr-HT", { day: "numeric", month: "long", year: "numeric" });
 
-// Ti notifikasyon bò pwofil atis la: "Vin Pro" (oswa estati Pro li), ak pop-up peman an
-export function ProUpgrade({ proUntil }: { proUntil: string | null }) {
+// Ti notifikasyon bò pwofil atis la: "Vin Pro" (oswa estati Pro li), ak pop-up peman an.
+// pending = atis la voye yon prèv ki ap tann validasyon admin (badj la poko parèt).
+export function ProUpgrade({ proUntil, pending = false }: { proUntil: string | null; pending?: boolean }) {
   const [open, setOpen] = useState(false);
   const pro = isPro(proUntil);
 
   return (
     <>
-      {pro ? (
+      {pending && (
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-400/40 bg-amber-500/10 p-4">
+          <span className="text-2xl" aria-hidden>
+            ⏳
+          </span>
+          <div className="min-w-0 flex-1 text-sm">
+            <p className="font-bold text-white">{pro ? "Pwolonjman Pro ou ap tann validasyon" : "Demann Pro ou an ap tann validasyon"}</p>
+            <p className="text-zinc-300">Ekip UpMizik la ap verifye peman an. W ap resevwa yon notifikasyon depi yo valide l.</p>
+          </div>
+        </div>
+      )}
+      {pending && !pro ? null : pro ? (
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-citron-400/40 bg-gradient-to-r from-citron-400/15 to-amber-500/10 p-4">
           <span className="text-2xl" aria-hidden>
             ⭐
@@ -38,9 +50,11 @@ export function ProUpgrade({ proUntil }: { proUntil: string | null }) {
             </p>
             <p className="text-zinc-300">Aktif jiska {formatDate(proUntil!)}.</p>
           </div>
-          <button type="button" onClick={() => setOpen(true)} className="text-sm font-semibold text-citron-300 hover:text-citron-200">
-            Pwolonje →
-          </button>
+          {!pending && (
+            <button type="button" onClick={() => setOpen(true)} className="text-sm font-semibold text-citron-300 hover:text-citron-200">
+              Pwolonje →
+            </button>
+          )}
         </div>
       ) : (
         <button
@@ -81,7 +95,6 @@ function ProModal({ renewing, onClose }: { renewing: boolean; onClose: () => voi
   const [transactionRef, setTransactionRef] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string>();
-  const [proUntil, setProUntil] = useState<string>();
   const [pending, startTransition] = useTransition();
   const number = methodNumber(settings, method);
 
@@ -126,7 +139,6 @@ function ProModal({ renewing, onClose }: { renewing: boolean; onClose: () => voi
     startTransition(async () => {
       const res = await requestPro(fd);
       if (res.error) return setError(res.error);
-      setProUntil(res.proUntil);
       setStep("done");
     });
   }
@@ -159,10 +171,10 @@ function ProModal({ renewing, onClose }: { renewing: boolean; onClose: () => voi
               ✕
             </button>
             <p className="text-4xl" aria-hidden>
-              {step === "done" ? "🎉" : "⭐"}
+              {step === "done" ? "⏳" : "⭐"}
             </p>
             <h2 id="pro-title" className="mt-2 pr-10 text-2xl font-extrabold text-zinc-950">
-              {step === "done" ? "Ou se atis Pro kounye a!" : renewing ? "Pwolonje pwofil Pro ou" : "Vin atis Pro"}
+              {step === "done" ? "Demann ou an voye!" : renewing ? "Pwolonje pwofil Pro ou" : "Vin atis Pro"}
             </h2>
             {step !== "done" && (
               <p className="mt-1 text-sm font-semibold text-zinc-900/80">
@@ -196,7 +208,7 @@ function ProModal({ renewing, onClose }: { renewing: boolean; onClose: () => voi
                       Voye <strong className="text-white">{formatHTG(priceHtg)}</strong> ({priceUsd(settings.proPriceUsd)}) sou MonCash oswa NatCash.
                     </li>
                     <li>Pran yon foto ekran mesaj konfimasyon an.</li>
-                    <li>Voye foto a isit la: pwofil Pro ou aktive touswit.</li>
+                    <li>Voye foto a isit la. Depi ekip la valide peman an, pwofil Pro ou aktive.</li>
                   </ol>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row-reverse">
@@ -282,30 +294,24 @@ function ProModal({ renewing, onClose }: { renewing: boolean; onClose: () => voi
                     ← Retounen
                   </button>
                   <button type="button" onClick={submit} disabled={pending} className="btn-primary flex-1 rounded-xl px-4 py-3 font-semibold disabled:opacity-60">
-                    {pending ? "Ap voye…" : "✅ Mwen peye, aktive Pro a"}
+                    {pending ? "Ap voye…" : "✅ Voye demann mwen"}
                   </button>
                 </div>
               </>
             )}
 
-            {/* ===== ETAP 3: FINI ===== */}
+            {/* ===== ETAP 3: DEMANN NAN VOYE ===== */}
             {step === "done" && (
               <>
                 <p className="text-zinc-300">
-                  Mèsi! Pwofil Pro ou aktif
-                  {proUntil ? (
-                    <>
-                      {" "}
-                      jiska <strong className="text-white">{formatDate(proUntil)}</strong>
-                    </>
-                  ) : null}
-                  . Badj <ProBadge /> la parèt deja sou pwofil ou.
+                  Mèsi! Ekip UpMizik la ap verifye peman an. Depi yo valide l, badj <ProBadge /> la ap parèt sou pwofil ou epi tout avantaj Pro
+                  yo ap aktive.
                 </p>
                 <p className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-400">
-                  Ekip UpMizik la ap tcheke prèv peman an. Si peman an pa rive, Pro a ka retire.
+                  W ap resevwa yon notifikasyon sou UpMizik lè demann ou an valide.
                 </p>
                 <button type="button" onClick={close} className="btn-primary w-full rounded-xl px-4 py-3 font-semibold">
-                  Kontinye
+                  Dakò
                 </button>
               </>
             )}

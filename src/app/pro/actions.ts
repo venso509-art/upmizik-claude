@@ -7,8 +7,8 @@ const PROOF_TYPES: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jp
 
 export type ProResult = { error?: string; proUntil?: string };
 
-// Atis la voye prèv peman Pro a: foto a monte nan folder li, epi li vin Pro touswit.
-// (Admin tcheke prèv la apre sou /admin/pro e li ka retire Pro a si peman an pa vre.)
+// Atis la voye prèv peman Pro a: foto a monte nan folder li, epi demann nan ap tann.
+// Li vin Pro SÈLMAN lè admin apwouve l sou /admin/pro.
 export async function requestPro(formData: FormData): Promise<ProResult> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -28,7 +28,7 @@ export async function requestPro(formData: FormData): Promise<ProResult> {
     .upload(proofPath, proof, { contentType: PROOF_TYPES[ext], upsert: false });
   if (uploadError) return { error: `Foto prèv la pa monte: ${uploadError.message}` };
 
-  const { data, error } = await supabase.rpc("request_pro", {
+  const { error } = await supabase.rpc("request_pro", {
     p_method: method,
     p_transaction_ref: transactionRef,
     p_proof_path: proofPath,
@@ -43,7 +43,7 @@ export async function requestPro(formData: FormData): Promise<ProResult> {
   revalidatePath(`/atis/${user.id}`);
   revalidatePath("/atis");
   revalidatePath("/");
-  return { proUntil: data as string };
+  return {};
 }
 
 // Chante an vedèt sou CV a (atis Pro sèlman; baz done a verifye l)
@@ -58,10 +58,12 @@ export async function setFeaturedSong(songId: string | null): Promise<ProResult>
   return {};
 }
 
-// Admin: retire Pro a (peman pa vre) oswa remete l
-export async function reviewPro(requestId: string, revoke: boolean, note: string): Promise<ProResult> {
+export type ProDecision = "approve" | "reject" | "revoke";
+
+// Admin: apwouve (atis la vin Pro), rejte (peman pa vre), oswa retire yon Pro aktif
+export async function decidePro(requestId: string, action: ProDecision, note: string): Promise<ProResult> {
   const supabase = createClient();
-  const { error } = await supabase.rpc("review_pro", { p_request_id: requestId, p_revoke: revoke, p_note: note.trim().slice(0, 500) });
+  const { error } = await supabase.rpc("decide_pro", { p_request_id: requestId, p_action: action, p_note: note.trim().slice(0, 500) });
   if (error) return { error: error.message };
   revalidatePath("/admin/pro");
   revalidatePath("/atis");

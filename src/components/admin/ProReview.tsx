@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { reviewPro } from "@/app/pro/actions";
+import { decidePro, type ProDecision } from "@/app/pro/actions";
 import { DONATION_METHODS, formatHTG, formatUSD } from "@/lib/donations";
 import { isPro } from "@/lib/pro";
 
@@ -17,7 +17,7 @@ export type AdminProRequest = {
   amountUsd: number;
   amountHtg: number;
   months: number;
-  status: "active" | "revoked";
+  status: "pending" | "active" | "rejected" | "revoked";
   adminNote: string | null;
   createdAt: string;
   reviewedAt: string | null;
@@ -42,13 +42,17 @@ function ProCard({ r }: { r: AdminProRequest }) {
   const [note, setNote] = useState("");
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
-  const revoked = r.status === "revoked";
+  const CONFIRM: Record<ProDecision, string> = {
+    approve: `Apwouve peman an? ${r.artistName} ap vin Pro pou ${r.months} mwa.`,
+    reject: `Rejte demann Pro ${r.artistName}?`,
+    revoke: `Retire pwofil Pro ${r.artistName}?`,
+  };
 
-  function act(revoke: boolean) {
-    if (revoke && !confirm(`Retire pwofil Pro ${r.artistName}?`)) return;
+  function act(action: ProDecision) {
+    if (!confirm(CONFIRM[action])) return;
     setError(undefined);
     startTransition(async () => {
-      const res = await reviewPro(r.id, revoke, note);
+      const res = await decidePro(r.id, action, note);
       if (res.error) setError(res.error);
     });
   }
@@ -77,22 +81,28 @@ function ProCard({ r }: { r: AdminProRequest }) {
         </p>
         {r.adminNote && <p className="rounded-lg bg-zinc-950 px-2 py-1 text-xs text-zinc-400">Nòt: {r.adminNote}</p>}
 
-        {!revoked && (
+        {r.status !== "rejected" && r.status !== "revoked" && (
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
             maxLength={500}
-            placeholder="Rezon (opsyonèl, atis la ap wè l)"
+            placeholder={r.status === "pending" ? "Mesaj pou atis la (opsyonèl, egz: rezon rejè a)" : "Rezon (opsyonèl, atis la ap wè l)"}
             className="mt-2 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-citron-400"
           />
         )}
-        <div className="pt-1">
-          {revoked ? (
-            <button type="button" disabled={pending} onClick={() => act(false)} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60">
-              {pending ? "…" : "↩️ Remete Pro a"}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {r.status !== "active" && (
+            <button type="button" disabled={pending} onClick={() => act("approve")} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60">
+              {pending ? "…" : r.status === "pending" ? "✅ Apwouve" : "✅ Apwouve kanmenm"}
             </button>
-          ) : (
-            <button type="button" disabled={pending} onClick={() => act(true)} className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60">
+          )}
+          {r.status === "pending" && (
+            <button type="button" disabled={pending} onClick={() => act("reject")} className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60">
+              {pending ? "…" : "❌ Rejte"}
+            </button>
+          )}
+          {r.status === "active" && (
+            <button type="button" disabled={pending} onClick={() => act("revoke")} className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60">
               {pending ? "…" : "🚫 Retire Pro a"}
             </button>
           )}

@@ -38,6 +38,10 @@ export default async function ProfilePage() {
     : { data: null };
   const showPro = !!proRow && proRow.status === "approved";
   const pro = showPro && isPro(proRow.pro_until);
+  // Yon demann Pro k ap tann validasyon admin?
+  const { count: pendingPro } = showPro
+    ? await supabase.from("pro_requests").select("id", { count: "exact", head: true }).eq("artist_id", user.id).eq("status", "pending")
+    : { count: 0 };
   const { data: mySongs } = pro
     ? await supabase.from("songs").select("id, title").eq("artist_id", user.id).is("archived_at", null).order("created_at", { ascending: false })
     : { data: null };
@@ -57,7 +61,7 @@ export default async function ProfilePage() {
       </div>
       {showPro && (
         <div className="mb-8 space-y-3">
-          <ProUpgrade proUntil={proRow.pro_until} />
+          <ProUpgrade proUntil={proRow.pro_until} pending={(pendingPro ?? 0) > 0} />
           {pro && <FeaturedSongPicker songs={mySongs ?? []} current={proRow.featured_song_id} />}
         </div>
       )}
