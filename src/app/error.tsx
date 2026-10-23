@@ -2,13 +2,31 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { isNetworkError, reportNetworkError } from "@/lib/network";
 
 // Paj erè pou yon paj ki kraze (header a ak footer a rete). An pwodiksyon, Next.js kache
 // mesaj erè sèvè yo: nou montre "digest" la, ki pèmèt jwenn mesaj konplè a nan Logs Coolify.
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  // Entènèt koupe/fèb ("Loading chunk failed"...): se pa yon vre erè, pa montre detay teknik yo
+  const network = isNetworkError(error) || (typeof navigator !== "undefined" && !navigator.onLine);
+
   useEffect(() => {
-    console.error("[UpMizik] Erè paj:", error);
-  }, [error]);
+    if (network) reportNetworkError(); // ti bwat la parèt, epi paj la rechaje lè entènèt la tounen
+    else console.error("[UpMizik] Erè paj:", error);
+  }, [error, network]);
+
+  if (network) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-20 text-center">
+        <p className="text-6xl">📡</p>
+        <h1 className="mt-4 text-2xl font-extrabold text-white">Paj la pa t ka fin chaje</h1>
+        <p className="mt-2 text-zinc-400">Entènèt ou a fèb oswa li koupe. Paj la ap rechaje pou kont li lè koneksyon an tounen.</p>
+        <button onClick={() => window.location.reload()} className="mt-6 rounded-full btn-primary px-6 py-3 font-semibold">
+          Eseye ankò
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-lg px-4 py-20 text-center">

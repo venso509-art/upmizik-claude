@@ -54,7 +54,8 @@ export function OfflineLibrary() {
   const playingHere = isPlaying && tracks.some((t) => t.id === current?.id);
 
   return (
-    <div>
+    // Mizik telechaje yo jwe san entènèt: pa bloke bouton yo
+    <div data-offline-ok>
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <span className={`rounded-full px-3 py-1 font-medium ${online ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/15 text-red-300"}`}>
           {online ? "🟢 An liy" : "🔴 San entènèt"}

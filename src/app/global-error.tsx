@@ -1,9 +1,43 @@
 "use client";
 
+import { useEffect } from "react";
+import { isNetworkError, pingServer } from "@/lib/network";
+
 // Paj erè lè menm layout la kraze (egz: header a pa ka konekte ak Supabase).
 // Li ranplase TOUT paj la, kidonk li bezwen pwòp <html>/<body> li, ak stil "inline"
 // (fichye CSS sit la pa chaje nan ka sa a).
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  const network = isNetworkError(error) || (typeof navigator !== "undefined" && !navigator.onLine);
+
+  // Entènèt koupe/fèb: rechaje paj la otomatikman lè sèvè a reponn ankò
+  useEffect(() => {
+    if (!network) return;
+    const t = setInterval(async () => {
+      if (navigator.onLine && (await pingServer())) window.location.reload();
+    }, 4000);
+    return () => clearInterval(t);
+  }, [network]);
+
+  if (network) {
+    return (
+      <html lang="ht">
+        <body style={{ margin: 0, minHeight: "100vh", background: "#0B132B", color: "#e4e4e7", fontFamily: "system-ui, sans-serif" }}>
+          <div style={{ maxWidth: 520, margin: "0 auto", padding: "80px 16px", textAlign: "center" }}>
+            <p style={{ fontSize: 56, margin: 0 }}>📡</p>
+            <h1 style={{ fontSize: 24, color: "#fff", margin: "16px 0 8px" }}>Entènèt ou a fèb oswa li koupe</h1>
+            <p style={{ color: "#a1a1aa", margin: 0 }}>Tanpri tann yon ti moman. Paj la ap rechaje pou kont li lè koneksyon an tounen.</p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{ marginTop: 24, padding: "12px 24px", border: 0, borderRadius: 999, background: "#FFD700", color: "#0B132B", fontWeight: 600, cursor: "pointer" }}
+            >
+              Eseye ankò
+            </button>
+          </div>
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="ht">
       <body style={{ margin: 0, minHeight: "100vh", background: "#0B132B", color: "#e4e4e7", fontFamily: "system-ui, sans-serif" }}>

@@ -19,7 +19,8 @@ export function PlayerBar() {
   if (!current) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 transform-gpu border-t border-zinc-800 bg-zinc-950/95 backdrop-blur md:bottom-0 md:z-50">
+    // data-offline-ok: chante ki deja chaje a ka kontinye jwe/kanpe san entènèt
+    <div data-offline-ok className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 transform-gpu border-t border-zinc-800 bg-zinc-950/95 backdrop-blur md:bottom-0 md:z-50">
       {/* Ba pwogrè fen anlè (vizib sou telefòn) */}
       <div className="h-0.5 bg-zinc-800 sm:hidden">
         <div className="h-full bg-fuchsia-500" style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
