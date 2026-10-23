@@ -7,6 +7,7 @@ import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/up
 import { EMPTY_RELEASE, ReleasePicker, type ReleaseValue } from "@/components/upload/ReleasePicker";
 import { GenreSelect } from "@/components/GenreSelect";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
+import { maxSplits } from "@/lib/pro";
 import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { formatDuration } from "@/lib/songs";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
@@ -58,7 +59,7 @@ function Cover({ url }: { url: string | null }) {
   );
 }
 
-export function SongManager({ songs, artistId }: { songs: ManagedSong[]; artistId: string }) {
+export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSong[]; artistId: string; pro?: boolean }) {
   const [editing, setEditing] = useState<ManagedSong | null>(null);
   const [deleting, setDeleting] = useState<ManagedSong | null>(null);
   const [error, setError] = useState<string>();
@@ -94,7 +95,7 @@ export function SongManager({ songs, artistId }: { songs: ManagedSong[]; artistI
     e.preventDefault();
     if (!editing || !splits || !featuring) return;
     const form = new FormData(e.currentTarget);
-    const splitsError = validateSplits(splits);
+    const splitsError = validateSplits(splits, maxSplits(pro));
     if (splitsError) return setError(splitsError);
     if (sharesOver) return setError("Total pousantaj yo (featuring + kolaboratè) depase 100%.");
     startTransition(async () => {
@@ -185,7 +186,7 @@ export function SongManager({ songs, artistId }: { songs: ManagedSong[]; artistI
               <>
                 <ReleasePicker artistId={artistId} value={release} onChange={setRelease} disabled={pending} />
                 <FeaturingEditor value={featuring} onChange={setFeaturing} otherTotal={splitsTotal(splits)} disabled={pending} />
-                <SplitsEditor splits={splits} onChange={setSplits} disabled={pending} reserved={featuringTotal(featuring)} />
+                <SplitsEditor splits={splits} onChange={setSplits} disabled={pending} reserved={featuringTotal(featuring)} max={maxSplits(pro)} />
               </>
             ) : (
               <p className="rounded-xl border border-zinc-800 p-4 text-sm text-zinc-500">Ap chaje featuring ak pataj royalties yo...</p>

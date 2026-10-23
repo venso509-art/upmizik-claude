@@ -40,9 +40,12 @@ export default async function UploadPage() {
     );
   }
 
+  // Atis Pro: fichye pi gwo ak plis kolaboratè (false si migration Pro a poko kouri)
+  const { data: pro } = await supabase.rpc("is_pro", { p_user: user.id });
+
   return (
     <AuthCard title="Pibliye yon chante" subtitle="Pataje mizik ou ak tout kominote UpMizik la.">
-      <UploadForm userId={user.id} />
+      <UploadForm userId={user.id} pro={pro === true} />
     </AuthCard>
   );
 }

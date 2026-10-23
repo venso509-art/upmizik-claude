@@ -1,11 +1,13 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { DEFAULT_SETTINGS, SETTINGS_SELECT, SETTINGS_SELECT_BASE, toSettings, type AppSettings, type SettingsRow } from "@/lib/settings";
+import { DEFAULT_SETTINGS, SETTINGS_SELECT, SETTINGS_SELECT_BASE, SETTINGS_SELECT_PRO, toSettings, type AppSettings, type SettingsRow } from "@/lib/settings";
 
 // Li paramèt yo yon sèl fwa pa demann (cache React), pou tout paj yo ak layout la
 export const getSettings = cache(async (): Promise<AppSettings> => {
   try {
     const supabase = createClient();
+    const pro = await supabase.from("settings").select(SETTINGS_SELECT_PRO).eq("id", true).maybeSingle<SettingsRow>();
+    if (!pro.error) return toSettings(pro.data);
     const full = await supabase.from("settings").select(SETTINGS_SELECT).eq("id", true).maybeSingle<SettingsRow>();
     if (!full.error) return toSettings(full.data);
     // Si migration non kont lan poko kouri, li rès paramèt yo kanmenm

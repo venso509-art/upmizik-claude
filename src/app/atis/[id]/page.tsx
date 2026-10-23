@@ -8,6 +8,8 @@ import { DonateButton } from "@/components/donate/DonateButton";
 import { SafeImage } from "@/components/SafeImage";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
+import { ProBadge } from "@/components/pro/ProBadge";
+import { isPro } from "@/lib/pro";
 import { ArtistSocialLinks } from "@/components/artist/ArtistSocialLinks";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { computeTrophies, type TrophyStats } from "@/lib/trophies";
@@ -33,6 +35,8 @@ type Artist = {
   tiktok_url?: string | null;
   whatsapp_url?: string | null;
   banner_url?: string | null; // foto kouvèti a
+  pro_until?: string | null; // Pwofil Pro
+  featured_song_id?: string | null;
 };
 
 const BASE_COLUMNS = "id, display_name, bio, avatar_url, created_at, is_verified";
@@ -46,6 +50,7 @@ async function getArtist(id: string): Promise<Artist | null> {
 
   // Si nouvo kolòn yo poko egziste (migration poko kouri), eseye ak mwens kolòn
   for (const columns of [
+    `${BASE_COLUMNS}, ${EXTRA_COLUMNS}, banner_url, tiktok_url, whatsapp_url, pro_until, featured_song_id`,
     `${BASE_COLUMNS}, ${EXTRA_COLUMNS}, banner_url, tiktok_url, whatsapp_url`,
     `${BASE_COLUMNS}, ${EXTRA_COLUMNS}, banner_url`,
     `${BASE_COLUMNS}, ${EXTRA_COLUMNS}`,
@@ -167,6 +172,9 @@ export default async function ArtistPage({ params }: Props) {
     .slice(0, 5)
     .map((s) => tracks.find((t) => t.id === s.id)!)
     .filter(Boolean);
+  // Atis Pro: chante an vedèt li anlè paj la
+  const pro = isPro(artist.pro_until);
+  const featured = pro && artist.featured_song_id ? tracks.find((t) => t.id === artist.featured_song_id) ?? null : null;
   const trophyStats = ((trophyRows ?? []) as TrophyStats[])[0] ?? null;
   const earned = trophyStats ? computeTrophies(trophyStats).filter((t) => t.earned) : [];
 
@@ -252,6 +260,7 @@ export default async function ArtistPage({ params }: Props) {
               {name}
               {/* Badj la bò kote non an, tankou sou gwo rezo sosyal yo */}
               {artist.is_verified && <VerifiedBadge size="lg" className="ml-2 align-middle" />}
+              {pro && <ProBadge size="md" className="ml-2 align-middle" />}
             </h1>
             <p className="mt-3 text-sm text-zinc-300 sm:text-base">
               <span className="font-semibold text-white">{totalPlays.toLocaleString("fr-HT")}</span> koute total
@@ -305,6 +314,38 @@ export default async function ArtistPage({ params }: Props) {
         <div className="grid gap-8 pb-16 pt-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           {/* ===== KOLÒN PRENSIPAL ===== */}
           <div className="min-w-0 space-y-10">
+            {/* CHANTE AN VEDÈT (atis Pro) */}
+            {featured && (
+              <section className="relative overflow-hidden rounded-3xl border border-citron-400/40 bg-gradient-to-br from-citron-400/15 via-zinc-900 to-zinc-950 p-5 sm:p-6">
+                <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:text-left">
+                  <div className="h-40 w-40 shrink-0 overflow-hidden rounded-2xl bg-zinc-800 shadow-2xl shadow-black/50 sm:h-36 sm:w-36">
+                    {featured.coverUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={featured.coverUrl} alt={featured.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-5xl">🎵</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-widest text-citron-300">📌 An vedèt</p>
+                    <h2 className="mt-1 break-words text-2xl font-extrabold text-white sm:text-3xl">{featured.title}</h2>
+                    <p className="mt-1 text-sm text-zinc-400">
+                      {formatPlays(plays[featured.id] ?? 0)} ekout{featured.genre ? ` · ${featured.genre}` : ""}
+                    </p>
+                    <div className="mt-4 flex flex-wrap justify-center gap-3 sm:justify-start">
+                      <PlayAllButton tracks={[featured, ...tracks.filter((t) => t.id !== featured.id)]} label="▶ Jwe l" />
+                      <Link
+                        href={`/chante/${featured.id}`}
+                        className="inline-flex items-center rounded-full border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:border-citron-400 hover:text-white"
+                      >
+                        Wè chante a
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
             {/* 3. POPILÈ */}
             <section>
               <h2 className="text-2xl font-extrabold tracking-tight text-white">🔥 Popilè</h2>

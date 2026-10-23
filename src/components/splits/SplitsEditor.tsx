@@ -9,11 +9,13 @@ export function SplitsEditor({
   onChange,
   disabled,
   reserved = 0,
+  max = MAX_SPLITS,
 }: {
   splits: Split[];
   onChange: (s: Split[]) => void;
   disabled?: boolean;
   reserved?: number; // pousantaj ki deja bay atis featuring yo
+  max?: number; // 10 pou atis Pro yo
 }) {
   const total = splitsTotal(splits);
   const artistShare = Math.max(0, Math.round((100 - total - reserved) * 100) / 100);
@@ -28,10 +30,10 @@ export function SplitsEditor({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-white">🤝 Pataj royalties</p>
-          <p className="text-xs text-zinc-500">Pataje 85% chante a ak jiska {MAX_SPLITS} moun ki te patisipe. UpMizik peye yo dirèkteman.</p>
+          <p className="text-xs text-zinc-500">Pataje 85% chante a ak jiska {max} moun ki te patisipe. UpMizik peye yo dirèkteman.</p>
         </div>
         <span className="shrink-0 rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
-          {splits.length}/{MAX_SPLITS}
+          {splits.length}/{max}
         </span>
       </div>
 
@@ -139,7 +141,7 @@ export function SplitsEditor({
         </ul>
       )}
 
-      {splits.length < MAX_SPLITS && (
+      {splits.length < max && (
         <button
           type="button"
           onClick={() => onChange([...splits, emptySplit()])}

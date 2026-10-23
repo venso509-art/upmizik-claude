@@ -9,7 +9,6 @@ import { normalizeGenre } from "@/lib/genres";
 import {
   AUDIO_TYPES,
   IMAGE_TYPES,
-  MAX_AUDIO_BYTES,
   MAX_IMAGE_BYTES,
   fileExtension,
   readAudioDuration,
@@ -22,6 +21,7 @@ import { EMPTY_RELEASE, ReleasePicker, type ReleaseValue } from "@/components/up
 import { RELEASE_LABELS } from "@/lib/releases";
 import { normalizeUrl } from "@/lib/links";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
+import { maxAudioBytes, maxSplits } from "@/lib/pro";
 
 type Status = "idle" | "uploading" | "done";
 
@@ -46,7 +46,8 @@ function ProgressBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function UploadForm({ userId }: { userId: string }) {
+export function UploadForm({ userId, pro = false }: { userId: string; pro?: boolean }) {
+  const maxAudio = maxAudioBytes(pro);
   const router = useRouter();
   const [audio, setAudio] = useState<File | null>(null);
   const [cover, setCover] = useState<File | null>(null);
@@ -73,7 +74,10 @@ export function UploadForm({ userId }: { userId: string }) {
     setError(undefined);
     if (!file) return setAudio(null);
     if (!AUDIO_TYPES[fileExtension(file)]) return setError("Fòma odyo sa a pa aksepte. Itilize MP3, M4A, WAV, OGG oswa FLAC.");
-    if (file.size > MAX_AUDIO_BYTES) return setError(`Fichye odyo a twò gwo (${formatMB(file.size)}). Maksimòm: 50 MB.`);
+    if (file.size > maxAudio)
+      return setError(
+        `Fichye odyo a twò gwo (${formatMB(file.size)}). Maksimòm: ${formatMB(maxAudio)}.${pro ? "" : " Atis Pro yo ka voye jiska 100 MB."}`,
+      );
     setAudio(file);
   }
 
@@ -96,7 +100,7 @@ export function UploadForm({ userId }: { userId: string }) {
     if (!title) return setError("Mete tit chante a.");
     if (!audio) return setError("Chwazi fichye odyo a.");
     if (youtubeUrl === undefined) return setError("Lyen YouTube la pa valid.");
-    const splitsError = validateSplits(splits);
+    const splitsError = validateSplits(splits, maxSplits(pro));
     if (splitsError) return setError(splitsError);
     if (sharesOver) return setError("Total pousantaj yo (featuring + kolaboratè) depase 100%.");
     const releaseLabel = RELEASE_LABELS[release.kind].label;
@@ -288,7 +292,7 @@ export function UploadForm({ userId }: { userId: string }) {
           ) : (
             <>
               <span className="mt-2 font-medium text-white">Chwazi fichye odyo a</span>
-              <span className="text-xs text-zinc-400">MP3, M4A, WAV, OGG, FLAC · Maks 50 MB</span>
+              <span className="text-xs text-zinc-400">MP3, M4A, WAV, OGG, FLAC · Maks {pro ? "100" : "50"} MB</span>
             </>
           )}
           <input type="file" accept=".mp3,.m4a,.wav,.ogg,.flac" className="sr-only" onChange={(e) => pickAudio(e.target.files?.[0])} />
@@ -313,7 +317,7 @@ export function UploadForm({ userId }: { userId: string }) {
 
       <FeaturingEditor value={featuring} onChange={setFeaturing} otherTotal={splitsTotal(splits)} disabled={busy} />
 
-      <SplitsEditor splits={splits} onChange={setSplits} disabled={busy} reserved={featuringTotal(featuring)} />
+      <SplitsEditor splits={splits} onChange={setSplits} disabled={busy} reserved={featuringTotal(featuring)} max={maxSplits(pro)} />
 
       <FormMessage error={error} />
 

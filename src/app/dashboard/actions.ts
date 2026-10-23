@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeGenre } from "@/lib/genres";
 import { normalizeUrl } from "@/lib/links";
-import { validateSplits, type Split } from "@/lib/splits";
+import { MAX_SPLITS, validateSplits, type Split } from "@/lib/splits";
+import { PRO_MAX_SPLITS } from "@/lib/pro";
 
 export type SongActionResult = { error?: string };
 
@@ -79,12 +80,16 @@ export async function updateSong(
   if (genre === undefined) return { error: "Jan mizik la pa valid (2 a 40 lèt)." };
   const youtubeUrl = normalizeUrl(input.youtubeUrl);
   if (youtubeUrl === undefined) return { error: "Lyen YouTube la pa valid." };
-  const splitsError = validateSplits(input.splits);
+  const splitsError = validateSplits(input.splits, PRO_MAX_SPLITS);
   if (splitsError) return { error: splitsError };
 
   const { supabase, user, song } = await getOwnSong(songId);
   if (!user) return { error: "Ou dwe konekte." };
   if (!song) return { error: "Chante sa a pa egziste oswa li pa pou ou." };
+  // Plis pase 5 kolaboratè: se pou atis Pro yo sèlman
+  if (input.splits.length > MAX_SPLITS && (await supabase.rpc("is_pro", { p_user: user.id })).data !== true) {
+    return { error: `Ou ka ajoute maksimòm ${MAX_SPLITS} kolaboratè. Atis Pro yo ka mete jiska ${PRO_MAX_SPLITS}.` };
+  }
 
   const { error } = await supabase
     .from("songs")

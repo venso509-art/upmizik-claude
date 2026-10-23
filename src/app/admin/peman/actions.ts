@@ -19,6 +19,8 @@ export async function updatePaymentSettings(_prev: SettingsState, formData: Form
   const registrationFeeUsd = num(formData, "registration_fee_usd");
   const minDonationUsd = num(formData, "min_donation_usd");
   const monthlyFeeUsd = num(formData, "monthly_fee_usd");
+  const proPriceUsd = num(formData, "pro_price_usd");
+  const proMonths = num(formData, "pro_months");
   const moncash = String(formData.get("moncash_number") ?? "").trim();
   const natcash = String(formData.get("natcash_number") ?? "").trim();
   const accountName = String(formData.get("account_name") ?? "").trim().replace(/\s+/g, " ");
@@ -28,6 +30,8 @@ export async function updatePaymentSettings(_prev: SettingsState, formData: Form
   if (!(registrationFeeUsd >= 0 && registrationFeeUsd <= 1000)) return { error: "Frè enskripsyon an pa valid." };
   if (!(minDonationUsd > 0 && minDonationUsd <= 1000)) return { error: "Don minimòm lan pa valid." };
   if (!(monthlyFeeUsd >= 0 && monthlyFeeUsd <= 100)) return { error: "Frè mansyèl la pa valid." };
+  if (!(proPriceUsd > 0 && proPriceUsd <= 1000)) return { error: "Pri Pwofil Pro a pa valid." };
+  if (!(Number.isInteger(proMonths) && proMonths >= 1 && proMonths <= 120)) return { error: "Dire Pro a dwe ant 1 ak 120 mwa." };
   for (const [label, n] of [["MonCash", moncash], ["NatCash", natcash]] as const) {
     if (n.replace(/\D/g, "").length < 8 || n.length > 20) return { error: `Nimewo ${label} la pa valid.` };
   }
@@ -42,6 +46,8 @@ export async function updatePaymentSettings(_prev: SettingsState, formData: Form
       registration_fee_usd: registrationFeeUsd,
       min_donation_usd: minDonationUsd,
       monthly_fee_usd: monthlyFeeUsd,
+      pro_price_usd: proPriceUsd,
+      pro_months: proMonths,
       updated_by: user.id,
       updated_at: new Date().toISOString(),
     })

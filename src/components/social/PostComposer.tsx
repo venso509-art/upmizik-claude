@@ -154,7 +154,7 @@ export function PostComposer({ posts, artistId, artistName }: { posts: MyPost[];
           Wè feed la →
         </a>
       </div>
-      <p className="mt-0.5 text-sm text-zinc-500">Yon imaj oswa yon lyen, ak yon ti tèks. Pòs la ap rete vizib pou 30 jou.</p>
+      <p className="mt-0.5 text-sm text-zinc-500">Yon imaj oswa yon lyen, ak yon ti tèks. Pòs la ap rete vizib pou 30 jou (60 jou si w se atis Pro).</p>
 
       <form onSubmit={submit} className="mt-4 space-y-4">
         {/* Chwa: imaj oswa lyen */}

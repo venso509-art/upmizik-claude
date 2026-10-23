@@ -138,6 +138,8 @@ export default async function DashboardPage() {
   ]);
   const balance = toBalance((balanceRes.data as BalanceRow[] | null)?.[0]);
 
+  // Atis Pro: jiska 10 kolaboratè lè l ap modifye yon chante
+  const isProArtist = (await supabase.rpc("is_pro", { p_user: user.id })).data === true;
   const managed: ManagedSong[] = songs.map((s) => ({
     id: s.id,
     title: s.title,
@@ -271,7 +273,7 @@ export default async function DashboardPage() {
           {/* ===== CHANTE YO ===== */}
           <div className="mt-6">
             <Panel title="Chante ou yo" subtitle={`${songs.length} chante sou platfòm lan`}>
-              <SongManager songs={managed} artistId={user.id} />
+              <SongManager songs={managed} artistId={user.id} pro={isProArtist} />
             </Panel>
           </div>
         </>

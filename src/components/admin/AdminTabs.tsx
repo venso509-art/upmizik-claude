@@ -25,6 +25,7 @@ export async function AdminTabs() {
           { href: "/admin/kont", label: "💼 Kont atis" },
           { href: "/admin/relve", label: "🗂️ Relve mwa" },
           { href: "/admin/peman", label: "💳 Peman" },
+          { href: "/admin/pro", label: "⭐ Pro" },
           { href: "/admin/pos", label: "🗞️ Jesyon Pòs" },
           { href: "/admin/top3", label: "🏆 Top 3" },
           { href: "/admin/nivo", label: "🏅 Nivo" },

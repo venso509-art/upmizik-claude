@@ -14,7 +14,7 @@ function refresh() {
   revalidatePath("/admin/pos");
 }
 
-// Atis la pibliye yon nouvo pòs (dire 30 jou, kalkile pa baz done a).
+// Atis la pibliye yon nouvo pòs (dire 30 jou, 60 pou atis Pro; kalkile pa baz done a).
 // Pòs la dwe gen yon imaj (deja monte nan post-images/<atis>/...) OSWA yon lyen, plis tèks la.
 export async function createPost(input: { content: string; imagePath: string | null; linkUrl: string | null }): Promise<PostResult> {
   const supabase = createClient();
@@ -42,7 +42,7 @@ export async function createPost(input: { content: string; imagePath: string | n
   }
 
   refresh();
-  return { message: "Pòs ou pibliye! Li parèt sou paj Sosyal la pou 30 jou. 🎉" };
+  return { message: "Pòs ou pibliye! Li parèt sou paj Sosyal la. 🎉" };
 }
 
 // Atis la retire pwòp pòs li

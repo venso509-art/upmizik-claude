@@ -7,6 +7,8 @@ export type AppSettings = {
   registrationFeeUsd: number;
   minDonationUsd: number;
   monthlyFeeUsd: number;
+  proPriceUsd: number; // Pwofil Pro
+  proMonths: number;
 };
 
 // Valè sekou si baz done a pa reponn (menm valè ak migration nan)
@@ -18,6 +20,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   registrationFeeUsd: 4.99,
   minDonationUsd: 5,
   monthlyFeeUsd: 0.99,
+  proPriceUsd: 5.5,
+  proMonths: 24,
 };
 
 export type SettingsRow = {
@@ -28,10 +32,13 @@ export type SettingsRow = {
   registration_fee_usd: number;
   min_donation_usd: number;
   monthly_fee_usd: number;
+  pro_price_usd?: number;
+  pro_months?: number;
 };
 
 export const SETTINGS_SELECT_BASE = "htg_per_usd, moncash_number, natcash_number, registration_fee_usd, min_donation_usd, monthly_fee_usd";
 export const SETTINGS_SELECT = `${SETTINGS_SELECT_BASE}, account_name`;
+export const SETTINGS_SELECT_PRO = `${SETTINGS_SELECT}, pro_price_usd, pro_months`;
 
 export function toSettings(row: SettingsRow | null | undefined): AppSettings {
   if (!row) return DEFAULT_SETTINGS;
@@ -43,6 +50,8 @@ export function toSettings(row: SettingsRow | null | undefined): AppSettings {
     registrationFeeUsd: Number(row.registration_fee_usd),
     minDonationUsd: Number(row.min_donation_usd),
     monthlyFeeUsd: Number(row.monthly_fee_usd),
+    proPriceUsd: row.pro_price_usd != null ? Number(row.pro_price_usd) : DEFAULT_SETTINGS.proPriceUsd,
+    proMonths: row.pro_months ?? DEFAULT_SETTINGS.proMonths,
   };
 }
 

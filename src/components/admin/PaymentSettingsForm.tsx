@@ -67,6 +67,19 @@ export function PaymentSettingsForm({ initial }: { initial: AppSettings }) {
           </div>
         </div>
 
+        <div>
+          <h2 className="text-lg font-bold text-white">⭐ Pwofil Pro</h2>
+          <p className="text-sm text-zinc-500">Sa atis yo peye pou vin Pro, ak konbyen tan li dire. Atis ki deja Pro yo kenbe dat yo genyen an.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field label="Pri Pro a (dola)">
+              <input name="pro_price_usd" inputMode="decimal" required defaultValue={initial.proPriceUsd.toFixed(2)} onChange={set("proPriceUsd", true)} className={inputClass} />
+            </Field>
+            <Field label="Dire (mwa)">
+              <input name="pro_months" inputMode="numeric" required defaultValue={initial.proMonths} onChange={set("proMonths", true)} className={inputClass} />
+            </Field>
+          </div>
+        </div>
+
         <FormMessage error={state?.error} message={state?.message} />
         <SubmitButton>💾 Sove paramèt yo</SubmitButton>
       </form>
@@ -81,6 +94,7 @@ export function PaymentSettingsForm({ initial }: { initial: AppSettings }) {
           <Preview label="Don minimòm" value={`${formatUSD(s.minDonationUsd)} = ${formatHTG(usdToHtg(s.minDonationUsd, s))}`} />
           <Preview label="Don $10" value={formatHTG(usdToHtg(10, s))} />
           <Preview label="Frè mansyèl" value={`${formatUSD(s.monthlyFeeUsd)} = ${formatHTG(monthlyFeeHtg(s))}`} />
+          <Preview label="Pwofil Pro" value={`$${s.proPriceUsd.toFixed(2)} = ${formatHTG(usdToHtg(s.proPriceUsd, s))} · ${s.proMonths} mwa`} />
           <Preview label="MonCash" value={s.moncashNumber || "—"} />
           <Preview label="NatCash" value={s.natcashNumber || "—"} />
           <Preview label="Non sou kont lan" value={s.accountName || "—"} />

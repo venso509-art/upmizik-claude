@@ -3,6 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm, type EditableProfile } from "@/components/profile/ProfileForm";
+import { ProUpgrade } from "@/components/pro/ProUpgrade";
+import { FeaturedSongPicker } from "@/components/pro/FeaturedSongPicker";
+import { isPro } from "@/lib/pro";
 
 export const metadata: Metadata = { title: "Modifye pwofil | UpMizik" };
 
@@ -24,6 +27,21 @@ export default async function ProfilePage() {
     .eq("id", user.id)
     .maybeSingle<{ banner_url: string | null; tiktok_url: string | null; whatsapp_url: string | null }>();
 
+  // Pwofil Pro (atis apwouve sèlman). Apa tou, pou paj la mache si migration Pro a poko kouri.
+  const isArtist = profile.role === "artist";
+  const { data: proRow } = isArtist
+    ? await supabase
+        .from("profiles")
+        .select("status, pro_until, featured_song_id")
+        .eq("id", user.id)
+        .maybeSingle<{ status: string; pro_until: string | null; featured_song_id: string | null }>()
+    : { data: null };
+  const showPro = !!proRow && proRow.status === "approved";
+  const pro = showPro && isPro(proRow.pro_until);
+  const { data: mySongs } = pro
+    ? await supabase.from("songs").select("id, title").eq("artist_id", user.id).is("archived_at", null).order("created_at", { ascending: false })
+    : { data: null };
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -37,6 +55,12 @@ export default async function ProfilePage() {
           </Link>
         )}
       </div>
+      {showPro && (
+        <div className="mb-8 space-y-3">
+          <ProUpgrade proUntil={proRow.pro_until} />
+          {pro && <FeaturedSongPicker songs={mySongs ?? []} current={proRow.featured_song_id} />}
+        </div>
+      )}
       <ProfileForm
         profile={{ ...profile, banner_url: banner?.banner_url ?? null, tiktok_url: banner?.tiktok_url ?? null, whatsapp_url: banner?.whatsapp_url ?? null }}
       />

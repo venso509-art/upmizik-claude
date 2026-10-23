@@ -18,8 +18,9 @@ export function splitsTotal(splits: Split[]) {
 }
 
 // Retounen yon mesaj erè, oswa null si tout bagay kòrèk
-export function validateSplits(splits: Split[]): string | null {
-  if (splits.length > MAX_SPLITS) return `Ou ka ajoute maksimòm ${MAX_SPLITS} kolaboratè.`;
+// max: 5 pou tout atis, 10 pou atis Pro yo (gade lib/pro.ts)
+export function validateSplits(splits: Split[], max = MAX_SPLITS): string | null {
+  if (splits.length > max) return `Ou ka ajoute maksimòm ${max} kolaboratè.`;
   for (let i = 0; i < splits.length; i++) {
     const s = splits[i];
     const n = i + 1;

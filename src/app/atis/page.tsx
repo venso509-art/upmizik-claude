@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
+import { ProBadge } from "@/components/pro/ProBadge";
 import { SearchInput } from "@/components/search/SearchInput";
 import { ScrollRow } from "@/components/ScrollRow";
 
@@ -18,7 +19,7 @@ function ArtistList({ searching, count, children }: { searching: boolean; count:
   );
 }
 
-type ArtistRow ={ id: string; display_name: string; avatar_url: string | null; is_verified: boolean; location: string | null };
+type ArtistRow = { id: string; display_name: string; avatar_url: string | null; is_verified: boolean; location: string | null; pro?: boolean };
 
 export default async function ArtistsPage({ searchParams }: { searchParams: { q?: string } }) {
   const q = (searchParams.q ?? "").trim().slice(0, 100);
@@ -47,6 +48,17 @@ export default async function ArtistsPage({ searchParams }: { searchParams: { q?
       .limit(200)
       .returns<ArtistRow[]>();
     artists = data ?? [];
+  }
+
+  // Atis Pro yo: badj PRO, epi yo parèt an premye (rès lòd la pa chanje)
+  if (artists.length) {
+    const { data: proRows } = await supabase
+      .from("profiles")
+      .select("id")
+      .in("id", artists.map((a) => a.id))
+      .gt("pro_until", new Date().toISOString());
+    const proIds = new Set((proRows ?? []).map((r) => r.id));
+    artists = artists.map((a) => ({ ...a, pro: proIds.has(a.id) })).sort((a, b) => Number(!!b.pro) - Number(!!a.pro));
   }
 
   return (
@@ -94,6 +106,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: { q?
                     <span className="truncate">{a.display_name}</span>
                     {a.is_verified && <VerifiedBadge />}
                   </span>
+                  {a.pro && <ProBadge className="mt-1" />}
                   <span className="mt-0.5 w-full truncate text-xs text-zinc-500">{a.location ? `📍 ${a.location}` : "🎤 Atis"}</span>
                 </Link>
               </li>

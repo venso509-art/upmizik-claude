@@ -116,7 +116,7 @@ export function PostCard({
             🎤 Atis · <time dateTime={post.created_at}>{timeAgo(post.created_at, now)}</time>
           </p>
         </div>
-        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold tabular-nums ${tone}`} title="Pòs yo disparèt otomatikman apre 30 jou">
+        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold tabular-nums ${tone}`} title="Pòs yo disparèt otomatikman lè tan yo fini">
           ⏳ {daysLeftLabel(post.expires_at, now)}
         </span>
       </header>

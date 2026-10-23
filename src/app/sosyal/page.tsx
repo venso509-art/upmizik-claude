@@ -55,7 +55,7 @@ export default async function SocialPage({ searchParams }: { searchParams: { q?:
       <div className="relative mx-auto max-w-2xl px-4 py-10">
         <p className="text-sm font-medium uppercase tracking-widest text-fuchsia-300">UpMizik Sosyal</p>
         <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">💬 Sa k ap pase</h1>
-        <p className="mt-2 text-zinc-400">Nouvèl, evènman ak nouvo pwojè atis yo. Chak pòs rete 30 jou.</p>
+        <p className="mt-2 text-zinc-400">Nouvèl, evènman ak nouvo pwojè atis yo. Chak pòs rete 30 jou (60 jou pou atis Pro yo).</p>
 
         {canPost && (
           <Link
