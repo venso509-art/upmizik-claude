@@ -83,7 +83,7 @@ export default async function SongPage({ params }: Props) {
             </Link>
             <FeaturingLinks artists={extras[song.id]?.featuring} className="font-semibold text-white" />
             {track.genre && <> · {track.genre}</>} · {formatDuration(track.durationSeconds)} ·{" "}
-            {song.play_count.toLocaleString("fr-HT")} koute
+            {song.play_count.toLocaleString("fr-HT")} ekout
             {typeof relRow?.streams === "number" && relRow.streams > 0 && <> · {relRow.streams.toLocaleString("fr-HT")} streams</>}
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:justify-start">

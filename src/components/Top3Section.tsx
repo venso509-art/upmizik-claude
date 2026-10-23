@@ -131,7 +131,7 @@ export function Top3Section({
         <div>
           <p className="text-sm font-semibold uppercase tracking-widest text-amber-300">🏆 Top 3</p>
           <h2 className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Pi gwo mizik yo kounye a</h2>
-          <p className="mt-1 text-sm text-zinc-400">{auto ? "Mizik ki pi koute sou UpMizik." : "Seleksyon ekip UpMizik la."}</p>
+          <p className="mt-1 text-sm text-zinc-400">{auto ? "Mizik ki gen plis ekout sou UpMizik." : "Seleksyon ekip UpMizik la."}</p>
         </div>
         <button
           type="button"

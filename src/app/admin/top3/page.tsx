@@ -36,7 +36,7 @@ export default async function AdminTop3Page() {
       <p className="mt-1 text-zinc-400">Chwazi 3 mizik ki ap parèt an gwo sou paj akèy la.</p>
 
       <p className={`mt-4 inline-block rounded-full px-3 py-1 text-sm ${isAuto ? "bg-zinc-800 text-zinc-300" : "bg-amber-500/15 text-amber-300"}`}>
-        {isAuto ? "🤖 Kounye a: mòd otomatik (3 mizik ki pi koute yo)" : "✋ Kounye a: seleksyon admin"}
+        {isAuto ? "🤖 Kounye a: mòd otomatik (3 mizik ki gen plis ekout yo)" : "✋ Kounye a: seleksyon admin"}
       </p>
 
       <div className="mt-8">

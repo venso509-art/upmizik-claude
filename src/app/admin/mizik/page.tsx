@@ -19,7 +19,7 @@ const FILTERS = [
 
 const SORTS = [
   { key: "nouvo", label: "🆕 Pi nouvo" },
-  { key: "koute", label: "🎧 Pi koute" },
+  { key: "koute", label: "🎧 Plis ekout" },
   { key: "tit", label: "🔤 Tit A-Z" },
 ] as const;
 

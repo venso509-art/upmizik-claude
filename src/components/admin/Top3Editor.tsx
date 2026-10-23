@@ -130,11 +130,11 @@ export function Top3Editor({ songs, initial }: { songs: SongOption[]; initial: (
 
       <div className="flex flex-wrap justify-between gap-3">
         <button
-          onClick={() => confirm("Retounen nan mòd otomatik? Paj akèy la ap montre 3 mizik ki pi koute yo.") && save([])}
+          onClick={() => confirm("Retounen nan mòd otomatik? Paj akèy la ap montre 3 mizik ki gen plis ekout yo.") && save([])}
           disabled={pending}
           className="rounded-lg px-4 py-2.5 text-sm text-zinc-400 transition hover:text-white disabled:opacity-50"
         >
-          🤖 Mòd otomatik (3 pi koute yo)
+          🤖 Mòd otomatik (3 ki gen plis ekout)
         </button>
         <button
           onClick={() => save(slots)}

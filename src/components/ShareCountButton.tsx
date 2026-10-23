@@ -9,6 +9,7 @@ export function ShareCountButton({
   id,
   path,
   title,
+  text,
   initialCount = 0,
   className,
 }: {
@@ -16,6 +17,7 @@ export function ShareCountButton({
   id: string;
   path: string;
   title: string;
+  text?: string; // mesaj ki akonpaye lyen an
   initialCount?: number;
   className?: string;
 }) {
@@ -23,7 +25,7 @@ export function ShareCountButton({
   const [copied, setCopied] = useState(false);
 
   async function onClick() {
-    const res = await shareLink(path, title);
+    const res = await shareLink(path, title, text);
     if (!res) return;
     if (res === "copied") {
       setCopied(true);

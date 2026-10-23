@@ -15,6 +15,7 @@ import { SongManager, type ManagedSong } from "@/components/dashboard/SongManage
 import { PostComposer, type MyPost } from "@/components/social/PostComposer";
 import { postImageUrl } from "@/lib/posts";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
+import { donateShareText } from "@/lib/shareMessages";
 
 export const metadata: Metadata = { title: "Dashboard | UpMizik" };
 
@@ -171,7 +172,7 @@ export default async function DashboardPage() {
   }
   const songsByGenre: BarDatum[] = Array.from(byGenre.entries())
     .sort((a, b) => b[1].count - a[1].count)
-    .map(([label, v]) => ({ label, value: v.count, detail: `${v.plays.toLocaleString("fr-HT")} koute` }));
+    .map(([label, v]) => ({ label, value: v.count, detail: `${v.plays.toLocaleString("fr-HT")} ekout` }));
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -208,7 +209,7 @@ export default async function DashboardPage() {
             >
               ✏️ Modifye pwofil
             </Link>
-            <ShareLinkButton path={`/don/${user.id}`} label="🔗 Pataje lyen don mwen" />
+            <ShareLinkButton path={`/don/${user.id}`} label="🔗 Pataje lyen don mwen" title={`Sipòte ${profile.display_name} sou UpMizik`} text={donateShareText(profile.display_name, true)} />
           </div>
         </div>
       </section>
@@ -262,8 +263,8 @@ export default async function DashboardPage() {
         <>
           {/* ===== ESTATISTIK ===== */}
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <Panel title="Koute pa chante" subtitle={songs.length > 8 ? "8 chante ki pi koute yo" : "Tout chante ou yo"}>
-              <BarChart data={playsBySong} unit="koute" />
+            <Panel title="Ekout pa chante" subtitle={songs.length > 8 ? "8 chante ki gen plis ekout yo" : "Tout chante ou yo"}>
+              <BarChart data={playsBySong} unit="ekout" />
             </Panel>
             <Panel title="Chante pa jan mizik" subtitle="Konbyen chante ou genyen nan chak jan">
               <BarChart data={songsByGenre} unit="chante" />

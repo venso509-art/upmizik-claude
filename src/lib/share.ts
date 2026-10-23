@@ -17,7 +17,8 @@ export async function recordShare(kind: ShareKind, id: string): Promise<number |
   return Number(data ?? 0);
 }
 
-// Pataje yon lyen: meni pataj telefòn nan, oswa kopye lyen an. Retounen "shared", "copied" oswa null (anile).
+// Pataje yon lyen: meni pataj telefòn nan, oswa kopye mesaj la + lyen an. Retounen "shared", "copied" oswa null (anile).
+// text = mesaj ki akonpaye lyen an (gade lib/shareMessages.ts)
 export async function shareLink(path: string, title: string, text?: string): Promise<"shared" | "copied" | null> {
   const url = `${window.location.origin}${path}`;
   try {
@@ -25,7 +26,8 @@ export async function shareLink(path: string, title: string, text?: string): Pro
       await navigator.share({ title, text, url });
       return "shared";
     }
-    await navigator.clipboard.writeText(url);
+    // Sou òdinatè: kopye mesaj la ak lyen an ansanm, pou moun nan ka kole l sou WhatsApp/Facebook
+    await navigator.clipboard.writeText(text ? `${text}\n👉 ${url}` : url);
     return "copied";
   } catch {
     return null; // moun nan fèmen meni pataj la

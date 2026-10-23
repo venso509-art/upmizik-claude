@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { PLAQUE_MIN_DONATIONS_USD, PLAY_LEVELS, formatPlays, levelName, progressFor, type LevelKind } from "@/lib/levels";
+import { PLAQUE_MIN_DONATIONS_USD, PLAY_LEVELS, formatPlays, progressFor, type LevelKind } from "@/lib/levels";
+import { Medal } from "@/components/badges/Medal";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 type EventRow = { kind: LevelKind; threshold: number; reached_at: string; plaque_shipped_at: string | null };
@@ -9,20 +10,27 @@ function LevelBar({ title, kind, value, format }: { title: string; kind: LevelKi
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-5">
       <p className="text-sm text-zinc-400">{title}</p>
-      <p className="mt-2 text-2xl font-extrabold text-white">
-        {current.emoji} {current.name}
-      </p>
-      <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-zinc-800">
-        <div className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-500" style={{ width: `${progress * 100}%` }} />
+      <div className="mt-3 flex items-center gap-4">
+        <Medal icon={current.icon} tier={current.tier} size="lg" />
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-widest text-zinc-500">Nivo aktyèl</p>
+          <p className="text-2xl font-extrabold text-white">{current.name}</p>
+        </div>
+      </div>
+      <div className="mt-5 flex items-center gap-3">
+        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-zinc-800">
+          <div className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-citron-400" style={{ width: `${progress * 100}%` }} />
+        </div>
+        {next && <Medal icon={next.icon} tier={next.tier} size="xs" locked title={next.name} />}
       </div>
       <p className="mt-2 text-xs text-zinc-400">
         {next ? (
           <>
             <span className="font-semibold text-white">{format(value)}</span> / {format(next.threshold)} · ankò{" "}
-            <span className="text-zinc-200">{format(next.threshold - value)}</span> pou {next.emoji} {next.name}
+            <span className="text-zinc-200">{format(next.threshold - value)}</span> pou <span className="font-semibold text-zinc-200">{next.name}</span>
           </>
         ) : (
-          <span className="text-amber-300">Ou rive nan pi gwo nivo a! 🏆</span>
+          <span className="text-amber-300">Ou rive nan pi gwo nivo a!</span>
         )}
       </p>
     </div>
@@ -80,9 +88,14 @@ export async function LevelsCard({ artistId, verified }: { artistId: string; ver
             const shippedAt = shipped.get(l.threshold);
             const eligible = reached && donationsUsd >= PLAQUE_MIN_DONATIONS_USD;
             return (
-              <li key={l.threshold} className={`rounded-xl border p-3 text-sm ${reached ? "border-amber-500/40 bg-zinc-950" : "border-zinc-800 bg-zinc-950/50 opacity-60"}`}>
-                <p className="font-semibold text-white">{levelName("plays", l.threshold)}</p>
-                <p className="text-xs text-zinc-400">{formatPlays(l.threshold)} ekout</p>
+              <li key={l.threshold} className={`rounded-xl border p-3 text-sm ${reached ? "border-amber-500/40 bg-zinc-950" : "border-zinc-800 bg-zinc-950/50"}`}>
+                <div className="flex items-center gap-3">
+                  <Medal icon={l.icon} tier={l.tier} size="sm" locked={!reached} />
+                  <div>
+                    <p className="font-semibold text-white">Plak {l.name}</p>
+                    <p className="text-xs text-zinc-400">{formatPlays(l.threshold)} ekout</p>
+                  </div>
+                </div>
                 <p className="mt-2 text-xs">
                   {shippedAt ? (
                     <span className="text-emerald-300">📦 Plak la voye</span>

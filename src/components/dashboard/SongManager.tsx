@@ -143,7 +143,7 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
             </div>
             <div className="hidden w-16 text-right sm:block">
               <p className="font-semibold tabular-nums text-white">{s.plays.toLocaleString("fr-HT")}</p>
-              <p className="text-xs text-zinc-500">koute</p>
+              <p className="text-xs text-zinc-500">ekout</p>
             </div>
             <div className="hidden w-16 text-right sm:block">
               <p className="font-semibold tabular-nums text-white">{s.comments.toLocaleString("fr-HT")}</p>

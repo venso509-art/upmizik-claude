@@ -6,6 +6,7 @@ import { DonateButton } from "@/components/donate/DonateButton";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
+import { donateShareText } from "@/lib/shareMessages";
 import { ARTIST_SHARE_PERCENT } from "@/lib/finance";
 
 type Props = { params: { id: string } };
@@ -77,7 +78,7 @@ export default async function DonatePage({ params }: Props) {
             className="btn-primary inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg"
           />
           <div className="flex flex-wrap justify-center gap-2">
-            <ShareLinkButton path={`/don/${artist.id}`} />
+            <ShareLinkButton path={`/don/${artist.id}`} title={`Sipòte ${artist.display_name} sou UpMizik`} text={donateShareText(artist.display_name, false)} />
             <Link href={`/atis/${artist.id}`} className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white">
               🎤 Wè paj atis la
             </Link>

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { SongExtras } from "@/lib/songs";
 import { DonateButton } from "@/components/donate/DonateButton";
+import { songShareText } from "@/lib/shareMessages";
 import { recordShare, shareLink } from "@/lib/share";
 import { DownloadButton } from "@/components/offline/DownloadButton";
 import type { Track } from "@/components/player/PlayerProvider";
@@ -78,7 +79,7 @@ export function SongActions({
 
   // Pataje chante a, epi ogmante kontè pataj la (yon fwa pa moun, pa sesyon)
   async function share() {
-    const res = await shareLink(`/chante/${songId}`, title, `Koute « ${title} » pa ${artistName} sou UpMizik 🎶`);
+    const res = await shareLink(`/chante/${songId}`, `${title} – ${artistName} | UpMizik`, songShareText(title, artistName));
     if (!res) return;
     if (res === "copied") {
       setCopied(true);

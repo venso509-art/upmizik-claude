@@ -9,6 +9,8 @@ import { SafeImage } from "@/components/SafeImage";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { ProBadge } from "@/components/pro/ProBadge";
+import { artistShareText } from "@/lib/shareMessages";
+import { Medal } from "@/components/badges/Medal";
 import { isPro } from "@/lib/pro";
 import { ArtistSocialLinks } from "@/components/artist/ArtistSocialLinks";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
@@ -176,7 +178,8 @@ export default async function ArtistPage({ params }: Props) {
   const pro = isPro(artist.pro_until);
   const featured = pro && artist.featured_song_id ? tracks.find((t) => t.id === artist.featured_song_id) ?? null : null;
   const trophyStats = ((trophyRows ?? []) as TrophyStats[])[0] ?? null;
-  const earned = trophyStats ? computeTrophies(trophyStats).filter((t) => t.earned) : [];
+  const allTrophies = trophyStats ? computeTrophies(trophyStats) : [];
+  const earned = allTrophies.filter((t) => t.earned);
 
   const isOwner = user?.id === artist.id;
   const name = artist.display_name;
@@ -263,7 +266,7 @@ export default async function ArtistPage({ params }: Props) {
               {pro && <ProBadge size="md" className="ml-2 align-middle" />}
             </h1>
             <p className="mt-3 text-sm text-zinc-300 sm:text-base">
-              <span className="font-semibold text-white">{totalPlays.toLocaleString("fr-HT")}</span> koute total
+              <span className="font-semibold text-white">{totalPlays.toLocaleString("fr-HT")}</span> ekout total
               {artist.location && <> · 📍 {artist.location}</>}
             </p>
             {isOwner && !artist.banner_url && (
@@ -293,6 +296,7 @@ export default async function ArtistPage({ params }: Props) {
             path={`/atis/${artist.id}`}
             label={isOwner ? "🔗 Pataje pwofil mwen" : "🔗 Pataje"}
             title={`${name} sou UpMizik`}
+            text={artistShareText(name, isOwner)}
             className={
               isOwner
                 ? "btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm"
@@ -450,17 +454,45 @@ export default async function ArtistPage({ params }: Props) {
               )}
             </SideCard>
             <SideCard icon="🏆" title={earned.length ? `Trofe (${earned.length})` : "Trofe"}>
-              {earned.length > 0 ? (
-                <ul className="grid grid-cols-3 gap-2">
-                  {earned.map((t) => (
-                    <li key={t.id} className="rounded-xl border border-citron-400/25 bg-zinc-950/60 p-2 text-center" title={t.description}>
-                      <span className="text-2xl" aria-hidden>
-                        {t.emoji}
-                      </span>
-                      <p className="mt-1 text-[11px] font-semibold leading-tight text-white">{t.name}</p>
-                    </li>
-                  ))}
-                </ul>
+              {earned.length > 0 || (isOwner && allTrophies.length > 0) ? (
+                <>
+                  <ul className="grid grid-cols-3 gap-x-2 gap-y-4">
+                    {earned.map((t) => (
+                      <li key={t.id} className="flex flex-col items-center text-center" title={t.description}>
+                        <Medal icon={t.icon} tier={t.tier} size="md" />
+                        <p className="mt-2 text-[11px] font-semibold leading-tight text-white">{t.name}</p>
+                      </li>
+                    ))}
+                  </ul>
+                  {/* Atis la sèlman: trofe ki poko genyen yo, ak pwogrè a */}
+                  {isOwner && earned.length < allTrophies.length && (
+                    <details className="group mt-4">
+                      <summary className="cursor-pointer list-none text-xs font-semibold text-zinc-400 hover:text-white">
+                        <span className="group-open:hidden">Wè {allTrophies.length - earned.length} trofe pou debloke ↓</span>
+                        <span className="hidden group-open:inline">Kache ↑</span>
+                      </summary>
+                      <ul className="mt-3 space-y-3">
+                        {allTrophies
+                          .filter((t) => !t.earned)
+                          .map((t) => (
+                            <li key={t.id} className="flex items-center gap-3">
+                              <Medal icon={t.icon} tier={t.tier} size="sm" locked />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-xs font-semibold text-zinc-200">{t.name}</p>
+                                <p className="truncate text-[11px] text-zinc-500">{t.description}</p>
+                                <div className="mt-1 h-1 overflow-hidden rounded-full bg-zinc-800">
+                                  <div className="h-full rounded-full bg-citron-400" style={{ width: `${Math.round(t.progress * 100)}%` }} />
+                                </div>
+                              </div>
+                              <span className="shrink-0 text-[11px] tabular-nums text-zinc-500">
+                                {t.goal > 1 ? `${t.value.toLocaleString("fr-HT")}/${t.goal.toLocaleString("fr-HT")}` : ""}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    </details>
+                  )}
+                </>
               ) : isOwner ? (
                 <Empty isOwner text="" cta="➕ Pibliye yon chante pou premye trofe w" href="/upload" />
               ) : (
@@ -472,7 +504,7 @@ export default async function ArtistPage({ params }: Props) {
             </SideCard>
             {totalPlays > 0 && (
               <p className="text-center text-xs text-zinc-500">
-                🎧 {formatPlays(totalPlays)} koute sou {songs.length} chante
+                🎧 {formatPlays(totalPlays)} ekout sou {songs.length} chante
               </p>
             )}
           </aside>

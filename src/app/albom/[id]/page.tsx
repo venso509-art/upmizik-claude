@@ -6,6 +6,7 @@ import { SONG_SELECT, formatDuration, toTrack, type SongRow } from "@/lib/songs"
 import { PlayAllButton, TrackList } from "@/components/TrackList";
 import { SafeImage } from "@/components/SafeImage";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
+import { releaseShareText } from "@/lib/shareMessages";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { RELEASE_LABELS, type ReleaseKind } from "@/lib/releases";
 
@@ -92,7 +93,12 @@ export default async function ReleasePage({ params }: Props) {
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
             {tracks.length > 0 && <PlayAllButton tracks={tracks} label="▶ Jwe tout" />}
-            <ShareLinkButton path={`/albom/${release.id}`} label="🔗 Pataje" title={`${release.title} – ${artist?.display_name ?? ""} sou UpMizik`} />
+            <ShareLinkButton
+              path={`/albom/${release.id}`}
+              label="🔗 Pataje"
+              title={`${release.title} – ${artist?.display_name ?? ""} sou UpMizik`}
+              text={releaseShareText(label.label, release.title, artist?.display_name ?? "atis la")}
+            />
           </div>
         </div>
       </section>

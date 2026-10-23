@@ -1,5 +1,6 @@
 import { PostLikeButton } from "@/components/social/PostLikeButton";
 import { ShareCountButton } from "@/components/ShareCountButton";
+import { postShareText } from "@/lib/shareMessages";
 import Link from "next/link";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
@@ -153,6 +154,7 @@ export function PostCard({
             id={post.id}
             path={`/sosyal/${post.id}`}
             title={`${post.artist_name} sou UpMizik`}
+            text={postShareText(post.artist_name)}
             initialCount={shareCount ?? 0}
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
           />

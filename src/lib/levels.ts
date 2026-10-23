@@ -1,22 +1,25 @@
 // ===== Nivo atis yo (dwe matche ak migration 20261103000000_levels_verified_top10.sql) =====
 export type LevelKind = "donations" | "plays";
-export type Level = { threshold: number; name: string; emoji: string; plaque?: boolean };
+import type { MedalIcon, MedalTier } from "@/components/badges/Medal";
+
+// emoji = pou tèks; icon + tier = pou meday la (components/badges/Medal)
+export type Level = { threshold: number; name: string; emoji: string; icon: MedalIcon; tier: MedalTier; plaque?: boolean };
 
 export const DONATION_LEVELS: Level[] = [
-  { threshold: 0, name: "Nouvo", emoji: "🌱" },
-  { threshold: 50, name: "Zetwal k ap monte", emoji: "🔥" },
-  { threshold: 150, name: "Zetwal", emoji: "⭐" },
-  { threshold: 300, name: "Diaman", emoji: "💎" },
-  { threshold: 1000, name: "Lejand", emoji: "👑" },
+  { threshold: 0, name: "Nouvo", emoji: "🌱", icon: "sprout", tier: "emerald" },
+  { threshold: 50, name: "Zetwal k ap monte", emoji: "🔥", icon: "flame", tier: "bronze" },
+  { threshold: 150, name: "Zetwal", emoji: "⭐", icon: "star", tier: "silver" },
+  { threshold: 300, name: "Diaman", emoji: "💎", icon: "gem", tier: "platinum" },
+  { threshold: 1000, name: "Lejand", emoji: "👑", icon: "crown", tier: "gold" },
 ];
 
 export const PLAY_LEVELS: Level[] = [
-  { threshold: 0, name: "Debitan", emoji: "🎵" },
-  { threshold: 500, name: "Kalifye pou ✓", emoji: "🎯" },
-  { threshold: 1000, name: "Bwonz", emoji: "🥉" },
-  { threshold: 3000, name: "Ajan", emoji: "🥈", plaque: true },
-  { threshold: 10000, name: "Lò", emoji: "🥇", plaque: true },
-  { threshold: 100000, name: "Platin", emoji: "💿", plaque: true },
+  { threshold: 0, name: "Debitan", emoji: "🎵", icon: "music", tier: "emerald" },
+  { threshold: 500, name: "Kalifye pou ✓", emoji: "🎯", icon: "target", tier: "sapphire" },
+  { threshold: 1000, name: "Bwonz", emoji: "🥉", icon: "medal", tier: "bronze" },
+  { threshold: 3000, name: "Ajan", emoji: "🥈", icon: "medal", tier: "silver", plaque: true },
+  { threshold: 10000, name: "Lò", emoji: "🥇", icon: "medal", tier: "gold", plaque: true },
+  { threshold: 100000, name: "Platin", emoji: "💿", icon: "disc", tier: "platinum", plaque: true },
 ];
 
 // Plak fizik yo mande omwen $100 don tou
@@ -24,6 +27,10 @@ export const PLAQUE_MIN_DONATIONS_USD = 100;
 
 export function levelsFor(kind: LevelKind) {
   return kind === "donations" ? DONATION_LEVELS : PLAY_LEVELS;
+}
+
+export function levelAt(kind: LevelKind, threshold: number) {
+  return levelsFor(kind).find((x) => x.threshold === Number(threshold)) ?? null;
 }
 
 export function levelName(kind: LevelKind, threshold: number) {

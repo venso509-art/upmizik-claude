@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { markPlaqueShipped, setVerified } from "@/app/admin/nivo/actions";
-import { formatPlays, levelName, progressFor } from "@/lib/levels";
+import { formatPlays, levelAt, progressFor } from "@/lib/levels";
+import { Medal } from "@/components/badges/Medal";
 import { formatDate } from "@/lib/finance";
 import { FormMessage, inputClass } from "@/components/auth/ui";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -77,16 +78,16 @@ export function ArtistLevelsTable({ artists }: { artists: AdminArtistLevel[] }) 
                     {a.status !== "approved" && <span className="ml-2 text-xs text-zinc-500">({a.status})</span>}
                   </td>
                   <td className="py-3 pr-3">
-                    <p className="text-white">
-                      {p.current.emoji} {p.current.name}
+                    <p className="flex items-center gap-2 text-white">
+                      <Medal icon={p.current.icon} tier={p.current.tier} size="xs" /> {p.current.name}
                     </p>
                     <p className="text-xs text-zinc-500">
                       {formatPlays(a.plays)} ekout{p.next ? ` · ${Math.round(p.progress * 100)}% → ${p.next.name}` : ""}
                     </p>
                   </td>
                   <td className="py-3 pr-3">
-                    <p className="text-white">
-                      {d.current.emoji} {d.current.name}
+                    <p className="flex items-center gap-2 text-white">
+                      <Medal icon={d.current.icon} tier={d.current.tier} size="xs" /> {d.current.name}
                     </p>
                     <p className="text-xs text-zinc-500">
                       ${a.donationsUsd.toLocaleString("en-US")}
@@ -115,7 +116,13 @@ function PlaqueCard({ p }: { p: PlaqueItem }) {
 
   return (
     <li className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
-      <p className="text-lg font-bold text-white">{levelName("plays", p.threshold)}</p>
+      <p className="flex items-center gap-3 text-lg font-bold text-white">
+        {(() => {
+          const l = levelAt("plays", p.threshold);
+          return l ? <Medal icon={l.icon} tier={l.tier} size="sm" /> : null;
+        })()}
+        Plak {levelAt("plays", p.threshold)?.name ?? formatPlays(p.threshold)}
+      </p>
       <p className="text-sm text-zinc-300">
         <Link href={`/atis/${p.artistId}`} className="font-semibold hover:underline">
           {p.artistName}
