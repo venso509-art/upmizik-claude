@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { VerifyToggle } from "@/components/admin/VerifyToggle";
 import { formatHTG } from "@/lib/donations";
 import { currentMonthIso, monthLabel } from "@/lib/accounting";
@@ -95,13 +96,16 @@ export default async function AdminArtistAccountsPage() {
                 href={`/admin/kont/${r.artist_id}`}
                 className="flex flex-wrap items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 transition hover:border-citron-400/40 hover:bg-zinc-900"
               >
-                <span className="block h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700">
-                  {r.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.avatar_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="flex h-full items-center justify-center font-bold text-white">{r.display_name.charAt(0).toUpperCase()}</span>
-                  )}
+                <span className="relative shrink-0">
+                  <span className="block h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700">
+                    {r.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full items-center justify-center font-bold text-white">{r.display_name.charAt(0).toUpperCase()}</span>
+                    )}
+                  </span>
+                  <VerifiedCorner show={r.is_verified} size="sm" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 font-semibold text-white">

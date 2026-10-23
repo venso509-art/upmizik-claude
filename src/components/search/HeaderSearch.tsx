@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Suggestions } from "@/app/api/chache/route";
 import { Portal } from "@/components/Portal";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { GENRES } from "@/lib/genres";
 
 const EMPTY: Suggestions = { artists: [], songs: [] };
@@ -117,13 +118,16 @@ function Results({
           <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">Atis</p>
           {data.artists.map((a, i) => (
             <Link key={a.id} href={`/atis/${a.id}`} onClick={onPick} onMouseEnter={() => onHover(i)} className={row(i)}>
-              <span className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 ring-2 ring-fuchsia-500/30">
-                {a.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={a.avatarUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="flex h-full items-center justify-center font-bold text-white">{a.name.charAt(0).toUpperCase()}</span>
-                )}
+              <span className="relative shrink-0">
+                <span className="block h-11 w-11 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 ring-2 ring-fuchsia-500/30">
+                  {a.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={a.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full items-center justify-center font-bold text-white">{a.name.charAt(0).toUpperCase()}</span>
+                  )}
+                </span>
+                <VerifiedCorner show={a.verified} />
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-sm text-white">

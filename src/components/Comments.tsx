@@ -7,6 +7,7 @@ import { addComment, deleteComment } from "@/app/chante/actions";
 import { FormMessage } from "@/components/auth/ui";
 import { createClient } from "@/lib/supabase/client";
 import { countComments, type CommentItem, type CommentTarget } from "@/lib/comments";
+import { VerifiedCorner } from "@/components/VerifiedCorner";
 
 export type { CommentItem } from "@/lib/comments";
 
@@ -22,15 +23,18 @@ function timeAgo(iso: string) {
 const textareaClass =
   "w-full resize-y rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder:text-zinc-500 outline-none transition focus:border-fuchsia-500 focus:ring-2 focus:ring-fuchsia-500/30";
 
-function Avatar({ name, url, small }: { name: string; url: string | null; small?: boolean }) {
+function Avatar({ name, url, small, verified }: { name: string; url: string | null; small?: boolean; verified?: boolean }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 font-bold text-white ${small ? "h-8 w-8 text-xs" : "h-10 w-10 text-sm"}`}>
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="h-full w-full object-cover" />
-      ) : (
-        name.charAt(0).toUpperCase()
-      )}
+    <span className="relative shrink-0">
+      <span className={`flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 font-bold text-white ${small ? "h-8 w-8 text-xs" : "h-10 w-10 text-sm"}`}>
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="" className="h-full w-full object-cover" />
+        ) : (
+          name.charAt(0).toUpperCase()
+        )}
+      </span>
+      <VerifiedCorner show={verified} />
     </span>
   );
 }
@@ -93,7 +97,7 @@ function CommentRow({
 
   return (
     <div className="flex gap-3">
-      <Avatar name={c.authorName} url={c.authorAvatar} small={isReply} />
+      <Avatar name={c.authorName} url={c.authorAvatar} small={isReply} verified={c.authorVerified} />
       <div className="min-w-0 flex-1">
         <div className="rounded-2xl bg-zinc-900/70 px-4 py-2.5">
           <p className="text-sm">

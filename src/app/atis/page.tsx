@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { SearchInput } from "@/components/search/SearchInput";
 import { ScrollRow } from "@/components/ScrollRow";
 
@@ -74,7 +75,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: { q?
                   href={`/atis/${a.id}`}
                   className="group flex flex-col items-center rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 text-center transition hover:-translate-y-0.5 hover:border-fuchsia-500/40 hover:bg-zinc-900"
                 >
-                  <span className="rounded-full bg-gradient-to-tr from-amber-400 via-fuchsia-500 to-violet-600 p-[3px] transition group-hover:scale-105">
+                  <span className="relative rounded-full bg-gradient-to-tr from-amber-400 via-fuchsia-500 to-violet-600 p-[3px] transition group-hover:scale-105">
                     <span className="block rounded-full bg-zinc-950 p-[3px]">
                       <span className="block h-24 w-24 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700">
                         {a.avatar_url ? (
@@ -87,6 +88,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: { q?
                         )}
                       </span>
                     </span>
+                    <VerifiedCorner show={a.is_verified} size="lg" position="bottom-0.5 right-0.5" />
                   </span>
                   <span className="mt-3 flex w-full items-center justify-center font-semibold text-white">
                     <span className="truncate">{a.display_name}</span>

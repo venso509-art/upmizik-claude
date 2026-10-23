@@ -28,7 +28,7 @@ type Row = {
   image_path: string | null;
   link_url: string | null;
   artist_id: string;
-  profiles: { display_name: string; avatar_url: string | null } | { display_name: string; avatar_url: string | null }[] | null;
+  profiles: { display_name: string; avatar_url: string | null; is_verified?: boolean } | { display_name: string; avatar_url: string | null; is_verified?: boolean }[] | null;
 };
 
 export default async function AdminPostsPage({ searchParams }: { searchParams: { f?: string; q?: string } }) {
@@ -43,7 +43,7 @@ export default async function AdminPostsPage({ searchParams }: { searchParams: {
 
   let query = supabase
     .from("posts")
-    .select("id, content, created_at, expires_at, status, image_path, link_url, artist_id, profiles!posts_artist_id_fkey(display_name, avatar_url)")
+    .select("id, content, created_at, expires_at, status, image_path, link_url, artist_id, profiles!posts_artist_id_fkey(display_name, avatar_url, is_verified)")
     .order("created_at", { ascending: false })
     .limit(100);
   if (filter === "aktif") query = query.eq("status", "active").gt("expires_at", nowIso);
@@ -70,6 +70,7 @@ export default async function AdminPostsPage({ searchParams }: { searchParams: {
       artistId: r.artist_id,
       artistName: p?.display_name ?? "Atis enkoni",
       artistAvatar: p?.avatar_url ?? null,
+      artistVerified: p?.is_verified ?? false,
     };
   });
 

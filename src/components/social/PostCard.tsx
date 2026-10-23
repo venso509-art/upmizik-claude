@@ -2,6 +2,7 @@ import { PostLikeButton } from "@/components/social/PostLikeButton";
 import { ShareCountButton } from "@/components/ShareCountButton";
 import Link from "next/link";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { daysLeft, daysLeftLabel, linkInfo, timeAgo, type FeedPost } from "@/lib/posts";
 
 // Transfòme lyen yo (https://...) an lyen ki ka klike
@@ -22,15 +23,18 @@ function Linkified({ text }: { text: string }) {
   );
 }
 
-export function Avatar({ name, url, size = "h-12 w-12" }: { name: string; url: string | null; size?: string }) {
+export function Avatar({ name, url, size = "h-12 w-12", verified }: { name: string; url: string | null; size?: string; verified?: boolean | null }) {
   return (
-    <span className={`${size} block shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 ring-2 ring-zinc-900`}>
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <span className="flex h-full items-center justify-center font-bold text-white">{name.charAt(0).toUpperCase()}</span>
-      )}
+    <span className={`${size} relative block shrink-0`}>
+      <span className="block h-full w-full overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 ring-2 ring-zinc-900">
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex h-full items-center justify-center font-bold text-white">{name.charAt(0).toUpperCase()}</span>
+        )}
+      </span>
+      <VerifiedCorner show={verified} />
     </span>
   );
 }
@@ -101,7 +105,7 @@ export function PostCard({
     <article id={post.id} className="scroll-mt-40 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 transition hover:border-zinc-700">
       <header className="flex items-start gap-3">
         <Link href={`/atis/${post.artist_id}`} className="shrink-0">
-          <Avatar name={post.artist_name} url={post.artist_avatar} />
+          <Avatar name={post.artist_name} url={post.artist_avatar} verified={post.artist_verified} />
         </Link>
         <div className="min-w-0 flex-1">
           <Link href={`/atis/${post.artist_id}`} className="flex items-center font-semibold text-white hover:underline">

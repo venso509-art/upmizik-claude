@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/admin";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { MonthBreakdown } from "@/components/admin/MonthBreakdown";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { VerifyToggle } from "@/components/admin/VerifyToggle";
 import { formatHTG } from "@/lib/donations";
 import { MONEY_KEYS, currentMonthIso, monthLabel, monthParam, parseMonthParam, toNumbers, type MonthRow } from "@/lib/accounting";
@@ -122,13 +123,16 @@ export default async function AdminArtistAccountPage({ params, searchParams }: {
       </Link>
 
       <div className="mt-4 flex flex-wrap items-center gap-4">
-        <span className="block h-16 w-16 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700">
-          {artist.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={artist.avatar_url} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className="flex h-full items-center justify-center text-2xl font-bold text-white">{artist.display_name.charAt(0).toUpperCase()}</span>
-          )}
+        <span className="relative shrink-0">
+          <span className="block h-16 w-16 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700">
+            {artist.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={artist.avatar_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full items-center justify-center text-2xl font-bold text-white">{artist.display_name.charAt(0).toUpperCase()}</span>
+            )}
+          </span>
+          <VerifiedCorner show={artist.is_verified} size="md" />
         </span>
         <div className="min-w-0 flex-1">
           <h1 className="flex items-center text-3xl font-extrabold tracking-tight text-white">

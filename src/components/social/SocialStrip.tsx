@@ -36,7 +36,7 @@ export function SocialStrip({ posts, now }: { posts: FeedPost[]; now: number }) 
               <article className="flex h-full flex-col rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-fuchsia-500/40">
                 <header className="flex items-center gap-2.5">
                   <Link href={`/atis/${p.artist_id}`} className="shrink-0">
-                    <Avatar name={p.artist_name} url={p.artist_avatar} size="h-9 w-9" />
+                    <Avatar name={p.artist_name} url={p.artist_avatar} size="h-9 w-9" verified={p.artist_verified} />
                   </Link>
                   <div className="min-w-0 flex-1">
                     <Link href={`/atis/${p.artist_id}`} className="flex items-center text-sm font-semibold text-white hover:underline">

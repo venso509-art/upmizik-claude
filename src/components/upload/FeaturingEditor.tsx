@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { VerifiedCorner } from "@/components/VerifiedCorner";
 
 export type Featuring = { artistId: string; name: string; avatarUrl: string | null; verified: boolean; percentage: number };
 type Found = { id: string; display_name: string; avatar_url: string | null; is_verified: boolean };
@@ -13,15 +14,18 @@ export function featuringTotal(list: Featuring[]) {
   return Math.round(list.reduce((s, f) => s + (Number(f.percentage) || 0), 0) * 100) / 100;
 }
 
-function Avatar({ name, url }: { name: string; url: string | null }) {
+function Avatar({ name, url, verified }: { name: string; url: string | null; verified?: boolean }) {
   return (
-    <span className="block h-9 w-9 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700">
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <span className="flex h-full items-center justify-center text-sm font-bold text-white">{name.charAt(0).toUpperCase()}</span>
-      )}
+    <span className="relative shrink-0">
+      <span className="block h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700">
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex h-full items-center justify-center text-sm font-bold text-white">{name.charAt(0).toUpperCase()}</span>
+        )}
+      </span>
+      <VerifiedCorner show={verified} />
     </span>
   );
 }
@@ -127,7 +131,7 @@ export function FeaturingEditor({
                       onClick={() => add(a)}
                       className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-white transition hover:bg-white/5"
                     >
-                      <Avatar name={a.display_name} url={a.avatar_url} />
+                      <Avatar name={a.display_name} url={a.avatar_url} verified={a.is_verified} />
                       <span className="flex-1 truncate">
                         {a.display_name}
                         {a.is_verified && <VerifiedBadge />}
@@ -147,7 +151,7 @@ export function FeaturingEditor({
         <ul className="mt-3 space-y-2">
           {value.map((f, i) => (
             <li key={f.artistId} className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2">
-              <Avatar name={f.name} url={f.avatarUrl} />
+              <Avatar name={f.name} url={f.avatarUrl} verified={f.verified} />
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">
                 feat. {f.name}
                 {f.verified && <VerifiedBadge />}

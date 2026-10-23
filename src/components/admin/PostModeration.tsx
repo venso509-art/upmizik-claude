@@ -17,6 +17,7 @@ export type AdminPost = {
   artistId: string;
   artistName: string;
   artistAvatar: string | null;
+  artistVerified?: boolean;
 };
 
 const TONES = {
@@ -44,7 +45,7 @@ function PostRow({ post, now }: { post: AdminPost; now: number }) {
     <li className={`rounded-2xl border p-5 transition ${blocked ? "border-red-500/30 bg-red-500/5" : "border-zinc-800 bg-zinc-900/40"} ${pending ? "opacity-60" : ""}`}>
       <div className="flex items-start gap-3">
         <Link href={`/atis/${post.artistId}`}>
-          <Avatar name={post.artistName} url={post.artistAvatar} size="h-10 w-10" />
+          <Avatar name={post.artistName} url={post.artistAvatar} size="h-10 w-10" verified={post.artistVerified} />
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

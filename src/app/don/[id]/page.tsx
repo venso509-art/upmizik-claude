@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DonateButton } from "@/components/donate/DonateButton";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { ARTIST_SHARE_PERCENT } from "@/lib/finance";
 
@@ -47,13 +48,16 @@ export default async function DonatePage({ params }: Props) {
     <div className="relative">
       <div className="pointer-events-none absolute inset-x-0 -top-10 mx-auto h-72 max-w-3xl rounded-full bg-fuchsia-600/20 blur-3xl" />
       <div className="relative mx-auto max-w-xl px-4 py-12 text-center">
-        <span className="mx-auto block h-28 w-28 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 ring-4 ring-citron-400/40">
+        <span className="relative mx-auto block h-28 w-28">
+        <span className="block h-28 w-28 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 ring-4 ring-citron-400/40">
           {artist.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={artist.avatar_url} alt={artist.display_name} className="h-full w-full object-cover" />
           ) : (
             <span className="flex h-full items-center justify-center text-4xl font-extrabold text-white">{artist.display_name.charAt(0).toUpperCase()}</span>
           )}
+        </span>
+        <VerifiedCorner show={artist.is_verified} size="lg" position="bottom-0.5 right-0.5" />
         </span>
         <p className="mt-5 text-sm font-medium uppercase tracking-widest text-citron-300">💝 Sipòte atis la</p>
         <h1 className="mt-1 flex items-center justify-center text-3xl font-extrabold tracking-tight text-white sm:text-4xl">

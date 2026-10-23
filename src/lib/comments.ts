@@ -11,10 +11,13 @@ export type CommentItem = {
   authorName: string;
   authorAvatar: string | null;
   authorIsArtist: boolean;
+  authorVerified: boolean;
   likeCount: number;
   liked: boolean;
   replies: CommentItem[];
 };
+
+type Author = { display_name: string; role: string; avatar_url: string | null; is_verified?: boolean };
 
 type Row = {
   id: string;
@@ -23,10 +26,10 @@ type Row = {
   user_id: string;
   parent_id?: string | null;
   // "!comments_user_id_fkey": tablo comment_likes la kreye yon dezyèm chemen ant comments ak profiles
-  profiles: { display_name: string; role: string; avatar_url: string | null } | { display_name: string; role: string; avatar_url: string | null }[] | null;
+  profiles: Author | Author[] | null;
 };
 
-const AUTHOR = "profiles!comments_user_id_fkey(display_name, role, avatar_url)";
+const AUTHOR = "profiles!comments_user_id_fkey(display_name, role, avatar_url, is_verified)";
 
 export async function loadComments(supabase: SupabaseClient, target: CommentTarget, userId: string | null): Promise<CommentItem[]> {
   const column = target.type === "song" ? "song_id" : "post_id";
@@ -63,6 +66,7 @@ export async function loadComments(supabase: SupabaseClient, target: CommentTarg
       authorName: p?.display_name ?? "Itilizatè",
       authorAvatar: p?.avatar_url ?? null,
       authorIsArtist: p?.role === "artist",
+      authorVerified: p?.is_verified === true,
       likeCount: counts.get(r.id) ?? 0,
       liked: mine.has(r.id),
       replies: [],
