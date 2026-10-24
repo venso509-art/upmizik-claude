@@ -11,6 +11,26 @@ export const metadata: Metadata = { title: "Admin: Sekirite | UpMizik" };
 type LoginRow = { id: string; email: string; user_id: string | null; success: boolean; ip: string | null; user_agent: string | null; created_at: string };
 type AuditRow = { id: string; actor_id: string | null; action: string; details: Record<string, unknown>; created_at: string; actor: { display_name: string } | null };
 type Suspicious = { kind: "email" | "ip"; value: string; failures: number; last_attempt: string };
+// Detay kont yo (fonksyon admin_accounts). Modpas yo PA ladan: Supabase sere yo chifre, pèsonn pa ka li yo.
+type Account = {
+  id: string;
+  display_name: string;
+  role: string;
+  status: string;
+  email: string;
+  phone: string | null;
+  created_at: string;
+  last_sign_in_at: string | null;
+  email_confirmed: boolean;
+};
+
+const ROLE_LABEL: Record<string, string> = { artist: "🎤 Atis", listener: "🎧 Koutè" };
+
+// Lyen WhatsApp pou yon nimewo (Ayiti pa defo si pa gen kòd peyi)
+function waLink(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  return `https://wa.me/${digits.length === 8 ? `509${digits}` : digits}`;
+}
 
 const FILTERS = [
   { key: "tout", label: "Tout" },
@@ -62,7 +82,7 @@ export default async function AdminSecurityPage({ searchParams }: { searchParams
   if (filter === "echek") loginQuery = loginQuery.eq("success", false);
   if (filter === "admin") loginQuery = loginQuery.in("user_id", adminIds.length ? adminIds : ["00000000-0000-0000-0000-000000000000"]);
 
-  const [{ data: logins }, { data: audit }, { data: suspicious }, ok24, fail24] = await Promise.all([
+  const [{ data: logins }, { data: audit }, { data: suspicious }, ok24, fail24, { data: accountRows }] = await Promise.all([
     loginQuery.returns<LoginRow[]>(),
     supabase
       .from("audit_log")
@@ -73,7 +93,11 @@ export default async function AdminSecurityPage({ searchParams }: { searchParams
     supabase.rpc("admin_suspicious_logins"),
     supabase.from("login_events").select("id", { count: "exact", head: true }).eq("success", true).gte("created_at", since24h),
     supabase.from("login_events").select("id", { count: "exact", head: true }).eq("success", false).gte("created_at", since24h),
+    // Vid si migration 20261204000000 poko kouri
+    supabase.rpc("admin_accounts", { p_limit: 200 }),
   ]);
+  const accounts = (accountRows ?? []) as Account[];
+  const accountById = new Map(accounts.map((a) => [a.id, a]));
   const alerts = (suspicious ?? []) as Suspicious[];
   const adminSet = new Set(adminIds);
 
@@ -145,12 +169,73 @@ export default async function AdminSecurityPage({ searchParams }: { searchParams
                     <tr key={l.id}>
                       <td className="whitespace-nowrap py-2.5 pr-3 text-zinc-400">{when(l.created_at)}</td>
                       <td className="py-2.5 pr-3 text-zinc-200">
+                        {l.user_id && accountById.get(l.user_id) && (
+                          <span className="block font-semibold text-white">{accountById.get(l.user_id)!.display_name}</span>
+                        )}
                         {l.email}
                         {l.user_id && adminSet.has(l.user_id) && <span className="ml-1.5 text-xs text-amber-300">🛡️</span>}
+                        {l.user_id && accountById.get(l.user_id)?.phone && (
+                          <span className="block text-xs text-zinc-500">📱 {accountById.get(l.user_id)!.phone}</span>
+                        )}
                       </td>
                       <td className="py-2.5 pr-3">{l.success ? <span className="text-emerald-300">✅ Reyisi</span> : <span className="text-red-300">❌ Echwe</span>}</td>
                       <td className="py-2.5 pr-3 font-mono text-xs text-zinc-400">{l.ip ?? "—"}</td>
                       <td className="py-2.5 text-zinc-400">{describeUserAgent(l.user_agent)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+
+        {/* ===== KONT YO ===== */}
+        <Panel
+          title="👥 Kont yo"
+          subtitle="Tout moun ki enskri: non, imèl, telefòn, lè yo kreye kont lan ak dènye fwa yo konekte. Modpas yo pa vizib: yo chifre, pèsonn pa ka li yo."
+        >
+          {accounts.length === 0 ? (
+            <p className="py-6 text-center text-sm text-zinc-500">Kouri migration 20261204000000_admin_alerts_accounts.sql pou w wè kont yo.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left text-sm">
+                <thead className="text-xs uppercase tracking-wider text-zinc-500">
+                  <tr className="border-b border-zinc-800">
+                    <th className="py-2 pr-3 font-medium">Moun nan</th>
+                    <th className="py-2 pr-3 font-medium">Imèl</th>
+                    <th className="py-2 pr-3 font-medium">Telefòn</th>
+                    <th className="py-2 pr-3 font-medium">Enskri</th>
+                    <th className="py-2 font-medium">Dènye koneksyon</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/70">
+                  {accounts.map((a) => (
+                    <tr key={a.id}>
+                      <td className="py-2.5 pr-3">
+                        <span className="block font-semibold text-white">
+                          {a.display_name}
+                          {adminSet.has(a.id) && <span className="ml-1.5 text-xs text-amber-300">🛡️</span>}
+                        </span>
+                        <span className="text-xs text-zinc-500">
+                          {ROLE_LABEL[a.role] ?? a.role}
+                          {a.status !== "approved" ? ` · ${a.status}` : ""}
+                        </span>
+                      </td>
+                      <td className="py-2.5 pr-3 text-zinc-300">
+                        {a.email}
+                        {!a.email_confirmed && <span className="ml-1.5 text-xs text-amber-300">(poko konfime)</span>}
+                      </td>
+                      <td className="py-2.5 pr-3">
+                        {a.phone ? (
+                          <a href={waLink(a.phone)} target="_blank" rel="noopener noreferrer" className="text-emerald-300 hover:underline">
+                            📱 {a.phone}
+                          </a>
+                        ) : (
+                          <span className="text-zinc-600">—</span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap py-2.5 pr-3 text-zinc-400">{when(a.created_at)}</td>
+                      <td className="whitespace-nowrap py-2.5 text-zinc-400">{a.last_sign_in_at ? when(a.last_sign_in_at) : "Poko konekte"}</td>
                     </tr>
                   ))}
                 </tbody>

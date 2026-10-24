@@ -19,8 +19,9 @@ const ICONS: Record<string, string> = {
   registration: "🎤",
 };
 
-// Ti son "ding-dong" an de nòt, fabrike dirèkteman (pa gen fichye pou telechaje)
-function playChime(ctxRef: React.MutableRefObject<AudioContext | null>) {
+// Ti son "ding-dong" an de nòt, fabrike dirèkteman (pa gen fichye pou telechaje).
+// Don ak enskripsyon (admin): yon son "ka-ching" an 3 nòt, pi fò, pou l pa pase inapèsi.
+function playChime(ctxRef: React.MutableRefObject<AudioContext | null>, type = "") {
   try {
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!Ctx) return;
@@ -28,16 +29,25 @@ function playChime(ctxRef: React.MutableRefObject<AudioContext | null>) {
     ctxRef.current = ctx;
     if (ctx.state === "suspended") void ctx.resume();
     const now = ctx.currentTime;
-    [
-      { f: 880, t: 0 },
-      { f: 1318.5, t: 0.14 },
-    ].forEach(({ f, t }) => {
+    const important = type === "donation" || type === "registration";
+    (important
+      ? [
+          { f: 1046.5, t: 0 },
+          { f: 1318.5, t: 0.1 },
+          { f: 1568, t: 0.2 },
+          { f: 2093, t: 0.32 },
+        ]
+      : [
+          { f: 880, t: 0 },
+          { f: 1318.5, t: 0.14 },
+        ]
+    ).forEach(({ f, t }) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
       osc.frequency.value = f;
       gain.gain.setValueAtTime(0.0001, now + t);
-      gain.gain.exponentialRampToValueAtTime(0.25, now + t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(important ? 0.35 : 0.25, now + t + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + t + 0.6);
       osc.connect(gain).connect(ctx.destination);
       osc.start(now + t);
@@ -80,7 +90,7 @@ export function NotificationListener({ userId }: { userId: string }) {
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
         (payload) => {
           const n = payload.new as Incoming;
-          playChime(audioRef);
+          playChime(audioRef, n.type);
           setToasts((t) => [n, ...t].slice(0, 3));
           // Mete kontè 🔔 la ajou
           router.refresh();
