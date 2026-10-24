@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Portal } from "@/components/Portal";
@@ -16,6 +17,8 @@ export type StatusArtist = { id: string; name: string; avatarUrl: string | null;
 // Anba a: like ❤️, repons rapid (emoji) ak yon ti mesaj ki ale bay atis la sèlman.
 export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClose: () => void }) {
   const { isPlaying, toggle } = usePlayer();
+  const router = useRouter();
+  const pathname = usePathname();
   const [statuses, setStatuses] = useState<ArtistStatus[] | null>(null);
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0); // 0 → 1 pou stati aktyèl la
@@ -118,6 +121,15 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
     return () => window.removeEventListener("keydown", onKey);
   }, [close, next, typing]);
 
+  // Foto oswa non atis la: ale sou pwofil li. Nou lanse navigasyon an AVAN nou fèmen stati a
+  // (si nou fèmen l anvan, lyen an disparèt e paj la pa chanje).
+  function goToProfile(e: React.MouseEvent) {
+    e.preventDefault();
+    const href = `/atis/${artist.id}`;
+    if (pathname !== href) router.push(href);
+    close();
+  }
+
   function flash(text: string) {
     setToast(text);
     setTimeout(() => setToast(undefined), 1800);
@@ -173,7 +185,7 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
 
           {/* Tèt: atis la */}
           <div className="absolute inset-x-0 top-0 z-20 flex items-center gap-3 bg-gradient-to-b from-black/60 to-transparent px-3 pb-6 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
-            <Link href={`/atis/${artist.id}`} onClick={close} className="flex min-w-0 flex-1 items-center gap-3">
+            <Link href={`/atis/${artist.id}`} onClick={goToProfile} className="flex min-w-0 flex-1 items-center gap-3" title={`Wè pwofil ${artist.name}`}>
               <span className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-zinc-800 ring-2 ring-white/70">
                 {artist.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -291,7 +303,15 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
               {isOwner ? (
                 <p className="text-center text-xs text-white/60">Se stati ou. Wè like ak repons yo nan dashboard ou (📸 Stati 24 è).</p>
               ) : userId === null ? (
-                <Link href="/konekte" onClick={close} className="block text-center text-sm font-semibold text-citron-300">
+                <Link
+                  href="/konekte"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    router.push("/konekte");
+                    close();
+                  }}
+                  className="block text-center text-sm font-semibold text-citron-300"
+                >
                   Konekte pou w like epi reponn ✨
                 </Link>
               ) : userId ? (
