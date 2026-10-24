@@ -5,6 +5,7 @@ import { AccountName, AccountNameHint } from "@/components/payment/AccountName";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { signupArtist, type ArtistSignupResult } from "@/app/auth/actions";
+import { becomeArtist } from "@/app/vin-atis/actions";
 import { DONATION_METHODS, formatHTG, formatUSD, type DonationMethod } from "@/lib/donations";
 import { IMAGE_TYPES, MAX_IMAGE_BYTES, fileExtension } from "@/lib/upload";
 import { useSettings } from "@/components/SettingsProvider";
@@ -16,7 +17,8 @@ import { Portal } from "@/components/Portal";
 type Step = "rules" | "payment" | "done";
 
 // Pop-up enskripsyon atis: 1) règ yo  2) peman + prèv  3) mesaj final
-export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: () => void }) {
+// upgrade = yon koutè ki deja konekte e ki vin atis (kont lan pa kreye: li chanje lè admin apwouve l)
+export function ArtistSignupModal({ info, onClose, upgrade = false }: { info: FormData; onClose: () => void; upgrade?: boolean }) {
   const settings = useSettings();
   const feeHtg = registrationFeeHtg(settings);
   const [step, setStep] = useState<Step>("rules");
@@ -70,7 +72,7 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
     fd.set("transaction_ref", transactionRef);
     fd.set("proof", proof);
     startTransition(async () => {
-      const res = await signupArtist(fd);
+      const res = upgrade ? await becomeArtist(fd) : await signupArtist(fd);
       if (res.error) setError(res.error);
       else {
         setResult(res);
@@ -221,7 +223,7 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                   disabled={pending}
                   className="flex-1 rounded-xl btn-primary px-4 py-3 font-semibold transition disabled:opacity-60"
                 >
-                  {pending ? "Ap kreye kont ou..." : "Voye demann mwen"}
+                  {pending ? (upgrade ? "Ap voye demann ou..." : "Ap kreye kont ou...") : "Voye demann mwen"}
                 </button>
               </div>
             </div>
@@ -246,11 +248,18 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                 <span className="text-2xl">🛡️</span>
                 <div className="text-sm text-amber-100">
                   <p className="font-semibold">Demann ou an ale bò kot ekip UpMizik la</p>
-                  <p className="mt-1 text-amber-100/80">
-                    Admin nan ap verifye prèv peman an. Kont ou an <span className="font-semibold">standby</span> jiskaske li valide l:
-                    ekip la ap kontakte w sou imèl oswa WhatsApp. Depi l valide, w ap ka konekte, antre nan espas atis ou epi pibliye
-                    mizik ou.
-                  </p>
+                  {upgrade ? (
+                    <p className="mt-1 text-amber-100/80">
+                      Admin nan ap verifye prèv peman an. Pandan tan sa a, ou ka <span className="font-semibold">kontinye koute mizik</span> ak kont
+                      ou a. Depi l valide, w ap resevwa yon notifikasyon epi espas atis ou ap louvri pou w pibliye mizik ou.
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-amber-100/80">
+                      Admin nan ap verifye prèv peman an. Kont ou an <span className="font-semibold">standby</span> jiskaske li valide l:
+                      ekip la ap kontakte w sou imèl oswa WhatsApp. Depi l valide, w ap ka konekte, antre nan espas atis ou epi pibliye
+                      mizik ou.
+                    </p>
+                  )}
                 </div>
               </div>
               <Link href="/" className="block w-full rounded-xl btn-primary px-4 py-3 text-center font-semibold">

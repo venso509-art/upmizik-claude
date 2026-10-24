@@ -124,7 +124,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
                 ▶ Koute kounye a
               </a>
               <Link
-                href="/enskri"
+                href="/enskri?wol=atis"
                 className="rounded-full border border-zinc-700 px-6 py-3 font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-white"
               >
                 🎤 Mwen se atis
@@ -235,7 +235,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
             <li>✓ Wè konbyen moun ki koute w</li>
           </ul>
           <Link
-            href="/enskri"
+            href="/enskri?wol=atis"
             className="btn-primary relative mt-8 inline-block rounded-full px-6 py-3"
           >
             Kreye kont atis ou

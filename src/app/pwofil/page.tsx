@@ -66,6 +66,22 @@ export default async function ProfilePage() {
           {pro && <FeaturedSongPicker songs={mySongs ?? []} current={proRow.featured_song_id} />}
         </div>
       )}
+      {/* Koutè: vin atis */}
+      {!isArtist && (
+        <Link
+          href="/vin-atis"
+          className="mb-4 flex items-center gap-4 rounded-2xl border border-fuchsia-500/40 bg-gradient-to-r from-fuchsia-600/15 to-violet-700/10 p-4 transition hover:border-fuchsia-400"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-600 to-violet-700 text-2xl" aria-hidden>
+            🎤
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold text-white">Ou se atis? Vin atis sou UpMizik</span>
+            <span className="block text-sm text-zinc-300">Pibliye mizik ou, resevwa don fanatik yo. Menm kont lan, menm modpas la.</span>
+          </span>
+          <span className="shrink-0 rounded-full bg-citron-400 px-3 py-1.5 text-sm font-bold text-zinc-950">Kòmanse →</span>
+        </Link>
+      )}
       {/* Enstale app la (si l poko enstale sou aparèy sa a) */}
       <div className="mb-8">
         <InstallAppButton />

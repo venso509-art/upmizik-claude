@@ -60,7 +60,7 @@ export async function Footer() {
         <FooterLinks
           title="Pou atis"
           links={[
-            { href: "/enskri", label: "Enskri kòm atis" },
+            { href: "/enskri?wol=atis", label: "Enskri kòm atis" },
             { href: "/dashboard", label: "Espas atis" },
             { href: "/upload", label: "Pibliye yon chante" },
           ]}

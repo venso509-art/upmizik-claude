@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/auth/actions";
 import { isAdmin } from "@/lib/admin";
 import { MobileMenu, type MenuItem } from "@/components/MobileMenu";
+import { BecomeArtistPrompt } from "@/components/registration/BecomeArtistPrompt";
 import { HeaderSearch } from "@/components/search/HeaderSearch";
 import { NotificationListener } from "@/components/inbox/NotificationListener";
 
@@ -49,6 +50,7 @@ export async function Header() {
     { href: "/telechaje", label: "📥 Mizik offline" },
     { href: "/mesaj", label: `🔔 Mesaj${unread ? ` (${unread})` : ""}` },
     isArtist && user ? { href: `/atis/${user.id}`, label: "🎤 Paj atis mwen" } : { href: "/pwofil", label: "🎧 Pwofil mwen" },
+    ...(user && !isArtist ? [{ href: "/vin-atis", label: "🎤 Vin atis (pibliye mizik ou)", tone: "primary" as const }] : []),
   ];
 
   return (
@@ -56,6 +58,8 @@ export async function Header() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-zinc-950/55 pt-[env(safe-area-inset-top)] shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl backdrop-saturate-150">
       {/* Nouvo mesaj an dirèk: son + ti kat (pou tout moun ki konekte) */}
       {user && <NotificationListener userId={user.id} />}
+      {/* Koutè yo: ti kat "Ou se atis? Vin atis" */}
+      {user && !isArtist && <BecomeArtistPrompt />}
       {/* Ti liy limyè anba header a: vèt → jòn sitwon → vèt */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-citron-400/40 to-transparent" aria-hidden />
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4">
@@ -104,6 +108,11 @@ export async function Header() {
                   className="rounded-lg btn-primary px-3 py-1.5 text-sm font-semibold transition"
                 >
                   + Upload
+                </Link>
+              )}
+              {!isArtist && (
+                <Link href="/vin-atis" className="rounded-lg border border-fuchsia-500/40 px-3 py-1.5 text-sm font-medium text-fuchsia-200 transition hover:bg-fuchsia-500/10">
+                  🎤 Vin atis
                 </Link>
               )}
               <Link href="/telechaje" className="rounded-lg px-2 py-1.5 text-lg transition hover:bg-zinc-800" aria-label="Mizik offline" title="Mizik offline">

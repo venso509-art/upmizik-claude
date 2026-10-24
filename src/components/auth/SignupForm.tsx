@@ -19,10 +19,10 @@ const roles = [
 
 const pinClass = `${inputClass} tracking-[0.5em]`;
 
-export function SignupForm() {
+export function SignupForm({ initialRole = "listener" }: { initialRole?: "listener" | "artist" }) {
   const [state, formAction] = useFormState(signup, undefined);
   const settings = useSettings();
-  const [role, setRole] = useState<"listener" | "artist">("listener");
+  const [role, setRole] = useState<"listener" | "artist">(initialRole);
   const isArtist = role === "artist";
   const [artistInfo, setArtistInfo] = useState<FormData | null>(null);
   const [localError, setLocalError] = useState<string>();
