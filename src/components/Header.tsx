@@ -48,6 +48,7 @@ export async function Header() {
     ...(admin ? [{ href: "/admin", label: "🛡️ Admin", tone: "admin" as const }] : []),
     ...(isArtist ? [{ href: "/dashboard", label: "📊 Dashboard" }] : []),
     { href: "/telechaje", label: "📥 Mizik offline" },
+    { href: "/kredi", label: "🪙 Kredi mwen" },
     { href: "/mesaj", label: `🔔 Mesaj${unread ? ` (${unread})` : ""}` },
     isArtist && user ? { href: `/atis/${user.id}`, label: "🎤 Paj atis mwen" } : { href: "/pwofil", label: "🎧 Pwofil mwen" },
     ...(user && !isArtist ? [{ href: "/vin-atis", label: "🎤 Vin atis (pibliye mizik ou)", tone: "primary" as const }] : []),

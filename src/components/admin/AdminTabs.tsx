@@ -1,18 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import { NavTabs } from "@/components/NavTabs";
 
-async function countPending(table: "donations" | "payouts" | "artist_registrations" | "pro_requests" | "password_resets") {
+async function countPending(table: "donations" | "payouts" | "artist_registrations" | "pro_requests" | "password_resets" | "credit_purchases") {
   const { count } = await createClient().from(table).select("id", { count: "exact", head: true }).eq("status", "pending");
   return count ?? 0;
 }
 
 export async function AdminTabs() {
-  const [registrations, donations, payouts, pro, resets] = await Promise.all([
+  const [registrations, donations, payouts, pro, resets, credits] = await Promise.all([
     countPending("artist_registrations"),
     countPending("donations"),
     countPending("payouts"),
     countPending("pro_requests"),
     countPending("password_resets"),
+    countPending("credit_purchases"),
   ]);
   return (
     <div className="mb-8">
@@ -28,6 +29,7 @@ export async function AdminTabs() {
           { href: "/admin/relve", label: "🗂️ Relve mwa" },
           { href: "/admin/peman", label: "💳 Peman" },
           { href: "/admin/pro", label: "⭐ Pro", badge: pro },
+          { href: "/admin/kredi", label: "🪙 Kredi", badge: credits },
           { href: "/admin/pos", label: "🗞️ Jesyon Pòs" },
           { href: "/admin/top3", label: "🏆 Top 3" },
           { href: "/admin/nivo", label: "🏅 Nivo" },
