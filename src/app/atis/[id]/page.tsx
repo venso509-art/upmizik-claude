@@ -13,6 +13,8 @@ import { artistShareText } from "@/lib/shareMessages";
 import { Medal } from "@/components/badges/Medal";
 import { StatusRing } from "@/components/status/StatusRing";
 import { liveStatusIds } from "@/lib/statuses";
+import { liveNowMap } from "@/lib/liveNow";
+import { LiveBadge } from "@/components/live/LiveBadge";
 import { isPro } from "@/lib/pro";
 import { ArtistSocialLinks } from "@/components/artist/ArtistSocialLinks";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
@@ -184,7 +186,9 @@ export default async function ArtistPage({ params }: Props) {
   const earned = allTrophies.filter((t) => t.earned);
 
   const isOwner = user?.id === artist.id;
-  const statusIds = (await liveStatusIds(supabase, [artist.id]))[artist.id] ?? [];
+  const [statusMap, liveMap] = await Promise.all([liveStatusIds(supabase, [artist.id]), liveNowMap(supabase)]);
+  const statusIds = statusMap[artist.id] ?? [];
+  const liveId = liveMap[artist.id];
   const name = artist.display_name;
   const initials = initialsOf(name);
   const hasSocial = !!(artist.youtube_url || artist.instagram_url || artist.tiktok_url || artist.whatsapp_url);
@@ -258,6 +262,12 @@ export default async function ArtistPage({ params }: Props) {
               </div>
             </StatusRing>
             <VerifiedCorner show={artist.is_verified} size="xl" position="bottom-1.5 right-1.5 sm:bottom-2.5 sm:right-2.5" />
+            {/* An live kounye a: wonn wouj k ap bat + badj LIVE */}
+            {liveId && (
+              <Link href={`/live/${liveId}`} className="absolute inset-0 rounded-full ring-4 ring-red-600 motion-safe:animate-pulse" aria-label="Gade live la">
+                <LiveBadge size="md" className="absolute -bottom-2 left-1/2 -translate-x-1/2" />
+              </Link>
+            )}
           </div>
           <div className="min-w-0">
             {artist.is_verified && (

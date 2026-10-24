@@ -10,6 +10,7 @@ type Incoming = { id: string; type: string; title: string; body: string; link: s
 
 const ICONS: Record<string, string> = {
   new_song: "🎵",
+  live: "🔴",
   new_post: "📣",
   comment: "💬",
   admin_message: "🛡️",
@@ -131,7 +132,7 @@ export function NotificationListener({ userId }: { userId: string }) {
                       onClick={() => setToasts((t) => t.filter((x) => x.id !== n.id))}
                       className="btn-primary rounded-full px-4 py-1.5 text-sm"
                     >
-                      {n.type === "new_song" ? "🎧 Tande l →" : n.type === "new_post" ? "Wè l →" : "Louvri →"}
+                      {n.type === "live" ? "🔴 Gade live la →" : n.type === "new_song" ? "🎧 Tande l →" : n.type === "new_post" ? "Wè l →" : "Louvri →"}
                     </Link>
                   )}
                   <Link href="/mesaj" className="rounded-full px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-zinc-800 hover:text-white">

@@ -124,6 +124,22 @@ const config: Config = {
           "0%, 44%, 60%, 100%": { transform: "scale(1)" },
           "48%": { transform: "scale(0.94)" },
         },
+        // Live: kado ki glise antre, gwo kado nan mitan ekran an, kè k ap monte
+        "gift-in": {
+          "0%": { opacity: "0", transform: "translateX(-120%)" },
+          "10%, 85%": { opacity: "1", transform: "translateX(0)" },
+          "100%": { opacity: "0", transform: "translateY(-20px)" },
+        },
+        "gift-big": {
+          "0%": { opacity: "0", transform: "scale(0.2) rotate(-15deg)" },
+          "25%": { opacity: "1", transform: "scale(1.15) rotate(5deg)" },
+          "40%, 80%": { opacity: "1", transform: "scale(1) rotate(0deg)" },
+          "100%": { opacity: "0", transform: "scale(1.6) translateY(-60px)" },
+        },
+        "heart-float": {
+          "0%": { opacity: "1", transform: "translateY(0) scale(0.6)" },
+          "100%": { opacity: "0", transform: "translateY(-220px) scale(1.3)" },
+        },
         // Disk vinil lektè a k ap woule
         "vinyl-spin": { from: { transform: "rotate(0deg)" }, to: { transform: "rotate(360deg)" } },
         // Bwat "pa gen entènèt" la souke lè yon klik bloke
@@ -134,6 +150,9 @@ const config: Config = {
         },
       },
       animation: {
+        "gift-in": "gift-in 4.2s ease-out both",
+        "gift-big": "gift-big 2.6s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "heart-float": "heart-float 1.8s ease-out both",
         vinyl: "vinyl-spin 5s linear infinite",
         shake: "shake 0.4s ease-in-out",
         equalizer: "equalizer 1.2s ease-in-out infinite",

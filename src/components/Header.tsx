@@ -47,6 +47,7 @@ export async function Header() {
     ...(canUpload ? [{ href: "/upload", label: "+ Pibliye yon chante", tone: "primary" as const }] : []),
     ...(admin ? [{ href: "/admin", label: "🛡️ Admin", tone: "admin" as const }] : []),
     ...(isArtist ? [{ href: "/dashboard", label: "📊 Dashboard" }] : []),
+    { href: "/live", label: "🔴 Live yo" },
     { href: "/telechaje", label: "📥 Mizik offline" },
     { href: "/kredi", label: "🪙 Kredi mwen" },
     { href: "/mesaj", label: `🔔 Mesaj${unread ? ` (${unread})` : ""}` },

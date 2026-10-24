@@ -30,6 +30,7 @@ export async function AdminTabs() {
           { href: "/admin/peman", label: "💳 Peman" },
           { href: "/admin/pro", label: "⭐ Pro", badge: pro },
           { href: "/admin/kredi", label: "🪙 Kredi", badge: credits },
+          { href: "/admin/live", label: "🎥 Jesyon Live" },
           { href: "/admin/pos", label: "🗞️ Jesyon Pòs" },
           { href: "/admin/top3", label: "🏆 Top 3" },
           { href: "/admin/nivo", label: "🏅 Nivo" },

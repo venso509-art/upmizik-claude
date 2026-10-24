@@ -9,6 +9,7 @@ export function DashboardTabs() {
           { href: "/dashboard/estatistik", label: "📈 Estatistik" },
           { href: "/dashboard/revni", label: "💵 Revni mwen" },
           { href: "/dashboard/finans", label: "💰 Revni & Finans" },
+          { href: "/dashboard/revni-live", label: "🔴 Revni live" },
         ]}
       />
     </div>

@@ -238,6 +238,25 @@ export default async function DashboardPage() {
         </Link>
       </section>
 
+      {/* ===== LIVE (atis Pro) ===== */}
+      <section className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-red-500/30 bg-gradient-to-r from-red-600/15 to-transparent p-5">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-2xl" aria-hidden>
+          🔴
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-white">Fè yon live {isProArtist ? "" : "(atis Pro)"}</p>
+          <p className="text-sm text-zinc-400">Pale ak fanatik ou yo an dirèk, resevwa kado (60% pou ou), epi envite lòt atis monte sou sèn nan.</p>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/dashboard/revni-live" className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-zinc-500">
+            📊 Revni live
+          </Link>
+          <Link href={isProArtist ? "/live/nouvo" : "/pwofil"} className="rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-500">
+            {isProArtist ? "🔴 Kòmanse" : "⭐ Vin Pro"}
+          </Link>
+        </div>
+      </section>
+
       {/* ===== STATI 24 È (atis Pro) ===== */}
       <StatusComposer
         pro={isProArtist}
