@@ -94,9 +94,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "profile",
       siteName: "UpMizik",
-      ...(image ? { images: [{ url: image, alt: artist.display_name }] } : {}),
+      images: [{ url: image ?? "/og.jpg", alt: artist.display_name }],
     },
-    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
+    twitter: { card: "summary_large_image", title, description, images: [image ?? "/og.jpg"] },
   };
 }
 

@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${post.artist_name}: ${description.slice(0, 60)} | UpMizik`,
     description,
-    openGraph: { title, description, type: "article", siteName: "UpMizik", ...(image ? { images: [{ url: image }] } : {}) },
+    openGraph: { title, description, type: "article", siteName: "UpMizik", images: [{ url: image ?? "/og.jpg" }] },
   };
 }
 

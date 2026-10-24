@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${data.release.title} (${label}) – ${data.artist?.display_name ?? "Atis"} | UpMizik`;
   const description = `${label} ${data.artist?.display_name ?? ""}: ${data.tracks.length} chante. Koute l gratis sou UpMizik.`;
   const image = data.tracks.find((t) => t.coverUrl)?.coverUrl;
-  return { title, description, openGraph: { title, description, ...(image ? { images: [{ url: image }] } : {}) } };
+  return { title, description, openGraph: { title, description, images: [{ url: image ?? "/og.jpg" }] } };
 }
 
 export default async function ReleasePage({ params }: Props) {

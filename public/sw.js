@@ -3,7 +3,7 @@
 // Estrateji: REZO AN PREMYE (toujou dènye vèsyon an), kopi lokal sèlman si pa gen rezo.
 // Mizik offline yo li menm sere pa src/lib/offline.ts (cache "upmizik-offline-v1").
 // =====================================================================
-const SHELL = "upmizik-shell-v1";
+const SHELL = "upmizik-shell-v2";
 const OFFLINE_PAGE = "/telechaje";
 
 self.addEventListener("install", (event) => {
@@ -61,7 +61,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Fichye JS/CSS/fon Next.js ak ikòn yo: sove yo pou paj offline la ka chaje
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/pwa-icon/") || url.pathname === "/manifest.webmanifest") {
+  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname === "/manifest.webmanifest") {
     event.respondWith(networkFirst(request, request));
   }
 });

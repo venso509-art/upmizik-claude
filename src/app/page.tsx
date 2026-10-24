@@ -27,6 +27,7 @@ export const metadata: Metadata = {
     description: HOME_DESCRIPTION,
     siteName: "UpMizik",
     type: "website",
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "UpMizik: Platfòm mizik 100% ayisyen" }],
   },
 };
 

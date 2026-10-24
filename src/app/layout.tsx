@@ -30,7 +30,15 @@ export const metadata: Metadata = {
   title: "UpMizik",
   description: "Koute epi pataje mizik.",
   appleWebApp: { capable: true, title: "UpMizik", statusBarStyle: "black-translucent" },
-  icons: { apple: "/pwa-icon/192" },
+  // Lyen relatif yo (egz: /og.jpg) vin lyen konplè pou WhatsApp, Facebook...
+  metadataBase: new URL("https://upmizik.com"),
+  // Imaj pa defo lè yon moun pataje nenpòt lyen sit la: logo UpMizik la
+  openGraph: {
+    siteName: "UpMizik",
+    type: "website",
+    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "UpMizik: Platfòm mizik 100% ayisyen" }],
+  },
+  twitter: { card: "summary_large_image", images: ["/og.jpg"] },
 };
 
 // viewportFit "cover": ba navigasyon anba a respekte zòn bouton iPhone yo
