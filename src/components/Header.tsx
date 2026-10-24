@@ -52,7 +52,8 @@ export async function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-zinc-950/55 shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl backdrop-saturate-150">
+    // pt safe-area: sou iPhone (app enstale), header a desann anba zòn kamera/lè a olye l kache anba l
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-zinc-950/55 pt-[env(safe-area-inset-top)] shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl backdrop-saturate-150">
       {/* Nouvo mesaj an dirèk: son + ti kat (pou tout moun ki konekte) */}
       {user && <NotificationListener userId={user.id} />}
       {/* Ti liy limyè anba header a: vèt → jòn sitwon → vèt */}

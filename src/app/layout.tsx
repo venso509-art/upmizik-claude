@@ -9,6 +9,7 @@ import { ListenerAuthPrompt } from "@/components/auth/ListenerAuthPrompt";
 import { SplashScreen } from "@/components/SplashScreen";
 import { NoZoom } from "@/components/NoZoom";
 import { OfflineNotification } from "@/components/OfflineNotification";
+import { InstallAppPrompt } from "@/components/InstallAppPrompt";
 import { SPLASH_HEAD_SCRIPT } from "@/lib/splash";
 import { getSettings } from "@/lib/settings-server";
 import { PlayerProvider } from "@/components/player/PlayerProvider";
@@ -83,6 +84,7 @@ export default async function RootLayout({
             <BottomNav />
             <ListenerAuthPrompt />
             <OfflineNotification />
+            <InstallAppPrompt />
             <ServiceWorkerRegister />
           </PlayerProvider>
         </SettingsProvider>

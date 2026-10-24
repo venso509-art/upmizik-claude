@@ -8,6 +8,7 @@ import { Portal } from "@/components/Portal";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import { StatusOverlayLayer } from "@/components/status/StatusOverlayLayer";
+import { statusFontClass } from "@/lib/statusFonts";
 import { timeAgo } from "@/lib/posts";
 import { QUICK_REACTIONS, STATUS_SECONDS, loadArtistStatuses, markSeen, statusMediaUrl, type ArtistStatus } from "@/lib/statuses";
 
@@ -224,7 +225,7 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
             ) : !current ? (
               <p className="px-8 text-center text-white/80">Pa gen stati ankò. Stati yo disparèt apre 24 è.</p>
             ) : current.kind === "text" ? (
-              <p className="whitespace-pre-line break-words px-8 text-center text-2xl font-bold leading-snug text-white sm:text-3xl">{current.body}</p>
+              <p className={`whitespace-pre-line break-words px-8 text-center text-3xl leading-snug text-white ${statusFontClass(current.overlay?.font)}`}>{current.body}</p>
             ) : current.kind === "image" || current.kind === "video" ? (
               // Kad 9:16 la (menm jan ak editè a), ak stickers/lejand yo anlè l
               <div className="relative max-h-full w-full overflow-hidden" style={{ aspectRatio: "9 / 16", containerType: "inline-size" }}>

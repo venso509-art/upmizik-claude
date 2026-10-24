@@ -7,7 +7,8 @@ export type StatusKind = "text" | "image" | "video" | "audio";
 // Sticker oswa lejand sou foto/videyo a. x, y = sant li an % kad la; s = gwosè an % lajè kad la
 // b = fon dèyè tèks la (pa defo: wi)
 export type OverlayItem = { t: "sticker" | "text"; v: string; x: number; y: number; s: number; c?: string; b?: boolean };
-export type StatusOverlay = { items: OverlayItem[] };
+// font = stil ekriti yon stati tèks (gade lib/statusFonts.ts)
+export type StatusOverlay = { items: OverlayItem[]; font?: string };
 
 export type ArtistStatus = {
   id: string;

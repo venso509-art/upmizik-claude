@@ -9,6 +9,7 @@ import { ProBadge } from "@/components/pro/ProBadge";
 import { StatusViewer } from "@/components/status/StatusViewer";
 import { StatusEditor, type EditedStatus } from "@/components/status/StatusEditor";
 import { StatusOverlayLayer } from "@/components/status/StatusOverlayLayer";
+import { STATUS_FONTS, statusFontClass } from "@/lib/statusFonts";
 import {
   STATUSES_PER_DAY,
   STATUS_BACKGROUNDS,
@@ -35,6 +36,7 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
   const [kind, setKind] = useState<StatusKind>("text");
   const [body, setBody] = useState("");
   const [bg, setBg] = useState(STATUS_BACKGROUNDS[0]);
+  const [font, setFont] = useState(STATUS_FONTS[0].key); // stil ekriti stati tèks la
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -165,7 +167,9 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
               trim_start: edited.trimStart,
               trim_end: edited.trimEnd,
             }
-          : {};
+          : kind === "text" && font !== STATUS_FONTS[0].key
+            ? { overlay: { items: [], font } }
+            : {};
       let { error: err } = await supabase.from("artist_statuses").insert({ ...row, ...extra });
       // Migration editè a poko kouri: pibliye l san stickers yo
       if (err && (err.code === "42703" || err.code === "PGRST204")) ({ error: err } = await supabase.from("artist_statuses").insert(row));
@@ -244,8 +248,24 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
                 disabled={busy}
                 rows={3}
                 placeholder="Sa k ap pase jodi a?"
-                className="w-full resize-none bg-transparent text-center text-xl font-bold text-white placeholder:text-white/60 outline-none"
+                className={`w-full resize-none bg-transparent text-center text-2xl text-white placeholder:text-white/60 outline-none ${statusFontClass(font)}`}
               />
+            </div>
+            {/* Stil ekriti yo: chak bouton ekri nan pwòp font li */}
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
+              {STATUS_FONTS.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFont(f.key)}
+                  disabled={busy}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-base transition ${f.className} ${
+                    font === f.key ? "border-citron-400 bg-citron-400 text-zinc-950" : "border-zinc-700 text-zinc-200 hover:border-zinc-500"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {STATUS_BACKGROUNDS.map((c) => (
