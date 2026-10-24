@@ -32,8 +32,8 @@ export const STATUS_MEDIA: Record<Exclude<StatusKind, "text">, { accept: string;
   },
 };
 
-// Konbyen tan yon stati rete sou ekran an (videyo/odyo: dire fichye a)
-export const STATUS_SECONDS = 6;
+// Konbyen tan yon stati tèks oswa foto rete sou ekran an (videyo/odyo: dire fichye a)
+export const STATUS_SECONDS = 10;
 
 export function statusMediaUrl(supabase: SupabaseClient, path: string | null) {
   return path ? supabase.storage.from("statuses").getPublicUrl(path).data.publicUrl : null;
