@@ -50,7 +50,7 @@ export default async function LivePage({ params }: Props) {
   const [{ data: me }, { data: messages }, { data: guests }, { data: wallet }, { data: capacity }] = await Promise.all([
     user ? supabase.from("profiles").select("id, display_name, role, status").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("live_messages").select("id, live_id, user_id, sender_name, body, created_at").eq("live_id", live.id).order("created_at", { ascending: false }).limit(30).returns<LiveMessage[]>(),
-    supabase.from("live_guests").select("id, live_id, user_id, guest_name, status, created_at").eq("live_id", live.id).in("status", ["requested", "accepted"]).returns<LiveGuest[]>(),
+    supabase.from("live_guests").select("id, live_id, user_id, guest_name, status, created_at").eq("live_id", live.id).in("status", ["requested", "invited", "accepted"]).returns<LiveGuest[]>(),
     user ? supabase.from("credit_wallets").select("balance").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.rpc("live_capacity", { p_live: live.id }),
   ]);

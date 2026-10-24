@@ -189,6 +189,9 @@ export default async function ArtistPage({ params }: Props) {
   const [statusMap, liveMap] = await Promise.all([liveStatusIds(supabase, [artist.id]), liveNowMap(supabase)]);
   const statusIds = statusMap[artist.id] ?? [];
   const liveId = liveMap[artist.id];
+  // Pwochen live atis la anonse (si dat la poko pase); erè = migration poko kouri
+  const { data: nextLive } = await supabase.from("profiles").select("next_live_at, next_live_title").eq("id", artist.id).maybeSingle();
+  const nextLiveAt = !liveId && nextLive?.next_live_at && new Date(nextLive.next_live_at) > new Date() ? (nextLive.next_live_at as string) : null;
   const name = artist.display_name;
   const initials = initialsOf(name);
   const hasSocial = !!(artist.youtube_url || artist.instagram_url || artist.tiktok_url || artist.whatsapp_url);
@@ -285,6 +288,18 @@ export default async function ArtistPage({ params }: Props) {
               <span className="font-semibold text-white">{totalPlays.toLocaleString("fr-HT")}</span> ekout total
               {artist.location && <> · 📍 {artist.location}</>}
             </p>
+            {nextLiveAt && (
+              <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-red-600/15 px-3 py-1.5 text-sm text-red-100 ring-1 ring-red-500/40">
+                <span className="h-2 w-2 rounded-full bg-red-500 motion-safe:animate-pulse" />
+                <span>
+                  Pwochen live:{" "}
+                  <span className="font-semibold text-white">
+                    {new Date(nextLiveAt).toLocaleString("fr-HT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Port-au-Prince" })}
+                  </span>
+                  {nextLive?.next_live_title && <> · {nextLive.next_live_title}</>}
+                </span>
+              </p>
+            )}
             {isOwner && !artist.banner_url && (
               <Link href="/pwofil#kouveti" className="mt-3 inline-block text-sm font-medium text-citron-300 hover:text-citron-200">
                 🖼️ Ajoute yon foto kouvèti

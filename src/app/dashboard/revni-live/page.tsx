@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { formatHTG } from "@/lib/donations";
 import { formatCount, liveDuration } from "@/lib/live";
+import { LiveThanks, type Gifter } from "@/components/live/LiveThanks";
 
 export const metadata: Metadata = { title: "Revni live | UpMizik" };
 export const dynamic = "force-dynamic";
@@ -40,12 +41,15 @@ function Tile({ icon, label, value, hint }: { icon: string; label: string; value
 }
 
 // Revni live yo, apa revni mizik ak don yo: total, ak istwa chak live (blòk ki dewoule)
-export default async function LiveRevenuePage() {
+export default async function LiveRevenuePage({ searchParams }: { searchParams: { live?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
   if (profile?.role !== "artist") redirect("/dashboard");
+  // Pwochen live la (apa, pou paj la mache menm si migration an poko kouri)
+  const { data: next } = await supabase.from("profiles").select("next_live_at, next_live_title").eq("id", user.id).maybeSingle();
+  const nextLiveAt = next?.next_live_at && new Date(next.next_live_at) > new Date() ? (next.next_live_at as string) : null;
 
   const [{ data: rows }, { data: settings }] = await Promise.all([
     supabase.rpc("my_live_history"),
@@ -59,6 +63,16 @@ export default async function LiveRevenuePage() {
     history.slice(0, 20).map(async (l) => [l.live_id, ((await supabase.rpc("live_gift_breakdown", { p_live: l.live_id })).data ?? []) as Breakdown[]] as const),
   );
   const giftsByLive = new Map(breakdowns);
+
+  // Kiyès ki voye kado (pou remèsye yo) + tout moun ki te pase gade
+  const recent = history.slice(0, 20).map((l) => l.live_id);
+  const [gifterRows, { data: viewRows }] = await Promise.all([
+    Promise.all(recent.map(async (id) => [id, ((await supabase.rpc("live_gifters", { p_live: id })).data ?? []) as Gifter[]] as const)),
+    recent.length ? supabase.from("lives").select("id, total_views").in("id", recent) : Promise.resolve({ data: [] }),
+  ]);
+  const giftersByLive = new Map(gifterRows);
+  const viewsByLive = new Map(((viewRows ?? []) as { id: string; total_views: number | null }[]).map((r) => [r.id, r.total_views ?? 0]));
+  const openId = searchParams.live;
 
   const totals = history.reduce(
     (t, l) => ({ lives: t.lives + 1, gifts: t.gifts + l.gifts_count, giftHtg: t.giftHtg + l.gift_htg, mine: t.mine + l.artist_htg, likes: t.likes + Number(l.likes) }),
@@ -96,7 +110,7 @@ export default async function LiveRevenuePage() {
               return (
                 <li key={l.live_id}>
                   {/* Blòk ki fèmen: klike pou wè detay yo */}
-                  <details className="group rounded-2xl border border-zinc-800 bg-zinc-900/50 open:border-red-500/40">
+                  <details open={l.live_id === openId} className="group rounded-2xl border border-zinc-800 bg-zinc-900/50 open:border-red-500/40">
                     <summary className="flex cursor-pointer list-none flex-wrap items-center gap-3 p-4">
                       <span className={`rounded-md px-2 py-0.5 text-xs font-black ${l.status === "live" ? "bg-red-600 text-white" : "bg-zinc-800 text-zinc-300"}`}>
                         {l.status === "live" ? "LIVE" : l.status === "stopped" ? "KANPE" : "FINI"}
@@ -115,8 +129,8 @@ export default async function LiveRevenuePage() {
                     <div className="border-t border-zinc-800 p-4">
                       <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                         <p className="rounded-xl bg-zinc-950/70 p-3">
-                          <span className="block text-xs text-zinc-500">👥 Moun ki antre</span>
-                          <span className="font-bold text-white">{formatCount(l.viewers)}</span>
+                          <span className="block text-xs text-zinc-500">👥 Moun ki pase gade</span>
+                          <span className="font-bold text-white">{formatCount(Math.max(viewsByLive.get(l.live_id) ?? 0, l.viewers))}</span>
                         </p>
                         <p className="rounded-xl bg-zinc-950/70 p-3">
                           <span className="block text-xs text-zinc-500">👁 Plis moun an menm tan</span>
@@ -144,6 +158,12 @@ export default async function LiveRevenuePage() {
                       <p className="mt-4 text-sm text-zinc-300">
                         💰 Ou touche <span className="font-bold text-emerald-300">{formatHTG(l.artist_htg)}</span> ({pct}% de {formatHTG(l.gift_htg)})
                       </p>
+                      {giftersByLive.has(l.live_id) && (
+                        <div className="mt-5">
+                          <h3 className="mb-2 text-sm font-bold text-white">🎁 Moun ki voye kado</h3>
+                          <LiveThanks liveId={l.live_id} gifters={giftersByLive.get(l.live_id) ?? []} nextLiveAt={nextLiveAt} nextLiveTitle={(next?.next_live_title as string | null) ?? null} />
+                        </div>
+                      )}
                     </div>
                   </details>
                 </li>

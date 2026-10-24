@@ -21,7 +21,7 @@ export const LIVE_COLUMNS = "id, artist_id, title, status, started_at, ended_at,
 
 export type LiveGiftEvent = { id: string; live_id: string; sender_id: string; sender_name: string; gift_id: string; quantity: number; credits: number; created_at: string };
 export type LiveMessage = { id: string; live_id: string; user_id: string; sender_name: string; body: string; created_at: string };
-export type LiveGuest = { id: string; live_id: string; user_id: string; guest_name: string; status: "requested" | "accepted" | "rejected" | "left" | "removed"; created_at: string };
+export type LiveGuest = { id: string; live_id: string; user_id: string; guest_name: string; status: "requested" | "invited" | "accepted" | "rejected" | "left" | "removed"; created_at: string };
 
 // Yon live "an dirèk" = status live + atis la te bay siy lavi nan 2 dènye minit yo
 export function isLiveOn(l: Pick<LiveRow, "status" | "last_seen_at">, now = Date.now()) {

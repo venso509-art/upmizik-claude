@@ -24,6 +24,7 @@ export type AdminLive = {
   platform_htg: number;
   live_banned_until: string | null;
   stop_reason: string | null;
+  total_views?: number;
 };
 
 const when = (iso: string) => new Date(iso).toLocaleString("fr-HT", { dateStyle: "short", timeStyle: "short", timeZone: "America/Port-au-Prince" });
@@ -60,7 +61,7 @@ function Row({ l }: { l: AdminLive }) {
           </span>
         </span>
         <span className="text-xs text-zinc-400">
-          👥 {formatCount(l.viewers)} · ❤️ {formatCount(l.likes)} · 🎁 {formatCount(l.gifts_count)}
+          👥 {formatCount(Math.max(l.total_views ?? 0, l.viewers))} · ❤️ {formatCount(l.likes)} · 🎁 {formatCount(l.gifts_count)}
         </span>
         <span className="text-right text-xs">
           <span className="block font-semibold text-white">{formatHTG(l.gift_htg)}</span>
@@ -72,6 +73,9 @@ function Row({ l }: { l: AdminLive }) {
       {l.stop_reason && <p className="mt-2 text-xs text-red-300">Kanpe: {l.stop_reason}</p>}
 
       <div className="mt-3 flex flex-wrap gap-2">
+        <Link href={`/admin/live/${l.live_id}`} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-sm text-white hover:bg-zinc-700">
+          📊 Detay
+        </Link>
         {l.is_on && (
           <>
             <Link href={`/live/${l.live_id}`} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-sm text-white hover:bg-zinc-700">

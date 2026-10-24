@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConnectionState, Room, RoomEvent, Track, VideoPresets, type LocalVideoTrack, type Participant } from "livekit-client";
-import { CamIcon, CamOffIcon, CloseIcon, EyeIcon, FlipIcon, GiftIcon, HandIcon, HeartIcon, MicIcon, MicOffIcon, PowerIcon, SendIcon, ShareIcon, UsersIcon } from "./LiveIcons";
+import { CamIcon, CamOffIcon, CloseIcon, EyeIcon, FlipIcon, GiftIcon, HandIcon, HeartIcon, MicIcon, MicOffIcon, MoreIcon, PowerIcon, SendIcon, ShareIcon, UserPlusIcon, UsersIcon } from "./LiveIcons";
 import { createClient } from "@/lib/supabase/client";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { shareLink } from "@/lib/share";
+import { openPortraitCamera, type PortraitCamera } from "@/lib/portraitCamera";
 import {
   HEARTBEAT_MS,
   LIKE_FLUSH_MS,
@@ -64,13 +65,12 @@ function VideoTile({ participant, version, mirror, label, big }: { participant: 
   return (
     <div className={`relative h-full w-full overflow-hidden bg-zinc-900 ${big ? "" : "rounded-2xl ring-2 ring-white/20"}`}>
       {/* Gwo ekran: tout imaj la parèt (pa koupe, pa zoume), ak yon kopi flou dèyè l pou ranpli ekran an */}
-      {big && <video ref={bgRef} autoPlay playsInline muted aria-hidden className={`absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl ${mirror ? "-scale-x-110" : ""} ${hasVideo ? "" : "hidden"}`} />}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted={participant.isLocal}
-        className={`relative h-full w-full ${big ? "object-contain" : "object-cover"} ${mirror ? "-scale-x-100" : ""} ${hasVideo ? "" : "hidden"}`}
+        className={`relative h-full w-full object-cover ${mirror ? "-scale-x-100" : ""} ${hasVideo ? "" : "hidden"}`}
       />
       {!hasVideo && (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-fuchsia-900/60 to-zinc-950 text-4xl text-white/70">🎤</div>
@@ -112,6 +112,15 @@ export function LiveRoom({
 
   // LiveKit
   const roomRef = useRef<Room | null>(null);
+  const camRef = useRef<PortraitCamera | null>(null); // kamera potrè (9:16) atis la / envite a
+
+  // Louvri kamera a an POTRÈ epi voye l nan live la
+  const publishCamera = useCallback(async (room: Room, facingMode: "user" | "environment") => {
+    camRef.current?.stop();
+    const cam = await openPortraitCamera(facingMode);
+    camRef.current = cam;
+    await room.localParticipant.publishTrack(cam.track, { source: Track.Source.Camera });
+  }, []);
   const [version, setVersion] = useState(0);
   const [connState, setConnState] = useState<"connecting" | "connected" | "error" | "ended">("connecting");
   const [connError, setConnError] = useState<string>();
@@ -137,7 +146,15 @@ export function LiveRoom({
   const pendingTaps = useRef(0);
   const heartId = useRef(0);
 
-  const myGuest = useMemo(() => (me ? guests.find((g) => g.user_id === me.id && (g.status === "requested" || g.status === "accepted")) : undefined), [guests, me]);
+  const myGuest = useMemo(
+    () => (me ? guests.find((g) => g.user_id === me.id && (g.status === "requested" || g.status === "invited" || g.status === "accepted")) : undefined),
+    [guests, me],
+  );
+  const invited = useMemo(() => guests.filter((g) => g.status === "invited"), [guests]);
+  // Meni ⋮ atis la: pataje, envite atis, demann yo, sèn nan
+  const [showMenu, setShowMenu] = useState(false);
+  type Candidate = { id: string; name: string; avatarUrl: string | null; isLive: boolean; liveId?: string };
+  const [candidates, setCandidates] = useState<Candidate[] | null>(null);
   const onStage = useMemo(() => guests.filter((g) => g.status === "accepted"), [guests]);
   const requests = useMemo(() => guests.filter((g) => g.status === "requested"), [guests]);
   const giftById = useMemo(() => new Map(gifts.map((g) => [g.id, g])), [gifts]);
@@ -154,6 +171,8 @@ export function LiveRoom({
     setConnError(undefined);
     try {
       await roomRef.current?.disconnect();
+      camRef.current?.stop();
+      camRef.current = null;
       const res = await fetch("/api/live/token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ liveId: live.id }) });
       const data = (await res.json()) as { token?: string; url?: string; canPublish?: boolean; error?: string };
       if (!res.ok || !data.token || !data.url) throw new Error(data.error ?? "Pa ka konekte nan live la.");
@@ -190,7 +209,7 @@ export function LiveRoom({
       await room.connect(data.url, data.token);
       setCanPublish(!!data.canPublish);
       if (data.canPublish) {
-        await room.localParticipant.setCameraEnabled(true, { ...CAPTURE, facingMode: facing });
+        await publishCamera(room, facing);
         await room.localParticipant.setMicrophoneEnabled(true);
         setCamOn(true);
         setMicOn(true);
@@ -208,9 +227,19 @@ export function LiveRoom({
   useEffect(() => {
     void connect();
     if (me) void supabase.rpc("join_live", { p_live: live.id });
+    let session = "";
+    try {
+      session = sessionStorage.getItem("upmizik-live-session") ?? crypto.randomUUID();
+      sessionStorage.setItem("upmizik-live-session", session);
+    } catch {
+      session = crypto.randomUUID();
+    }
+    void supabase.rpc("record_live_view", { p_live: live.id, p_session: session });
     return () => {
       void roomRef.current?.disconnect();
       roomRef.current = null;
+      camRef.current?.stop();
+      camRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -384,13 +413,15 @@ export function LiveRoom({
     if (!confirm("Fini live la?")) return;
     await supabase.rpc("end_live", { p_live: live.id });
     await roomRef.current?.disconnect();
-    router.push("/dashboard/revni-live");
+    router.push(`/dashboard/revni-live?live=${live.id}`);
   }
 
+  // Kamera: nou mete l an poz (mute) olye fèmen l, pou l rete an potrè lè l tounen
   async function toggleCam() {
-    const lp = roomRef.current?.localParticipant;
-    if (!lp) return;
-    await lp.setCameraEnabled(!camOn, { ...CAPTURE, facingMode: facing });
+    const pub = roomRef.current?.localParticipant.getTrackPublication(Track.Source.Camera);
+    if (!pub) return;
+    if (camOn) await pub.mute();
+    else await pub.unmute();
     setCamOn(!camOn);
   }
   async function toggleMic() {
@@ -399,11 +430,53 @@ export function LiveRoom({
     await lp.setMicrophoneEnabled(!micOn);
     setMicOn(!micOn);
   }
+  // Vire kamera a (devan/dèyè), toujou an potrè
   async function flipCam() {
     const track = roomRef.current?.localParticipant.getTrackPublication(Track.Source.Camera)?.track as LocalVideoTrack | undefined;
+    if (!track) return;
     const next = facing === "user" ? "environment" : "user";
-    await track?.restartTrack({ ...CAPTURE, facingMode: next });
+    const old = camRef.current;
+    const cam = await openPortraitCamera(next);
+    await track.replaceTrack(cam.track, true);
+    camRef.current = cam;
+    old?.stop();
     setFacing(next);
+  }
+
+  // Atis yo ka envite: sa ki an live kounye a sou sit la + atis k ap gade live sa a
+  async function openMenu() {
+    setShowMenu(true);
+    setCandidates(null);
+    const { data: lives } = await supabase.rpc("live_now");
+    const liveRows = ((lives ?? []) as { live_id: string; artist_id: string }[]).filter((l) => l.artist_id !== artist.id);
+    const viewerIds = Array.from(roomRef.current?.remoteParticipants.values() ?? [])
+      .map((p) => p.identity)
+      .filter((id) => /^[0-9a-f-]{36}$/i.test(id) && id !== artist.id);
+    const ids = Array.from(new Set([...liveRows.map((l) => l.artist_id), ...viewerIds]));
+    if (!ids.length) return setCandidates([]);
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, display_name, avatar_url")
+      .in("id", ids)
+      .eq("role", "artist")
+      .eq("status", "approved");
+    const liveBy = new Map(liveRows.map((l) => [l.artist_id, l.live_id]));
+    setCandidates(
+      ((profs ?? []) as { id: string; display_name: string; avatar_url: string | null }[])
+        .map((p) => ({ id: p.id, name: p.display_name, avatarUrl: p.avatar_url, isLive: liveBy.has(p.id), liveId: liveBy.get(p.id) }))
+        .sort((a, b) => Number(b.isLive) - Number(a.isLive)),
+    );
+  }
+
+  async function invite(artistId: string) {
+    const { error } = await supabase.rpc("invite_to_live", { p_live: live.id, p_artist: artistId });
+    if (error) flash(error.message.includes("invite_to_live") ? "Baz done a poko ajou (migration envitasyon an)." : error.message);
+    else flash("✉️ Envitasyon an voye!");
+  }
+
+  async function respondInvite(guestId: string, accept: boolean) {
+    const { error } = await supabase.rpc("respond_live_invite", { p_guest: guestId, p_accept: accept });
+    if (error) flash(error.message);
   }
 
   async function shareLive() {
@@ -546,7 +619,12 @@ export function LiveRoom({
           <span className={`flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold ${glass}`}>
             <EyeIcon className="h-4 w-4" /> {formatCount(watching)}
           </span>
-          {!isHost && (
+          {isHost ? (
+            <button type="button" onClick={() => void openMenu()} className={`relative flex h-8 w-8 items-center justify-center rounded-full ${glass}`} aria-label="Plis opsyon">
+              <MoreIcon className="h-5 w-5" />
+              {requests.length > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold">{requests.length}</span>}
+            </button>
+          ) : (
             <button type="button" onClick={() => router.back()} className={`flex h-8 w-8 items-center justify-center rounded-full ${glass}`} aria-label="Kite live la">
               <CloseIcon className="h-4 w-4" />
             </button>
@@ -554,6 +632,20 @@ export function LiveRoom({
         </div>
         {live.title && (
           <p className={`absolute left-3 top-[calc(env(safe-area-inset-top)+4.25rem)] z-20 max-w-[66%] truncate rounded-full px-3 py-1 text-xs font-medium ${glass}`}>{live.title}</p>
+        )}
+
+        {/* Lis datant: konbyen atis k ap tann pou monte (klike = wè yo tout) */}
+        {isHost && requests.length > 0 && (
+          <button
+            type="button"
+            onClick={() => void openMenu()}
+            className="absolute left-3 top-[calc(env(safe-area-inset-top)+6.25rem)] z-30 flex items-center gap-2 rounded-full bg-fuchsia-600/90 py-1.5 pl-1.5 pr-3 text-xs font-bold shadow-lg shadow-fuchsia-600/30 backdrop-blur motion-safe:animate-fade-up"
+          >
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">
+              <HandIcon className="h-3.5 w-3.5" />
+            </span>
+            {requests.length} ap tann pou monte
+          </button>
         )}
 
         {/* Son bloke pa navigatè a */}
@@ -691,10 +783,134 @@ export function LiveRoom({
 
         {toast && <p className="absolute inset-x-6 top-1/2 z-40 -translate-y-1/2 rounded-2xl bg-black/85 px-4 py-3 text-center text-sm backdrop-blur">{toast}</p>}
 
+        {/* ===== MWEN ENVITE: aksepte oswa refize ===== */}
+        {myGuest?.status === "invited" && (
+          <div className="absolute inset-x-3 top-[calc(env(safe-area-inset-top)+6.75rem)] z-40 flex items-center gap-3 rounded-2xl bg-zinc-900/95 p-3 shadow-2xl ring-1 ring-fuchsia-500/40 backdrop-blur motion-safe:animate-fade-up">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-fuchsia-600/30 text-fuchsia-200">
+              <UserPlusIcon className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1 text-sm">
+              <span className="block font-bold">{artist.name} envite w monte!</span>
+              <span className="text-xs text-white/60">Kamera w ak mikwo w ap limen</span>
+            </span>
+            <button type="button" onClick={() => void respondInvite(myGuest.id, false)} className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
+              Non
+            </button>
+            <button type="button" onClick={() => void respondInvite(myGuest.id, true)} className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-bold text-zinc-950">
+              Monte
+            </button>
+          </div>
+        )}
+
+        {/* ===== MENI ⋮ ATIS LA ===== */}
+        {isHost && showMenu && (
+          <div className="absolute inset-0 z-50 flex items-end bg-black/50" onClick={() => setShowMenu(false)}>
+            <div
+              className="max-h-[78vh] w-full overflow-y-auto rounded-t-3xl bg-zinc-900/95 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] ring-1 ring-white/10 backdrop-blur-xl motion-safe:animate-fade-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+
+              {/* Pataje */}
+              <button type="button" onClick={() => void shareLive()} className="flex w-full items-center gap-3 rounded-2xl bg-white/5 p-3 text-left transition hover:bg-white/10">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-citron-400 text-zinc-950">
+                  <ShareIcon className="h-5 w-5" />
+                </span>
+                <span className="text-sm">
+                  <span className="block font-bold">Pataje live la</span>
+                  <span className="text-xs text-white/60">WhatsApp, Facebook, Instagram…</span>
+                </span>
+              </button>
+
+              {/* Demann monte */}
+              {requests.length > 0 && (
+                <section className="mt-5">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-widest text-white/50">✋ Demann pou monte ({requests.length})</p>
+                  <ul className="space-y-2">
+                    {requests.map((r) => (
+                      <li key={r.id} className="flex items-center gap-3 rounded-2xl bg-white/5 p-2.5">
+                        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{r.guest_name}</span>
+                        <button type="button" onClick={() => void respond(r, false)} className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
+                          Refize
+                        </button>
+                        <button type="button" onClick={() => void respond(r, true)} className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-bold text-zinc-950">
+                          Aksepte
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {/* Sèn nan */}
+              <section className="mt-5">
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-white/50">
+                  👥 Sou sèn nan ({onStage.length}/{capacity})
+                </p>
+                {onStage.length + invited.length === 0 ? (
+                  <p className="rounded-2xl bg-white/5 p-3 text-xs text-white/60">Pèsonn poko monte. Envite yon atis anba a!</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {[...onStage, ...invited].map((g) => (
+                      <li key={g.id} className="flex items-center gap-3 rounded-2xl bg-white/5 p-2.5">
+                        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{g.guest_name}</span>
+                        <span className={`text-xs ${g.status === "accepted" ? "text-emerald-300" : "text-amber-300"}`}>{g.status === "accepted" ? "Sou sèn" : "⏳ Envite"}</span>
+                        <button type="button" onClick={() => void leaveStage(g.id)} className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
+                          {g.status === "accepted" ? "Retire" : "Anile"}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-2 text-[11px] text-white/45">100 like → 2 moun sou sèn · 100 like + $5 kado → 5 moun</p>
+              </section>
+
+              {/* Envite yon atis */}
+              <section className="mt-5">
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-white/50">🎤 Envite yon atis</p>
+                {candidates === null ? (
+                  <p className="p-3 text-xs text-white/60">Ap chèche atis yo…</p>
+                ) : candidates.length === 0 ? (
+                  <p className="rounded-2xl bg-white/5 p-3 text-xs text-white/60">Pa gen lòt atis an live oswa k ap gade live ou kounye a.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {candidates.map((c) => {
+                      const g = guests.find((x) => x.user_id === c.id && (x.status === "invited" || x.status === "accepted" || x.status === "requested"));
+                      return (
+                        <li key={c.id} className="flex items-center gap-3 rounded-2xl bg-white/5 p-2.5">
+                          <span className="relative shrink-0">
+                            {c.avatarUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={c.avatarUrl} alt="" className={`h-10 w-10 rounded-full object-cover ${c.isLive ? "ring-2 ring-red-500" : ""}`} />
+                            ) : (
+                              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-fuchsia-700 font-bold">{c.name.charAt(0)}</span>
+                            )}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold">{c.name}</span>
+                            <span className={`text-[11px] ${c.isLive ? "text-red-300" : "text-white/55"}`}>{c.isLive ? "🔴 An live kounye a" : "👁 Ap gade live ou"}</span>
+                          </span>
+                          {g ? (
+                            <span className="text-xs text-white/60">{g.status === "accepted" ? "Sou sèn" : g.status === "invited" ? "⏳ Envite" : "✋ Mande"}</span>
+                          ) : (
+                            <button type="button" onClick={() => void invite(c.id)} className="flex items-center gap-1 rounded-full bg-fuchsia-600 px-3 py-1.5 text-xs font-bold">
+                              <UserPlusIcon className="h-3.5 w-3.5" /> Envite
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+            </div>
+          </div>
+        )}
+
         {/* ===== ATIS LA: demann pou monte ===== */}
         {isHost && requests.length > 0 && (
-          <div className="absolute inset-x-3 top-[calc(env(safe-area-inset-top)+6.75rem)] z-40 space-y-2">
-            {requests.slice(0, 3).map((r) => (
+          <div className="absolute inset-x-3 top-[calc(env(safe-area-inset-top)+8.75rem)] z-40 space-y-2">
+            {requests.slice(0, 2).map((r) => (
               <div key={r.id} className="flex items-center gap-3 rounded-2xl bg-zinc-900/95 p-3 shadow-2xl ring-1 ring-white/10 backdrop-blur motion-safe:animate-fade-up">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-fuchsia-600/30 text-fuchsia-200">
                   <HandIcon className="h-5 w-5" />

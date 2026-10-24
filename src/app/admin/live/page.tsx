@@ -17,7 +17,11 @@ export default async function AdminLivePage() {
   if (!(await isAdmin(supabase, user.id))) redirect("/");
 
   const { data } = await supabase.rpc("admin_lives", { p_limit: 200 });
-  const lives = ((data ?? []) as AdminLive[]).map((l) => ({ ...l, gift_htg: Number(l.gift_htg), artist_htg: Number(l.artist_htg), platform_htg: Number(l.platform_htg), likes: Number(l.likes) }));
+  const raw = (data ?? []) as AdminLive[];
+  // Tout moun ki te pase gade (menm san kont)
+  const { data: views } = await supabase.from("lives").select("id, total_views").order("started_at", { ascending: false }).limit(500);
+  const viewsById = new Map(((views ?? []) as { id: string; total_views: number | null }[]).map((v) => [v.id, v.total_views ?? 0]));
+  const lives = raw.map((l) => ({ ...l, total_views: viewsById.get(l.live_id) ?? 0, gift_htg: Number(l.gift_htg), artist_htg: Number(l.artist_htg), platform_htg: Number(l.platform_htg), likes: Number(l.likes) }));
   const onNow = lives.filter((l) => l.is_on).length;
   const platform = lives.reduce((s, l) => s + l.platform_htg, 0);
 

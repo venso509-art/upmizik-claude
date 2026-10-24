@@ -39,7 +39,7 @@ export function StartLiveForm() {
 
   return (
     <div className="space-y-5">
-      <div className="relative mx-auto aspect-[3/4] w-full max-w-xs overflow-hidden rounded-3xl bg-zinc-900">
+      <div className="relative mx-auto aspect-[9/16] w-full max-w-[16rem] overflow-hidden rounded-3xl bg-zinc-900">
         <video ref={videoRef} autoPlay muted playsInline className="h-full w-full -scale-x-100 object-cover" />
         {camError && <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-red-300">{camError}</p>}
         <span className="absolute left-3 top-3 rounded-md bg-black/50 px-2 py-0.5 text-xs font-bold text-white">APÈSI</span>
