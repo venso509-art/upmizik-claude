@@ -136,6 +136,13 @@ const config: Config = {
           "40%, 80%": { opacity: "1", transform: "scale(1) rotate(0deg)" },
           "100%": { opacity: "0", transform: "scale(1.6) translateY(-60px)" },
         },
+        // Kè ki parèt kote dwèt la touche ekran an (tap doub), epi ki monte
+        "heart-pop": {
+          "0%": { opacity: "0", transform: "translate(-50%, -50%) scale(0.3) rotate(var(--rot, 0deg))" },
+          "18%": { opacity: "1", transform: "translate(-50%, -50%) scale(1.25) rotate(var(--rot, 0deg))" },
+          "35%": { opacity: "1", transform: "translate(-50%, -50%) scale(1) rotate(var(--rot, 0deg))" },
+          "100%": { opacity: "0", transform: "translate(-50%, -180%) scale(0.85) rotate(var(--rot, 0deg))" },
+        },
         "heart-float": {
           "0%": { opacity: "1", transform: "translateY(0) scale(0.6)" },
           "100%": { opacity: "0", transform: "translateY(-220px) scale(1.3)" },
@@ -153,6 +160,7 @@ const config: Config = {
         "gift-in": "gift-in 4.2s ease-out both",
         "gift-big": "gift-big 2.6s cubic-bezier(0.22, 1, 0.36, 1) both",
         "heart-float": "heart-float 1.8s ease-out both",
+        "heart-pop": "heart-pop 1.3s cubic-bezier(0.22, 1, 0.36, 1) both",
         vinyl: "vinyl-spin 5s linear infinite",
         shake: "shake 0.4s ease-in-out",
         equalizer: "equalizer 1.2s ease-in-out infinite",
