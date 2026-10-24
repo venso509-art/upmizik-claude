@@ -22,6 +22,7 @@ export function maxSplits(pro: boolean) {
 export const PRO_BENEFITS: { icon: string; title: string; text: string }[] = [
   { icon: "⭐", title: "Badj PRO sou pwofil ou", text: "Fanatik yo wè touswit ou se yon atis serye." },
   { icon: "🚀", title: "Ou parèt an premye", text: "Nan paj Atis yo ak nan « Atis popilè » sou paj akèy la." },
+  { icon: "📸", title: "Stati 24 è", text: "Poste jiska 5 stati pa jou (foto, videyo, odyo oswa tèks) nan wonn ou, tankou WhatsApp." },
   { icon: "📌", title: "Chante an vedèt", text: "Chwazi 1 chante ki parèt gwo anlè paj pwofil ou, ak yon bouton Jwe." },
   { icon: "💬", title: `${PRO_POSTS_PER_DAY} pòs Sosyal pa jou`, text: `Olye 5, epi pòs ou yo rete ${PRO_POST_DAYS} jou olye 30.` },
   { icon: "🎚️", title: "Fichye pi gwo", text: "Odyo jiska 100 MB olye 50 MB (pi bon kalite son)." },

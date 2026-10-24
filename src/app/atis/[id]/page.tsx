@@ -11,6 +11,8 @@ import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { ProBadge } from "@/components/pro/ProBadge";
 import { artistShareText } from "@/lib/shareMessages";
 import { Medal } from "@/components/badges/Medal";
+import { StatusRing } from "@/components/status/StatusRing";
+import { liveStatusIds } from "@/lib/statuses";
 import { isPro } from "@/lib/pro";
 import { ArtistSocialLinks } from "@/components/artist/ArtistSocialLinks";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
@@ -182,6 +184,7 @@ export default async function ArtistPage({ params }: Props) {
   const earned = allTrophies.filter((t) => t.earned);
 
   const isOwner = user?.id === artist.id;
+  const statusIds = (await liveStatusIds(supabase, [artist.id]))[artist.id] ?? [];
   const name = artist.display_name;
   const initials = initialsOf(name);
   const hasSocial = !!(artist.youtube_url || artist.instagram_url || artist.tiktok_url || artist.whatsapp_url);
@@ -248,9 +251,12 @@ export default async function ArtistPage({ params }: Props) {
 
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 pb-8 pt-28 text-center sm:flex-row sm:items-end sm:pt-40 sm:text-left">
           <div className="relative shrink-0">
-            <div className="h-36 w-36 overflow-hidden rounded-full shadow-2xl shadow-black/60 ring-4 ring-zinc-950 sm:h-44 sm:w-44">
-              <SafeImage src={artist.avatar_url} alt={name} className="h-full w-full object-cover" fallback={avatarFallback} />
-            </div>
+            {/* Wonn vèt + klike = stati atis la (si l gen stati vivan) */}
+            <StatusRing artist={{ id: artist.id, name, avatarUrl: artist.avatar_url, verified: artist.is_verified }} statusIds={statusIds}>
+              <div className="h-36 w-36 overflow-hidden rounded-full shadow-2xl shadow-black/60 ring-4 ring-zinc-950 sm:h-44 sm:w-44">
+                <SafeImage src={artist.avatar_url} alt={name} className="h-full w-full object-cover" fallback={avatarFallback} />
+              </div>
+            </StatusRing>
             <VerifiedCorner show={artist.is_verified} size="xl" position="bottom-1.5 right-1.5 sm:bottom-2.5 sm:right-2.5" />
           </div>
           <div className="min-w-0">

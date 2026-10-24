@@ -10,6 +10,7 @@ import { PromoSection } from "@/components/promos/PromoSection";
 import { getActivePromos } from "@/lib/promos";
 import { Top3Section } from "@/components/Top3Section";
 import { ArtistBubbles, type BubbleArtist } from "@/components/ArtistBubbles";
+import { liveStatusIds } from "@/lib/statuses";
 import { Reveal } from "@/components/Reveal";
 import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 import { SocialStrip } from "@/components/social/SocialStrip";
@@ -86,6 +87,8 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
   ]);
   const verified = new Set((verifiedRows ?? []).map((r) => r.id));
   bubbles = bubbles.map((b) => ({ ...b, is_verified: verified.has(b.artist_id) }));
+  // Stati vivan atis yo (wonn vèt tankou WhatsApp)
+  const bubbleStatuses = await liveStatusIds(supabase, bubbles.map((b) => b.artist_id));
 
   return (
     <>
@@ -135,7 +138,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
 
       {/* ===== SÈK ATIS YO (tankou estati WhatsApp), anba hero a ===== */}
       <Reveal>
-        <ArtistBubbles title={bubblesTitle} artists={bubbles} />
+        <ArtistBubbles title={bubblesTitle} artists={bubbles} statuses={bubbleStatuses} />
       </Reveal>
 
       {/* ===== RPA: ATIS POU DEKOUVRI ===== */}

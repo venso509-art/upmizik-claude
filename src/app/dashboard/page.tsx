@@ -13,6 +13,7 @@ import { toBalance, type BalanceRow } from "@/lib/finance";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
 import { SongManager, type ManagedSong } from "@/components/dashboard/SongManager";
 import { PostComposer, type MyPost } from "@/components/social/PostComposer";
+import { StatusComposer } from "@/components/status/StatusComposer";
 import { postImageUrl } from "@/lib/posts";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { donateShareText } from "@/lib/shareMessages";
@@ -54,7 +55,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
 
-  const { data: profile } = await supabase.from("profiles").select("display_name, role, status, is_verified").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("display_name, role, status, is_verified, avatar_url").eq("id", user.id).single();
   if (profile?.role !== "artist") {
     return (
       <AuthCard title="Dashboard la se pou atis" subtitle="Kont ou se yon kont koutè.">
@@ -236,6 +237,12 @@ export default async function DashboardPage() {
           <p className="mt-1 text-xs text-fuchsia-300 group-hover:underline">Mande retrè →</p>
         </Link>
       </section>
+
+      {/* ===== STATI 24 È (atis Pro) ===== */}
+      <StatusComposer
+        pro={isProArtist}
+        artist={{ id: user.id, name: profile.display_name, avatarUrl: profile.avatar_url ?? null, verified: profile.is_verified }}
+      />
 
       {/* ===== SOSYAL: pibliye yon pòs ===== */}
       <PostComposer
