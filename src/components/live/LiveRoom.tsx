@@ -24,13 +24,15 @@ type Artist = { id: string; name: string; avatarUrl: string | null; verified: bo
 // x/y: kote dwèt la touche ekran an (tap doub); side: kè ki monte bò bouton like la
 type FloatingHeart = { id: number; x: number; y: number; hue: number; rot: number; side: boolean };
 
-// Kamera a: fòma vètikal (telefòn) ak bon kalite, pou imaj la pa flou lè l plen ekran an
-const CAPTURE = { resolution: { width: 720, height: 1280, frameRate: 30 } };
+// Kamera a: Full HD vètikal (1080×1920) a 30 imaj pa segonn. Telefòn ki pa ka fè 1080p ap bay pi bon sa yo kapab.
+// (4K pa itilize: li twò lou pou entènèt fanatik yo ak pou batri telefòn atis la)
+const CAPTURE = { resolution: { width: 1080, height: 1920, frameRate: 30 } };
 type GiftAnim = { key: string; emoji: string; name: string; sender: string; quantity: number; big: boolean };
 
 // ===== Kare videyo yon moun sou sèn nan =====
 function VideoTile({ participant, version, mirror, label, big }: { participant: Participant; version: number; mirror: boolean; label?: string; big?: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const bgRef = useRef<HTMLVideoElement>(null); // kopi flou dèyè a (gwo ekran sèlman)
   const audioRef = useRef<HTMLAudioElement>(null);
   const cam = participant.getTrackPublication(Track.Source.Camera);
   const hasVideo = !!cam?.track && !cam.isMuted;
@@ -40,8 +42,11 @@ function VideoTile({ participant, version, mirror, label, big }: { participant: 
     const el = videoRef.current;
     if (!track || !el) return;
     track.attach(el);
+    const bg = bgRef.current;
+    if (bg) track.attach(bg);
     return () => {
       track.detach(el);
+      if (bg) track.detach(bg);
     };
   }, [participant, version]);
 
@@ -58,7 +63,15 @@ function VideoTile({ participant, version, mirror, label, big }: { participant: 
 
   return (
     <div className={`relative h-full w-full overflow-hidden bg-zinc-900 ${big ? "" : "rounded-2xl ring-2 ring-white/20"}`}>
-      <video ref={videoRef} autoPlay playsInline muted={participant.isLocal} className={`h-full w-full object-cover ${mirror ? "-scale-x-100" : ""} ${hasVideo ? "" : "hidden"}`} />
+      {/* Gwo ekran: tout imaj la parèt (pa koupe, pa zoume), ak yon kopi flou dèyè l pou ranpli ekran an */}
+      {big && <video ref={bgRef} autoPlay playsInline muted aria-hidden className={`absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl ${mirror ? "-scale-x-110" : ""} ${hasVideo ? "" : "hidden"}`} />}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted={participant.isLocal}
+        className={`relative h-full w-full ${big ? "object-contain" : "object-cover"} ${mirror ? "-scale-x-100" : ""} ${hasVideo ? "" : "hidden"}`}
+      />
       {!hasVideo && (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-fuchsia-900/60 to-zinc-950 text-4xl text-white/70">🎤</div>
       )}
@@ -111,6 +124,12 @@ export function LiveRoom({
   // UI
   const [hearts, setHearts] = useState<FloatingHeart[]>([]);
   const [giftAnims, setGiftAnims] = useState<GiftAnim[]>([]);
+  // Fèt 🥳 chak fwa yon moun rive 100, 200, 300... like
+  const [parties, setParties] = useState<{ key: number; name: string; count: number; mine: boolean }[]>([]);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const myTaps = useRef(0); // like MWEN nan live sa a
+  const serverLikes = useRef(initialLive.likes); // dènye kantite baz done a voye
+  const ownSent = useRef(0); // like mwen voye ki poko parèt nan kantite baz done a
   const [showGifts, setShowGifts] = useState(false);
   const [qty, setQty] = useState(1);
   const [draft, setDraft] = useState("");
@@ -146,8 +165,8 @@ export function LiveRoom({
         // Plis débit = imaj pi klè; simulcast = moun ki gen entènèt fèb resevwa yon vèsyon pi lejè otomatikman
         publishDefaults: {
           simulcast: true,
-          videoSimulcastLayers: [VideoPresets.h360, VideoPresets.h540],
-          videoEncoding: { maxBitrate: 2_500_000, maxFramerate: 30 },
+          videoSimulcastLayers: [VideoPresets.h360, VideoPresets.h720],
+          videoEncoding: { maxBitrate: 5_000_000, maxFramerate: 30 },
           degradationPreference: "maintain-resolution",
         },
       });
@@ -214,8 +233,19 @@ export function LiveRoom({
     const channel = supabase
       .channel(`live-${live.id}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "lives", filter: `id=eq.${live.id}` }, (p) => {
-        setLive((cur) => ({ ...cur, ...(p.new as LiveRow) }));
-        if ((p.new as LiveRow).status !== "live") setConnState("ended");
+        const row = p.new as LiveRow;
+        // Like lòt moun yo: kè yo monte sou ekran tout moun (atis la tou)
+        const delta = Math.max(0, Number(row.likes) - serverLikes.current);
+        serverLikes.current = Math.max(serverLikes.current, Number(row.likes));
+        const mine = Math.min(ownSent.current, delta);
+        ownSent.current -= mine;
+        spawnRemoteHearts(delta - mine);
+        setLive((cur) => ({ ...cur, ...row, likes: Math.max(cur.likes, Number(row.likes)) }));
+        if (row.status !== "live") setConnState("ended");
+      })
+      .on("broadcast", { event: "milestone" }, ({ payload }) => {
+        const m = payload as { name?: string; count?: number };
+        if (m?.name && m.count) celebrate(String(m.name).slice(0, 40), Number(m.count), false);
       })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "live_messages", filter: `live_id=eq.${live.id}` }, (p) => {
         setMessages((cur) => [...cur.slice(-49), p.new as LiveMessage]);
@@ -233,7 +263,9 @@ export function LiveRoom({
         setGuests((cur) => [...cur.filter((g) => g.id !== row.id), row]);
       })
       .subscribe();
+    channelRef.current = channel;
     return () => {
+      channelRef.current = null;
       void supabase.removeChannel(channel);
     };
   }, [live.id, supabase, giftById]);
@@ -256,20 +288,45 @@ export function LiveRoom({
   // ===== Like: tape kantite fwa w vle; nou voye yo an pake chak segonn =====
   useEffect(() => {
     const t = setInterval(async () => {
-      const taps = pendingTaps.current;
+      const taps = Math.min(pendingTaps.current, 30);
       if (!taps) return;
-      pendingTaps.current = 0;
-      const { data } = await supabase.rpc("like_live", { p_live: live.id, p_taps: Math.min(taps, 30) });
+      pendingTaps.current -= taps; // rès la ale nan pwochen pake a
+      ownSent.current += taps;
+      const { data } = await supabase.rpc("like_live", { p_live: live.id, p_taps: taps });
       if (typeof data === "number") setLive((cur) => ({ ...cur, likes: Math.max(cur.likes, data) }));
     }, LIKE_FLUSH_MS);
     return () => clearInterval(t);
   }, [live.id, supabase]);
+
+  // Kè ki soti nan like lòt moun yo (maks 12 alafwa, youn apre lòt)
+  function spawnRemoteHearts(n: number) {
+    for (let i = 0; i < Math.min(n, 12); i++) {
+      setTimeout(() => {
+        const id = ++heartId.current;
+        setHearts((cur) => [...cur.slice(-24), { id, x: 0, y: 0, hue: Math.floor(Math.random() * 60) - 30, rot: Math.floor(Math.random() * 40) - 20, side: true }]);
+        setTimeout(() => setHearts((cur) => cur.filter((h) => h.id !== id)), 1800);
+      }, i * 110);
+    }
+  }
+
+  // Fèt 🥳: "X bay 100 like!" sou ekran tout moun
+  function celebrate(name: string, count: number, mine: boolean) {
+    const key = Date.now() + Math.random();
+    setParties((cur) => [...cur.slice(-1), { key, name, count, mine }]);
+    setTimeout(() => setParties((cur) => cur.filter((p) => p.key !== key)), 3200);
+  }
 
   // Yon like: kontè a monte touswit, epi l ale nan baz done a nan pwochen pake a
   function addLike(x: number, y: number, side: boolean) {
     if (!me) return flash("Konekte pou w like live la");
     if (isHost) return;
     pendingTaps.current += 1;
+    myTaps.current += 1;
+    // Chak 100 like moun nan bay: ti fèt pou li, e tout moun (atis la tou) wè l
+    if (myTaps.current % 100 === 0) {
+      celebrate(me.name, myTaps.current, true);
+      void channelRef.current?.send({ type: "broadcast", event: "milestone", payload: { name: me.name, count: myTaps.current } });
+    }
     setLive((cur) => ({ ...cur, likes: cur.likes + 1 }));
     const id = ++heartId.current;
     setHearts((cur) => [...cur.slice(-18), { id, x, y, hue: Math.floor(Math.random() * 50) - 25, rot: Math.floor(Math.random() * 40) - 20, side }]);
@@ -509,6 +566,21 @@ export function LiveRoom({
             🔊 Tape pou tande live la
           </button>
         )}
+
+        {/* ===== FÈT 100 LIKE 🥳 ===== */}
+        {parties.slice(-1).map((p) => (
+          <div key={p.key} className="pointer-events-none absolute inset-x-0 top-[26%] z-40 flex flex-col items-center">
+            <span className="relative">
+              <span className="block text-[6.5rem] leading-none drop-shadow-[0_10px_30px_rgba(255,215,0,0.55)] motion-safe:animate-gift-big">🥳</span>
+              <span className="absolute -left-10 top-2 text-4xl motion-safe:animate-heart-float">🎉</span>
+              <span className="absolute -right-10 top-4 text-4xl motion-safe:animate-heart-float [animation-delay:150ms]">🎊</span>
+              <span className="absolute -top-6 left-1/2 text-3xl motion-safe:animate-heart-float [animation-delay:300ms]">✨</span>
+            </span>
+            <span className="mt-2 rounded-full bg-gradient-to-r from-fuchsia-600 via-rose-500 to-amber-400 px-5 py-2 text-center text-sm font-black shadow-2xl motion-safe:animate-fade-up">
+              {p.mine ? `Ou bay ${p.count} like! Mèsi 💖` : `${p.name} bay ${p.count} like! 💖`}
+            </span>
+          </div>
+        ))}
 
         {/* ===== ANIMASYON KADO ===== */}
         <div className="pointer-events-none absolute left-3 top-[34%] z-30 space-y-2">
