@@ -27,22 +27,19 @@ export default async function SocialPage({ searchParams }: { searchParams: { q?:
   const hasMore = rows.length > PAGE_SIZE;
   const now = Date.now();
 
-  const [postLikes, postShares] = await Promise.all([
-    loadPostLikes(supabase, posts.map((p) => p.id), user?.id ?? null),
-    loadPostShares(supabase, posts.map((p) => p.id)),
+  // Vitès: like, pataj, kòmantè ak pwofil moun nan pati ANSANM
+  const ids = posts.map((p) => p.id);
+  const [postLikes, postShares, { data: cRows }, { data: me }] = await Promise.all([
+    loadPostLikes(supabase, ids, user?.id ?? null),
+    loadPostShares(supabase, ids),
+    // Kantite kòmantè chak pòs (si migration kòmantè pòs yo poko kouri, tout se 0)
+    ids.length ? supabase.from("comments").select("post_id").in("post_id", ids).limit(5000) : Promise.resolve({ data: [] }),
+    // Atis apwouve yo wè yon lyen pou pibliye
+    user ? supabase.from("profiles").select("role, status").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
-
-  // Kantite kòmantè chak pòs (si migration kòmantè pòs yo poko kouri, tout se 0)
   const commentCounts = new Map<string, number>();
-  if (posts.length) {
-    const { data: cRows } = await supabase.from("comments").select("post_id").in("post_id", posts.map((p) => p.id)).limit(5000);
-    for (const c of (cRows ?? []) as { post_id: string }[]) commentCounts.set(c.post_id, (commentCounts.get(c.post_id) ?? 0) + 1);
-  }
+  for (const c of (cRows ?? []) as { post_id: string }[]) commentCounts.set(c.post_id, (commentCounts.get(c.post_id) ?? 0) + 1);
 
-  // Atis apwouve yo wè yon lyen pou pibliye
-  const { data: me } = user
-    ? await supabase.from("profiles").select("role, status").eq("id", user.id).maybeSingle()
-    : { data: null };
   const canPost = me?.role === "artist" && me.status === "approved";
 
   const olderHref = posts.length

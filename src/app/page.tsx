@@ -48,19 +48,30 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
   const supabase = createClient();
   let songsQuery = supabase.from("songs").select(SONG_SELECT).is("archived_at", null).order("created_at", { ascending: false });
   if (genre) songsQuery = songsQuery.eq("genre", genre);
-  const { data: rows } = await songsQuery.limit(genre ? 24 : 8).returns<SongRow[]>();
 
-  const songs = (rows ?? []).map((s) => toTrack(supabase, s));
-  const { data: { user } } = await supabase.auth.getUser();
-  const [extras, top3, myArtists, { data: adRows }, promos, { data: feedRows }] = await Promise.all([
-    getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null),
+  // Vitès: demann ki pa depann youn de lòt yo pati ANSANM (3 vag olye 6+ youn apre lòt)
+  // Vag 1: tout sa ki pa bezwen anyen
+  const [{ data: rows }, { data: { user } }, top3, { data: adRows }, promos, { data: feedRows }, { data: popularRows }] = await Promise.all([
+    songsQuery.limit(genre ? 24 : 8).returns<SongRow[]>(),
+    supabase.auth.getUser(),
     getTop3(supabase),
-    user ? supabase.rpc("my_top_artists", { p_limit: 15 }) : Promise.resolve({ data: [] }),
     // RLS la bay sèlman piblisite ki aktif e ki poko ekspire (admin wè tout, kidonk nou refiltre)
     supabase.from("ads").select("id, title, image_path, is_active, starts_at, expires_at").order("created_at", { ascending: false }).limit(20),
     getActivePromos(supabase),
     // Dènye pòs Sosyal yo (si yon migration poko kouri, data = null epi seksyon an vid)
     supabase.rpc("social_feed", { p_limit: 12 }),
+    supabase.rpc("popular_artists", { p_limit: 15 }),
+  ]);
+  const songs = (rows ?? []).map((s) => toTrack(supabase, s));
+
+  // Vag 2: sa ki bezwen chante yo, moun nan oswa Top 3 a
+  const [extras, myArtists, top10, top3Extras] = await Promise.all([
+    getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null),
+    user ? supabase.rpc("my_top_artists", { p_limit: 15 }) : Promise.resolve({ data: [] }),
+    // Top 10 otomatik la (san mizik ki deja nan Top 3 a)
+    getTop10(supabase, top3.entries.map((e) => e.track.id)),
+    // Likes, kòmantè ak featuring pou bouton Top 3 yo
+    getSongExtras(supabase, top3.entries.map((e) => e.track.id), user?.id ?? null),
   ]);
   const now = Date.now();
   const ads: PublicAd[] = (adRows ?? [])
@@ -72,23 +83,20 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
   let bubbles = (myArtists.data ?? []) as BubbleArtist[];
   let bubblesTitle = "🎧 Atis ou koute plis yo";
   if (bubbles.length === 0) {
-    bubbles = ((await supabase.rpc("popular_artists", { p_limit: 15 })).data ?? []) as BubbleArtist[];
+    bubbles = (popularRows ?? []) as BubbleArtist[];
     bubblesTitle = "🔥 Atis popilè yo";
   }
 
-  // Badj ✓ pou sèk yo, ak Top 10 otomatik la (san mizik ki deja nan Top 3 a)
-  const [{ data: verifiedRows }, top10, top3Extras] = await Promise.all([
-    bubbles.length
-      ? supabase.from("profiles").select("id").eq("is_verified", true).in("id", bubbles.map((b) => b.artist_id))
+  // Vag 3: badj ✓ ak stati vivan (wonn vèt) atis yo nan sèk yo
+  const bubbleIds = bubbles.map((b) => b.artist_id);
+  const [{ data: verifiedRows }, bubbleStatuses] = await Promise.all([
+    bubbleIds.length
+      ? supabase.from("profiles").select("id").eq("is_verified", true).in("id", bubbleIds)
       : Promise.resolve({ data: [] as { id: string }[] }),
-    getTop10(supabase, top3.entries.map((e) => e.track.id)),
-    // Likes, kòmantè ak featuring pou bouton Top 3 yo
-    getSongExtras(supabase, top3.entries.map((e) => e.track.id), user?.id ?? null),
+    liveStatusIds(supabase, bubbleIds),
   ]);
   const verified = new Set((verifiedRows ?? []).map((r) => r.id));
   bubbles = bubbles.map((b) => ({ ...b, is_verified: verified.has(b.artist_id) }));
-  // Stati vivan atis yo (wonn vèt tankou WhatsApp)
-  const bubbleStatuses = await liveStatusIds(supabase, bubbles.map((b) => b.artist_id));
 
   return (
     <>
