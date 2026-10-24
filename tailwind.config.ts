@@ -124,6 +124,8 @@ const config: Config = {
           "0%, 44%, 60%, 100%": { transform: "scale(1)" },
           "48%": { transform: "scale(0.94)" },
         },
+        // Disk vinil lektè a k ap woule
+        "vinyl-spin": { from: { transform: "rotate(0deg)" }, to: { transform: "rotate(360deg)" } },
         // Bwat "pa gen entènèt" la souke lè yon klik bloke
         shake: {
           "0%, 100%": { transform: "translateX(0)" },
@@ -132,6 +134,7 @@ const config: Config = {
         },
       },
       animation: {
+        vinyl: "vinyl-spin 5s linear infinite",
         shake: "shake 0.4s ease-in-out",
         equalizer: "equalizer 1.2s ease-in-out infinite",
         "fade-up": "fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",

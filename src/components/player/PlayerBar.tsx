@@ -1,6 +1,7 @@
 "use client";
 
 import { usePlayer } from "./PlayerProvider";
+import { MobilePlayerBar } from "./MobilePlayer";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -21,12 +22,13 @@ export function PlayerBar() {
   return (
     // data-offline-ok: chante ki deja chaje a ka kontinye jwe/kanpe san entènèt
     <div data-offline-ok className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 transform-gpu border-t border-zinc-800 bg-zinc-950/95 backdrop-blur md:bottom-0 md:z-50">
-      {/* Ba pwogrè fen anlè (vizib sou telefòn) */}
-      <div className="h-0.5 bg-zinc-800 sm:hidden">
-        <div className="h-full bg-fuchsia-500" style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
+      {/* TELEFÒN: CD k ap woule, ⏪10 ▶ 10⏩, ba pou glise, epi gwo ekran "Kounye a ap jwe" */}
+      <div className="sm:hidden">
+        <MobilePlayerBar />
       </div>
 
-      <div className="mx-auto flex h-20 max-w-6xl items-center gap-4 px-4">
+      {/* ÒDINATÈ: menm jan l te ye a */}
+      <div className="mx-auto hidden h-20 max-w-6xl items-center gap-4 px-4 sm:flex">
         {/* Chante a */}
         <div className="flex min-w-0 flex-1 items-center gap-3 sm:w-1/4 sm:flex-none">
           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-fuchsia-600/40 to-violet-800/40">
