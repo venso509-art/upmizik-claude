@@ -35,6 +35,12 @@ export async function GET() {
         NEXT_PUBLIC_SUPABASE_URL: url ? `✅ (${new URL(url).host})` : "❌ manke",
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: key ? `✅ (${key.slice(0, 15)}...)` : "❌ manke",
       },
+      // Live yo (LiveKit): nou di sèlman si kle yo la, JAMÈ valè yo
+      live: {
+        LIVEKIT_URL: process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL ? "✅" : "❌ manke (LIVEKIT_URL oswa NEXT_PUBLIC_LIVEKIT_URL)",
+        LIVEKIT_API_KEY: process.env.LIVEKIT_API_KEY ? "✅" : "❌ manke",
+        LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET ? "✅" : "❌ manke",
+      },
       supabase,
       node: process.version,
       lè: new Date().toISOString(),
