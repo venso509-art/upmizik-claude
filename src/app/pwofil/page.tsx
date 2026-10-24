@@ -6,6 +6,7 @@ import { ProfileForm, type EditableProfile } from "@/components/profile/ProfileF
 import { ProUpgrade } from "@/components/pro/ProUpgrade";
 import { FeaturedSongPicker } from "@/components/pro/FeaturedSongPicker";
 import { isPro } from "@/lib/pro";
+import { InstallAppButton } from "@/components/InstallAppPrompt";
 
 export const metadata: Metadata = { title: "Modifye pwofil | UpMizik" };
 
@@ -65,6 +66,10 @@ export default async function ProfilePage() {
           {pro && <FeaturedSongPicker songs={mySongs ?? []} current={proRow.featured_song_id} />}
         </div>
       )}
+      {/* Enstale app la (si l poko enstale sou aparèy sa a) */}
+      <div className="mb-8">
+        <InstallAppButton />
+      </div>
       <ProfileForm
         profile={{ ...profile, banner_url: banner?.banner_url ?? null, tiktok_url: banner?.tiktok_url ?? null, whatsapp_url: banner?.whatsapp_url ?? null }}
       />

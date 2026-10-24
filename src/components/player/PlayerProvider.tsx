@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { OFFLINE_EVENT, listOffline, offlineObjectUrl } from "@/lib/offline";
 
@@ -16,6 +16,10 @@ export type Track = {
   durationSeconds: number | null;
   playCount?: number; // kantite ekout (pou kat yo)
 };
+
+// Fason lis la jwe: "off" = youn apre lòt epi kanpe; "all" = tout lis la an bouk; "one" = menm chante a an bouk
+export type RepeatMode = "off" | "all" | "one";
+const MODE_KEY = "upmizik-player-mode";
 
 type PlayerState = {
   current: Track | null;
@@ -33,6 +37,10 @@ type PlayerState = {
   prev: () => void;
   seek: (seconds: number) => void;
   setVolume: (volume: number) => void;
+  repeatMode: RepeatMode;
+  cycleRepeat: () => void; // off → all → one → off
+  shuffle: boolean;
+  toggleShuffle: () => void;
 };
 
 const PlayerContext = createContext<PlayerState | null>(null);
@@ -103,10 +111,42 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(1);
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>("off");
+  const [shuffle, setShuffle] = useState(false);
+  const [shuffledIds, setShuffledIds] = useState<string[]>([]);
 
-  const index = current ? queue.findIndex((t) => t.id === current.id) : -1;
-  const hasNext = index >= 0 && index < queue.length - 1;
-  const hasPrev = index > 0;
+  // Sonje chwa moun nan (bouk / melanje) sou aparèy la
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(MODE_KEY) ?? "{}") as { repeat?: RepeatMode; shuffle?: boolean };
+      if (saved.repeat === "all" || saved.repeat === "one") setRepeatMode(saved.repeat);
+      if (saved.shuffle) setShuffle(true);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(MODE_KEY, JSON.stringify({ repeat: repeatMode, shuffle }));
+    } catch {}
+  }, [repeatMode, shuffle]);
+
+  // Melanje lis la: chante k ap jwe a rete premye, rès yo nan yon lòd o aza
+  const reshuffle = useCallback((list: Track[], firstId: string | null) => {
+    const rest = list.map((t) => t.id).filter((id) => id !== firstId);
+    for (let i = rest.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rest[i], rest[j]] = [rest[j], rest[i]];
+    }
+    setShuffledIds(firstId ? [firstId, ...rest] : rest);
+  }, []);
+
+  // Lòd jwe a (lis la jan l ye a, oswa melanje)
+  const order = useMemo(() => (shuffle && shuffledIds.length === queue.length ? shuffledIds : queue.map((t) => t.id)), [shuffle, shuffledIds, queue]);
+  const byId = useMemo(() => new Map(queue.map((t) => [t.id, t])), [queue]);
+  const pos = current ? order.indexOf(current.id) : -1;
+  const nextTrack = pos < 0 ? null : (byId.get(order[pos + 1]) ?? (repeatMode === "all" && order.length > 0 ? byId.get(order[0]) : undefined)) ?? null;
+  const prevTrack = pos < 0 ? null : (byId.get(order[pos - 1]) ?? (repeatMode === "all" && order.length > 0 ? byId.get(order[order.length - 1]) : undefined)) ?? null;
+  const hasNext = !!nextTrack;
+  const hasPrev = !!prevTrack;
 
   const load = useCallback((track: Track) => {
     const audio = audioRef.current;
@@ -133,11 +173,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         else audio.pause();
         return;
       }
-      setQueue(newQueue ?? [track]);
+      const list = newQueue ?? [track];
+      setQueue(list);
+      if (shuffle) reshuffle(list, track.id);
       load(track);
     },
-    [current, load],
+    [current, load, shuffle, reshuffle],
   );
+
+  const cycleRepeat = useCallback(() => setRepeatMode((m) => (m === "off" ? "all" : m === "all" ? "one" : "off")), []);
+  const toggleShuffle = useCallback(() => {
+    setShuffle((on) => {
+      if (!on) reshuffle(queue, current?.id ?? null);
+      return !on;
+    });
+  }, [queue, current, reshuffle]);
 
   const toggle = useCallback(() => {
     const audio = audioRef.current;
@@ -147,16 +197,29 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [current]);
 
   const next = useCallback(() => {
-    if (hasNext) load(queue[index + 1]);
-  }, [hasNext, index, queue, load]);
+    if (nextTrack) load(nextTrack);
+  }, [nextTrack, load]);
 
   const prev = useCallback(() => {
     const audio = audioRef.current;
     // Apre 3 segonn, ⏮ rekòmanse chante a olye ale nan sa ki anvan an
     if (audio && audio.currentTime > 3) audio.currentTime = 0;
-    else if (hasPrev) load(queue[index - 1]);
+    else if (prevTrack) load(prevTrack);
     else if (audio) audio.currentTime = 0;
-  }, [hasPrev, index, queue, load]);
+  }, [prevTrack, load]);
+
+  // Fen yon chante: menm chante a ankò ("one"), pwochen an (oswa retounen nan kòmansman an ak "all"), oswa kanpe
+  function handleEnded() {
+    const audio = audioRef.current;
+    if (repeatMode === "one" && audio && current) {
+      playRef.current = newSession(current.id); // chak tou konte kòm yon nouvo ekout
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+      return;
+    }
+    if (nextTrack) load(nextTrack);
+    else setIsPlaying(false);
+  }
 
   const seek = useCallback((seconds: number) => {
     if (audioRef.current) audioRef.current.currentTime = seconds;
@@ -234,6 +297,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         prev,
         seek,
         setVolume,
+        repeatMode,
+        cycleRepeat,
+        shuffle,
+        toggleShuffle,
       }}
     >
       {children}
@@ -247,7 +314,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         onCanPlay={() => setIsLoading(false)}
         onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-        onEnded={() => (hasNext ? next() : setIsPlaying(false))}
+        onEnded={handleEnded}
         onError={() => {
           setIsLoading(false);
           setIsPlaying(false);

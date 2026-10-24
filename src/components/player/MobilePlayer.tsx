@@ -6,7 +6,9 @@ import { Portal } from "@/components/Portal";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { usePlayer } from "./PlayerProvider";
 import { VinylDisc } from "./VinylDisc";
-import { ChevronDownIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon, Skip10Icon } from "./PlayerIcons";
+import { ChevronDownIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon, RepeatIcon, ShuffleIcon, Skip10Icon } from "./PlayerIcons";
+
+const REPEAT_LABEL = { off: "Youn apre lòt", all: "Tout lis la an bouk", one: "Chante sa a an bouk" } as const;
 
 export function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -115,7 +117,7 @@ export function MobilePlayerBar() {
 
 // Gwo ekran "Kounye a ap jwe" (telefòn)
 function NowPlaying({ onClose }: { onClose: () => void }) {
-  const { current, isPlaying, error, currentTime, duration, hasNext, next, prev, seek } = usePlayer();
+  const { current, isPlaying, error, currentTime, duration, hasNext, next, prev, seek, repeatMode, cycleRepeat, shuffle, toggleShuffle } = usePlayer();
 
   useEffect(() => {
     const overflow = document.body.style.overflow;
@@ -188,6 +190,26 @@ function NowPlaying({ onClose }: { onClose: () => void }) {
               aria-label="Pwochen chante"
             >
               <NextIcon className="h-7 w-7" />
+            </button>
+          </div>
+
+          {/* Fason pou jwe lis la: melanje, ak bouk (youn apre lòt → tout lis la → menm chante a) */}
+          <div className="mt-5 flex items-center justify-between text-xs">
+            <button
+              type="button"
+              onClick={toggleShuffle}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-2 font-semibold transition ${shuffle ? "bg-citron-400/15 text-citron-300" : "text-white/60 hover:text-white"}`}
+              aria-pressed={shuffle}
+            >
+              <ShuffleIcon className="h-5 w-5" /> {shuffle ? "Melanje: wi" : "Melanje"}
+            </button>
+            <button
+              type="button"
+              onClick={cycleRepeat}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-2 font-semibold transition ${repeatMode !== "off" ? "bg-citron-400/15 text-citron-300" : "text-white/60 hover:text-white"}`}
+              aria-label={`Fason jwe: ${REPEAT_LABEL[repeatMode]}`}
+            >
+              <RepeatIcon one={repeatMode === "one"} className="h-5 w-5" /> {REPEAT_LABEL[repeatMode]}
             </button>
           </div>
         </div>

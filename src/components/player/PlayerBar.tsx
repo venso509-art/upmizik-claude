@@ -2,6 +2,7 @@
 
 import { usePlayer } from "./PlayerProvider";
 import { MobilePlayerBar } from "./MobilePlayer";
+import { RepeatIcon, ShuffleIcon } from "./PlayerIcons";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -14,7 +15,7 @@ const iconButton =
   "flex h-10 w-10 items-center justify-center rounded-full text-zinc-300 transition hover:text-white disabled:opacity-30 disabled:hover:text-zinc-300";
 
 export function PlayerBar() {
-  const { current, isPlaying, isLoading, error, currentTime, duration, volume, hasNext, toggle, next, prev, seek, setVolume } =
+  const { current, isPlaying, isLoading, error, currentTime, duration, volume, hasNext, toggle, next, prev, seek, setVolume, repeatMode, cycleRepeat, shuffle, toggleShuffle } =
     usePlayer();
 
   if (!current) return null;
@@ -50,6 +51,15 @@ export function PlayerBar() {
         {/* Kontwòl yo */}
         <div className="flex flex-col items-center sm:flex-1">
           <div className="flex items-center gap-1">
+            <button
+              onClick={toggleShuffle}
+              className={`${iconButton} ${shuffle ? "!text-citron-300" : ""}`}
+              aria-pressed={shuffle}
+              aria-label="Melanje"
+              title={shuffle ? "Melanje: wi" : "Melanje"}
+            >
+              <ShuffleIcon className="h-4 w-4" />
+            </button>
             <button onClick={prev} className={iconButton} aria-label="Chante anvan">
               ⏮
             </button>
@@ -62,6 +72,14 @@ export function PlayerBar() {
             </button>
             <button onClick={next} disabled={!hasNext} className={iconButton} aria-label="Pwochen chante">
               ⏭
+            </button>
+            <button
+              onClick={cycleRepeat}
+              className={`${iconButton} ${repeatMode !== "off" ? "!text-citron-300" : ""}`}
+              aria-label="Fason jwe"
+              title={repeatMode === "off" ? "Youn apre lòt" : repeatMode === "all" ? "Tout lis la an bouk" : "Chante sa a an bouk"}
+            >
+              <RepeatIcon one={repeatMode === "one"} className="h-4 w-4" />
             </button>
           </div>
 

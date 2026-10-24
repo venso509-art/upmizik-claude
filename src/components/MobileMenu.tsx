@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logout } from "@/app/auth/actions";
+import { InstallAppButton } from "@/components/InstallAppPrompt";
 
 export type MenuItem = { href: string; label: string; tone?: "admin" | "primary" };
 
@@ -43,8 +44,8 @@ export function MobileMenu({ items, name, loggedIn }: { items: MenuItem[]; name:
       {open && (
         <>
           {/* Klike deyò panèl la pou fèmen l */}
-          <div className="fixed inset-x-0 bottom-0 top-16 z-40 bg-black/50" onClick={() => setOpen(false)} aria-hidden />
-          <nav className="absolute inset-x-0 top-16 z-50 border-b border-zinc-800 bg-zinc-950 px-4 pb-5 pt-3 shadow-2xl">
+          <div className="fixed inset-x-0 bottom-0 top-[calc(4rem+env(safe-area-inset-top))] z-40 bg-black/50" onClick={() => setOpen(false)} aria-hidden />
+          <nav className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-5rem)] overflow-y-auto border-b border-zinc-800 bg-zinc-950 px-4 pb-5 pt-3 shadow-2xl">
             {name && <p className="px-3 pb-3 text-sm text-zinc-400">{name}</p>}
             <ul className="space-y-1">
               {items.map((item) => (
@@ -55,6 +56,10 @@ export function MobileMenu({ items, name, loggedIn }: { items: MenuItem[]; name:
                 </li>
               ))}
             </ul>
+            {/* Enstale UpMizik sou ekran akèy la (Android: dirèkteman; iPhone: etap yo) */}
+            <div className="mt-3 border-t border-zinc-800 pt-3">
+              <InstallAppButton />
+            </div>
             {loggedIn && (
               <form action={logout} className="mt-3 border-t border-zinc-800 pt-3">
                 <button className="w-full rounded-xl border border-zinc-700 px-3 py-3 text-left text-base text-zinc-200 transition hover:border-zinc-500 hover:text-white">
