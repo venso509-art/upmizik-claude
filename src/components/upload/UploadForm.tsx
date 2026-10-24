@@ -9,7 +9,6 @@ import { normalizeGenre } from "@/lib/genres";
 import {
   AUDIO_TYPES,
   IMAGE_TYPES,
-  MAX_IMAGE_BYTES,
   fileExtension,
   readAudioDuration,
   uploadResumable,
@@ -22,6 +21,7 @@ import { RELEASE_LABELS } from "@/lib/releases";
 import { normalizeUrl } from "@/lib/links";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 import { maxAudioBytes, maxSplits } from "@/lib/pro";
+import { ImageCropper } from "@/components/media/ImageCropper";
 
 type Status = "idle" | "uploading" | "done";
 
@@ -51,6 +51,7 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
   const router = useRouter();
   const [audio, setAudio] = useState<File | null>(null);
   const [cover, setCover] = useState<File | null>(null);
+  const [coverToCrop, setCoverToCrop] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [audioProgress, setAudioProgress] = useState(0);
@@ -85,8 +86,8 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
     setError(undefined);
     if (!file) return setCover(null);
     if (!IMAGE_TYPES[fileExtension(file)]) return setError("Fòma imaj sa a pa aksepte. Itilize JPG, PNG oswa WebP.");
-    if (file.size > MAX_IMAGE_BYTES) return setError(`Imaj la twò gwo (${formatMB(file.size)}). Maksimòm: 5 MB.`);
-    setCover(file);
+    if (file.size > 20 * 1024 * 1024) return setError(`Imaj la twò gwo (${formatMB(file.size)}). Maksimòm: 20 MB.`);
+    setCoverToCrop(file); // atis la santre kouvèti a an kare anvan
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -258,6 +259,17 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {coverToCrop && (
+        <ImageCropper
+          file={coverToCrop}
+          options={{ aspect: 1, outputWidth: 1000, title: "✂️ Santre kouvèti chante a" }}
+          onCancel={() => setCoverToCrop(null)}
+          onDone={(f) => {
+            setCover(f);
+            setCoverToCrop(null);
+          }}
+        />
+      )}
       <Field label="Tit chante a">
         <input name="title" required maxLength={200} disabled={busy} placeholder="Egz: Lanmou Lakay" className={inputClass} />
       </Field>
@@ -278,7 +290,15 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
               <span className="mt-1 px-2 text-xs text-zinc-400">Imaj kouvèti (opsyonèl)</span>
             </>
           )}
-          <input type="file" accept=".jpg,.jpeg,.png,.webp" className="sr-only" onChange={(e) => pickCover(e.target.files?.[0])} />
+          <input
+            type="file"
+            accept=".jpg,.jpeg,.png,.webp"
+            className="sr-only"
+            onChange={(e) => {
+              pickCover(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
         </label>
 
         {/* Fichye odyo */}

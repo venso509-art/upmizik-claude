@@ -7,6 +7,8 @@ import { fileExtension, uploadResumable } from "@/lib/upload";
 import { timeAgo } from "@/lib/posts";
 import { ProBadge } from "@/components/pro/ProBadge";
 import { StatusViewer } from "@/components/status/StatusViewer";
+import { StatusEditor, type EditedStatus } from "@/components/status/StatusEditor";
+import { StatusOverlayLayer } from "@/components/status/StatusOverlayLayer";
 import {
   STATUSES_PER_DAY,
   STATUS_BACKGROUNDS,
@@ -41,6 +43,12 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
   const [message, setMessage] = useState<string>();
   const [mine, setMine] = useState<ArtistStatus[]>([]);
   const [viewing, setViewing] = useState(false);
+  // Editè a: fichye orijinal la (pou re-modifye) ak rezilta a (foto koupe, stickers, videyo koupe)
+  const [source, setSource] = useState<File | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [edited, setEdited] = useState<EditedStatus | null>(null);
+  // Like ak repons fanatik yo sou chak stati
+  const [activity, setActivity] = useState<Record<string, { likes: number; replies: { id: string; body: string; created_at: string; name: string }[] }>>({});
 
   // Stati m yo ki poko ekspire, ak konbyen m poste nan dènye 24 è yo
   const refresh = useCallback(async () => {
@@ -53,6 +61,27 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
       .order("created_at", { ascending: false })
       .returns<ArtistStatus[]>();
     setMine(data ?? []);
+    // Like + repons (vid si migration repons yo poko kouri)
+    const ids = (data ?? []).map((s) => s.id);
+    if (ids.length) {
+      const [{ data: likes }, { data: replies }] = await Promise.all([
+        supabase.from("status_likes").select("status_id").in("status_id", ids),
+        supabase
+          .from("status_replies")
+          .select("id, status_id, body, created_at, profiles!status_replies_user_id_fkey(display_name)")
+          .in("status_id", ids)
+          .order("created_at", { ascending: false }),
+      ]);
+      const act: Record<string, { likes: number; replies: { id: string; body: string; created_at: string; name: string }[] }> = {};
+      for (const id of ids) act[id] = { likes: 0, replies: [] };
+      for (const l of (likes ?? []) as { status_id: string }[]) act[l.status_id].likes++;
+      type R = { id: string; status_id: string; body: string; created_at: string; profiles: { display_name: string } | { display_name: string }[] | null };
+      for (const r of (replies ?? []) as R[]) {
+        const pr = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+        act[r.status_id].replies.push({ id: r.id, body: r.body, created_at: r.created_at, name: pr?.display_name ?? "Fanatik" });
+      }
+      setActivity(act);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artist.id]);
 
@@ -96,7 +125,12 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
     const media = STATUS_MEDIA[kind];
     if (!media.types[fileExtension(f)]) return setError(`Fichye sa a pa bon pou yon stati ${KINDS.find((k) => k.key === kind)?.label.toLowerCase()}.`);
     if (f.size > STATUS_MAX_BYTES) return setError("Fichye a twò gwo. Maksimòm: 30 MB.");
-    setFile(f);
+    if (kind === "audio") return setFile(f);
+    // Foto ak videyo: louvri editè a (santre, stickers, lejand, koupe)
+    setSource(f);
+    setEdited(null);
+    setFile(null);
+    setEditing(true);
   }
 
   async function publish() {
@@ -121,19 +155,28 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
           onProgress: setProgress,
         });
       }
-      const { error: err } = await supabase.from("artist_statuses").insert({
-        artist_id: artist.id,
-        kind,
-        media_path: mediaPath,
-        body: body.trim() || null,
-        bg: kind === "text" ? bg : null,
-      });
+      const row = { artist_id: artist.id, kind, media_path: mediaPath, body: body.trim() || null, bg: kind === "text" ? bg : null };
+      const extra =
+        edited && (kind === "image" || kind === "video")
+          ? {
+              overlay: edited.items.length ? { items: edited.items } : null,
+              focus_x: edited.focusX,
+              focus_y: edited.focusY,
+              trim_start: edited.trimStart,
+              trim_end: edited.trimEnd,
+            }
+          : {};
+      let { error: err } = await supabase.from("artist_statuses").insert({ ...row, ...extra });
+      // Migration editè a poko kouri: pibliye l san stickers yo
+      if (err && (err.code === "42703" || err.code === "PGRST204")) ({ error: err } = await supabase.from("artist_statuses").insert(row));
       if (err) {
         if (mediaPath) await supabase.storage.from("statuses").remove([mediaPath]);
         throw new Error(err.message);
       }
       setBody("");
       setFile(null);
+      setSource(null);
+      setEdited(null);
       setMessage("Stati ou pibliye! Li parèt nan wonn ou pou 24 è. 🎉");
       await refresh();
     } catch (e) {
@@ -152,7 +195,7 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6">
+    <section id="stati" className="mt-6 scroll-mt-24 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold text-white">
@@ -175,6 +218,8 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
             onClick={() => {
               setKind(k.key);
               setFile(null);
+              setSource(null);
+              setEdited(null);
               setError(undefined);
             }}
             className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
@@ -225,11 +270,25 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
                 busy ? "pointer-events-none opacity-60" : ""
               }`}
             >
-              {file && preview && kind === "image" ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview} alt="" className="max-h-60 w-full object-contain" />
-              ) : file && preview && kind === "video" ? (
-                <video src={preview} muted playsInline className="max-h-60 w-full object-contain" />
+              {file && preview && (kind === "image" || kind === "video") ? (
+                // Apèsi 9:16 ak stickers yo, jan fanatik yo ap wè l
+                <span className="relative my-3 block w-36 overflow-hidden rounded-xl bg-black" style={{ aspectRatio: "9 / 16", containerType: "inline-size" }}>
+                  {kind === "image" ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={preview} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <video
+                      src={preview}
+                      muted
+                      playsInline
+                      autoPlay
+                      loop
+                      className="h-full w-full object-cover"
+                      style={{ objectPosition: `${edited?.focusX ?? 50}% ${edited?.focusY ?? 50}%` }}
+                    />
+                  )}
+                  <StatusOverlayLayer items={edited?.items ?? []} />
+                </span>
               ) : file ? (
                 <span className="px-4 text-sm text-white">🎙️ {file.name}</span>
               ) : (
@@ -239,8 +298,26 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
                   <span className="text-xs text-zinc-500">Maks 30 MB</span>
                 </>
               )}
-              <input type="file" accept={STATUS_MEDIA[kind].accept} className="sr-only" onChange={(e) => pick(e.target.files?.[0])} />
+              <input
+                type="file"
+                accept={STATUS_MEDIA[kind].accept}
+                className="sr-only"
+                onChange={(e) => {
+                  pick(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
             </label>
+            {source && edited && !busy && (
+              <button type="button" onClick={() => setEditing(true)} className="text-sm font-semibold text-citron-300 hover:text-citron-200">
+                ✏️ Modifye ankò (stickers, lejand, santraj{kind === "video" ? ", longè" : ""})
+              </button>
+            )}
+            {edited?.trimStart != null && edited.trimEnd != null && (
+              <p className="text-xs text-zinc-400">
+                ✂️ Videyo a ap jwe de {edited.trimStart.toFixed(1)} s rive {edited.trimEnd.toFixed(1)} s
+              </p>
+            )}
             <input
               value={body}
               onChange={(e) => setBody(e.target.value.slice(0, 200))}
@@ -294,8 +371,20 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
                 <div className="min-w-0 flex-1 text-sm">
                   <p className="truncate text-white">{s.body || KIND_LABEL[s.kind]}</p>
                   <p className="text-xs text-zinc-500">
-                    {KIND_LABEL[s.kind]} · {timeAgo(s.created_at)}
+                    {KIND_LABEL[s.kind]} · {timeAgo(s.created_at)} · ❤️ {activity[s.id]?.likes ?? 0} · 💬 {activity[s.id]?.replies.length ?? 0}
                   </p>
+                  {(activity[s.id]?.replies.length ?? 0) > 0 && (
+                    <details className="mt-1">
+                      <summary className="cursor-pointer text-xs font-semibold text-citron-300">Wè repons yo</summary>
+                      <ul className="mt-1 space-y-1">
+                        {activity[s.id].replies.map((r) => (
+                          <li key={r.id} className="rounded-lg bg-zinc-900 px-2 py-1 text-xs text-zinc-300">
+                            <span className="font-semibold text-white">{r.name}:</span> {r.body} <span className="text-zinc-500">· {timeAgo(r.created_at)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                 </div>
                 <button type="button" onClick={() => remove(s)} className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-500/10">
                   ✕ Efase
@@ -306,6 +395,21 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
         </div>
       )}
       {viewing && <StatusViewer artist={artist} onClose={() => setViewing(false)} />}
+      {editing && source && (kind === "image" || kind === "video") && (
+        <StatusEditor
+          file={source}
+          kind={kind}
+          onCancel={() => {
+            setEditing(false);
+            if (!edited) setSource(null);
+          }}
+          onDone={(r) => {
+            setEdited(r);
+            setFile(r.file);
+            setEditing(false);
+          }}
+        />
+      )}
     </section>
   );
 }

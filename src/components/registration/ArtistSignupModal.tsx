@@ -1,5 +1,6 @@
 "use client";
 
+import { ProofCropButton } from "@/components/media/ProofCropButton";
 import { AccountName, AccountNameHint } from "@/components/payment/AccountName";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
@@ -195,8 +196,9 @@ export function ArtistSignupModal({ info, onClose }: { info: FormData; onClose: 
                     <span className="text-xs text-zinc-500">JPG, PNG, WebP · Maks 5 MB</span>
                   </>
                 )}
-                <input type="file" accept=".jpg,.jpeg,.png,.webp" className="sr-only" onChange={(e) => pickProof(e.target.files?.[0])} />
+                <input type="file" accept=".jpg,.jpeg,.png,.webp" className="sr-only" onChange={(e) => { pickProof(e.target.files?.[0]); e.target.value = ""; }} />
               </label>
+              {proof && <ProofCropButton file={proof} onChange={setProof} disabled={pending} />}
 
               <input
                 value={transactionRef}

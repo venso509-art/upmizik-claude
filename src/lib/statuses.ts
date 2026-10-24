@@ -4,6 +4,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type StatusKind = "text" | "image" | "video" | "audio";
 
+// Sticker oswa lejand sou foto/videyo a. x, y = sant li an % kad la; s = gwosè an % lajè kad la
+export type OverlayItem = { t: "sticker" | "text"; v: string; x: number; y: number; s: number; c?: string };
+export type StatusOverlay = { items: OverlayItem[] };
+
 export type ArtistStatus = {
   id: string;
   artist_id: string;
@@ -13,7 +17,31 @@ export type ArtistStatus = {
   bg: string | null;
   created_at: string;
   expires_at: string;
+  // Editè a (migration 20261203000000): null/50 si migration nan poko kouri
+  overlay?: StatusOverlay | null;
+  focus_x?: number;
+  focus_y?: number;
+  trim_start?: number | null;
+  trim_end?: number | null;
 };
+
+// Fòma stati foto/videyo yo (tankou WhatsApp/Instagram)
+export const STATUS_ASPECT = 9 / 16;
+
+// Pakè stickers editè a
+export const STICKER_PACKS: { name: string; icon: string; items: string[] }[] = [
+  { name: "Mizik", icon: "🎵", items: ["🎵", "🎶", "🎤", "🎧", "🎼", "📻", "💿", "📀", "🔊", "🎙️", "🪩", "🎚️"] },
+  { name: "Jwa", icon: "😂", items: ["😂", "🥳", "🎉", "😍", "🤩", "✨", "💃", "🕺", "🙌", "🔥", "💯", "❤️"] },
+  { name: "Enstriman", icon: "🎸", items: ["🎸", "🎹", "🥁", "🎷", "🎺", "🎻", "🪕", "🪘", "🪗", "🪇", "🪈", "🔔"] },
+  { name: "Machin", icon: "🚗", items: ["🚗", "🏎️", "🚙", "🚕", "🏍️", "🛵", "🚌", "🚐", "🚀", "✈️", "🚤", "🛻"] },
+  { name: "Komik", icon: "🤪", items: ["🤪", "😜", "🤡", "👻", "😎", "🙈", "💥", "🤯", "🥴", "👀", "🤑", "🫠"] },
+  { name: "Ayiti", icon: "🇭🇹", items: ["🇭🇹", "🌴", "☀️", "🥥", "🌺", "🏝️", "🌊", "🍍", "🥭", "⛰️", "🌶️", "🐓"] },
+];
+
+export const LEGEND_COLORS = ["#FFFFFF", "#FFD700", "#22C55E", "#F43F5E", "#38BDF8", "#0B132B"];
+
+// Repons rapid (tankou WhatsApp)
+export const QUICK_REACTIONS = ["❤️", "🔥", "😂", "😍", "👏", "🙏"];
 
 export const STATUSES_PER_DAY = 5;
 export const STATUS_MAX_BYTES = 30 * 1024 * 1024;
@@ -40,15 +68,21 @@ export function statusMediaUrl(supabase: SupabaseClient, path: string | null) {
 }
 
 // Stati vivan yon atis (pi ansyen an premye, tankou WhatsApp)
+export const STATUS_COLUMNS = "id, artist_id, kind, media_path, body, bg, created_at, expires_at";
+export const STATUS_EDITOR_COLUMNS = `${STATUS_COLUMNS}, overlay, focus_x, focus_y, trim_start, trim_end`;
+
 export async function loadArtistStatuses(supabase: SupabaseClient, artistId: string) {
-  const { data } = await supabase
-    .from("artist_statuses")
-    .select("id, artist_id, kind, media_path, body, bg, created_at, expires_at")
-    .eq("artist_id", artistId)
-    .gt("expires_at", new Date().toISOString())
-    .order("created_at", { ascending: true })
-    .returns<ArtistStatus[]>();
-  return data ?? [];
+  const query = (cols: string) =>
+    supabase
+      .from("artist_statuses")
+      .select(cols)
+      .eq("artist_id", artistId)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: true })
+      .returns<ArtistStatus[]>();
+  const full = await query(STATUS_EDITOR_COLUMNS);
+  // Si migration editè a poko kouri, chaje stati yo san stickers
+  return (full.error ? (await query(STATUS_COLUMNS)).data : full.data) ?? [];
 }
 
 // Pou wonn yo: ki atis ki gen stati vivan, ak id stati yo (pou konnen si moun nan deja wè yo).

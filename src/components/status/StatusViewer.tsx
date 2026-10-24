@@ -6,27 +6,44 @@ import { createClient } from "@/lib/supabase/client";
 import { Portal } from "@/components/Portal";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { usePlayer } from "@/components/player/PlayerProvider";
+import { StatusOverlayLayer } from "@/components/status/StatusOverlayLayer";
 import { timeAgo } from "@/lib/posts";
-import { STATUS_SECONDS, loadArtistStatuses, markSeen, statusMediaUrl, type ArtistStatus } from "@/lib/statuses";
+import { QUICK_REACTIONS, STATUS_SECONDS, loadArtistStatuses, markSeen, statusMediaUrl, type ArtistStatus } from "@/lib/statuses";
 
 export type StatusArtist = { id: string; name: string; avatarUrl: string | null; verified?: boolean };
 
-// Ekran stati a (plen ekran, tankou WhatsApp): ba pwogrè anlè, tape adwat/agoch pou chanje, kenbe pou pran poz
+// Ekran stati a (plen ekran, tankou WhatsApp): ba pwogrè anlè, tape adwat/agoch pou chanje, kenbe pou pran poz.
+// Anba a: like ❤️, repons rapid (emoji) ak yon ti mesaj ki ale bay atis la sèlman.
 export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClose: () => void }) {
   const { isPlaying, toggle } = usePlayer();
   const [statuses, setStatuses] = useState<ArtistStatus[] | null>(null);
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0); // 0 → 1 pou stati aktyèl la
-  const [paused, setPaused] = useState(false);
+  const [held, setHeld] = useState(false); // dwèt la ap kenbe ekran an
+  const [typing, setTyping] = useState(false); // moun nan ap ekri yon repons
   const [muted, setMuted] = useState(false);
+  const [userId, setUserId] = useState<string | null | undefined>(undefined);
+  const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [reply, setReply] = useState("");
+  const [toast, setToast] = useState<string>();
   const mediaRef = useRef<HTMLVideoElement & HTMLAudioElement>(null);
   const pausedMusic = useRef(false);
   const pressedAt = useRef(0); // pou fè diferans ant yon ti tape ak "kenbe pou poz"
   const supabase = useRef(createClient()).current;
+  const paused = held || typing;
 
-  // Chaje stati yo; mete mizik k ap jwe a an poz pandan moun nan ap gade (tankou WhatsApp)
+  // Chaje stati yo + moun ki konekte a + like li yo
   useEffect(() => {
-    void loadArtistStatuses(supabase, artist.id).then(setStatuses);
+    void (async () => {
+      const [list, { data }] = await Promise.all([loadArtistStatuses(supabase, artist.id), supabase.auth.getSession()]);
+      setStatuses(list);
+      const uid = data.session?.user.id ?? null;
+      setUserId(uid);
+      if (uid && list.length) {
+        const { data: mine } = await supabase.from("status_likes").select("status_id").eq("user_id", uid).in("status_id", list.map((s) => s.id));
+        setLiked(new Set(((mine ?? []) as { status_id: string }[]).map((l) => l.status_id)));
+      }
+    })();
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -34,6 +51,7 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
     };
   }, [artist.id, supabase]);
 
+  // Mete mizik k ap jwe a an poz pandan moun nan ap gade (tankou WhatsApp)
   useEffect(() => {
     if (isPlaying && !pausedMusic.current) {
       pausedMusic.current = true;
@@ -65,7 +83,7 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
     if (current) markSeen([current.id]);
   }, [current]);
 
-  // Tèks / foto: revèy 6 segonn. Videyo / odyo: swiv tan fichye a.
+  // Tèks / foto: revèy 10 segonn. Videyo / odyo: swiv tan fichye a.
   useEffect(() => {
     if (!current || paused) return;
     if (current.kind === "video" || current.kind === "audio") return;
@@ -88,18 +106,54 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
     else void m.play().catch(() => {});
   }, [paused, current]);
 
-  // Klavye (òdinatè): flèch yo ak Escape
+  // Klavye (òdinatè): flèch yo ak Escape (pa pandan moun nan ap ekri)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (typing) return;
       if (e.key === "Escape") close();
       else if (e.key === "ArrowRight") next();
       else if (e.key === "ArrowLeft") prev();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [close, next]);
+  }, [close, next, typing]);
+
+  function flash(text: string) {
+    setToast(text);
+    setTimeout(() => setToast(undefined), 1800);
+  }
+
+  async function toggleLike() {
+    if (!current || !userId) return;
+    const isLiked = liked.has(current.id);
+    const nextSet = new Set(liked);
+    if (isLiked) nextSet.delete(current.id);
+    else nextSet.add(current.id);
+    setLiked(nextSet);
+    const { error } = isLiked
+      ? await supabase.from("status_likes").delete().eq("status_id", current.id).eq("user_id", userId)
+      : await supabase.from("status_likes").insert({ status_id: current.id, user_id: userId });
+    if (error) {
+      setLiked(liked);
+      flash("Like la pa pase. Eseye ankò.");
+    }
+  }
+
+  async function sendReply(body: string) {
+    const text = body.trim();
+    if (!current || !userId || !text) return;
+    const { error } = await supabase.from("status_replies").insert({ status_id: current.id, user_id: userId, body: text.slice(0, 300) });
+    if (error) return flash(error.message.includes("Twòp") ? "Twòp repons. Tann yon ti moman." : "Repons lan pa pase. Eseye ankò.");
+    setReply("");
+    setTyping(false);
+    flash(`✓ Voye bay ${artist.name}`);
+  }
 
   const url = current ? statusMediaUrl(supabase, current.media_path) : null;
+  const isOwner = userId === artist.id;
+  const items = current?.overlay?.items ?? [];
+  const trimStart = current?.trim_start ?? 0;
+  const trimEnd = current?.trim_end ?? null;
 
   return (
     <Portal>
@@ -159,21 +213,37 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
               <p className="px-8 text-center text-white/80">Pa gen stati ankò. Stati yo disparèt apre 24 è.</p>
             ) : current.kind === "text" ? (
               <p className="whitespace-pre-line break-words px-8 text-center text-2xl font-bold leading-snug text-white sm:text-3xl">{current.body}</p>
-            ) : current.kind === "image" ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={current.id} src={url ?? ""} alt={current.body ?? `Stati ${artist.name}`} className="max-h-full w-full object-contain" />
-            ) : current.kind === "video" ? (
-              <video
-                key={current.id}
-                ref={mediaRef}
-                src={url ?? ""}
-                autoPlay
-                playsInline
-                muted={muted}
-                className="max-h-full w-full object-contain"
-                onTimeUpdate={(e) => setProgress(e.currentTarget.currentTime / (e.currentTarget.duration || 1))}
-                onEnded={next}
-              />
+            ) : current.kind === "image" || current.kind === "video" ? (
+              // Kad 9:16 la (menm jan ak editè a), ak stickers/lejand yo anlè l
+              <div className="relative max-h-full w-full overflow-hidden" style={{ aspectRatio: "9 / 16", containerType: "inline-size" }}>
+                {current.kind === "image" ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={current.id} src={url ?? ""} alt={current.body ?? `Stati ${artist.name}`} className="h-full w-full object-cover" />
+                ) : (
+                  <video
+                    key={current.id}
+                    ref={mediaRef}
+                    src={url ?? ""}
+                    autoPlay
+                    playsInline
+                    muted={muted}
+                    className="h-full w-full object-cover"
+                    style={{ objectPosition: `${current.focus_x ?? 50}% ${current.focus_y ?? 50}%` }}
+                    onLoadedMetadata={(e) => {
+                      if (trimStart > 0) e.currentTarget.currentTime = trimStart;
+                    }}
+                    onTimeUpdate={(e) => {
+                      const v = e.currentTarget;
+                      const end = trimEnd ?? v.duration ?? 0;
+                      // Videyo koupe: fini lè l rive nan fen moso a
+                      if (trimEnd && v.currentTime >= trimEnd) return next();
+                      setProgress(Math.max(0, (v.currentTime - trimStart) / ((end || 1) - trimStart || 1)));
+                    }}
+                    onEnded={next}
+                  />
+                )}
+                <StatusOverlayLayer items={items} />
+              </div>
             ) : (
               <div className="flex w-full flex-col items-center gap-6 px-8">
                 <span className="flex h-28 w-28 items-center justify-center rounded-full bg-white/10 text-5xl ring-4 ring-white/20 motion-safe:animate-pulse">🎙️</span>
@@ -193,39 +263,87 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
             {/* Zòn pou tape: agoch = anvan, adwat = apre; kenbe = poz */}
             {statuses && current && (
               <div className="absolute inset-0 z-10 flex">
-                <button
-                  type="button"
-                  className="h-full w-1/3"
-                  aria-label="Stati anvan"
-                  onClick={() => Date.now() - pressedAt.current < 300 && prev()}
-                  onPointerDown={() => {
-                    pressedAt.current = Date.now();
-                    setPaused(true);
-                  }}
-                  onPointerUp={() => setPaused(false)}
-                  onPointerLeave={() => setPaused(false)}
-                />
-                <button
-                  type="button"
-                  className="h-full w-2/3"
-                  aria-label="Pwochen stati"
-                  onClick={() => Date.now() - pressedAt.current < 300 && next()}
-                  onPointerDown={() => {
-                    pressedAt.current = Date.now();
-                    setPaused(true);
-                  }}
-                  onPointerUp={() => setPaused(false)}
-                  onPointerLeave={() => setPaused(false)}
-                />
+                {(["prev", "next"] as const).map((side) => (
+                  <button
+                    key={side}
+                    type="button"
+                    className={`h-full ${side === "prev" ? "w-1/3" : "w-2/3"}`}
+                    aria-label={side === "prev" ? "Stati anvan" : "Pwochen stati"}
+                    onClick={() => Date.now() - pressedAt.current < 300 && (side === "prev" ? prev() : next())}
+                    onPointerDown={() => {
+                      pressedAt.current = Date.now();
+                      setHeld(true);
+                    }}
+                    onPointerUp={() => setHeld(false)}
+                    onPointerLeave={() => setHeld(false)}
+                  />
+                ))}
               </div>
             )}
           </div>
 
-          {/* Deskripsyon (foto/videyo/odyo) */}
-          {current && current.kind !== "text" && current.body && (
-            <p className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/80 to-transparent px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-10 text-center text-sm text-white">
-              {current.body}
-            </p>
+          {/* Anba: deskripsyon + like + repons */}
+          {current && (
+            <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-10">
+              {current.kind !== "text" && current.body && <p className="mb-3 text-center text-sm text-white">{current.body}</p>}
+              {toast && <p className="mb-2 text-center text-xs font-semibold text-emerald-300">{toast}</p>}
+
+              {isOwner ? (
+                <p className="text-center text-xs text-white/60">Se stati ou. Wè like ak repons yo nan dashboard ou (📸 Stati 24 è).</p>
+              ) : userId === null ? (
+                <Link href="/konekte" onClick={close} className="block text-center text-sm font-semibold text-citron-300">
+                  Konekte pou w like epi reponn ✨
+                </Link>
+              ) : userId ? (
+                <>
+                  {/* Repons rapid: yon sèl klike */}
+                  <div className="mb-2 flex justify-center gap-2">
+                    {QUICK_REACTIONS.map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => void sendReply(r)}
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-xl transition hover:scale-110 hover:bg-white/20 active:scale-90"
+                        aria-label={`Reponn ak ${r}`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                  <form
+                    className="flex items-center gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void sendReply(reply);
+                    }}
+                  >
+                    <input
+                      value={reply}
+                      onChange={(e) => setReply(e.target.value.slice(0, 300))}
+                      onFocus={() => setTyping(true)}
+                      onBlur={() => !reply && setTyping(false)}
+                      placeholder={`Reponn ${artist.name}…`}
+                      className="min-w-0 flex-1 rounded-full border border-white/25 bg-black/40 px-4 py-2.5 text-sm text-white placeholder:text-white/60 outline-none focus:border-citron-400"
+                    />
+                    {reply.trim() ? (
+                      <button type="submit" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-citron-400 text-zinc-950" aria-label="Voye">
+                        ➤
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void toggleLike()}
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl transition active:scale-90 ${liked.has(current.id) ? "bg-rose-500/20" : "bg-white/10"}`}
+                        aria-label={liked.has(current.id) ? "Retire like la" : "Like stati a"}
+                        aria-pressed={liked.has(current.id)}
+                      >
+                        {liked.has(current.id) ? "❤️" : "🤍"}
+                      </button>
+                    )}
+                  </form>
+                </>
+              ) : null}
+            </div>
           )}
         </div>
       </div>

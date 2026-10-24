@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { StatusViewer } from "@/components/status/StatusViewer";
-import { statusRingStyle, useStatusSeen } from "@/components/status/StatusRing";
+import { SegmentedRing, useSeenFlags } from "@/components/status/StatusRing";
 
 export type BubbleArtist = { artist_id: string; display_name: string; avatar_url: string | null; plays: number; is_verified?: boolean };
 
@@ -39,16 +39,17 @@ export function ArtistBubbles({ title, artists, statuses = {} }: { title: string
 
 function Bubble({ artist: a, statusIds, onOpen }: { artist: BubbleArtist; statusIds: string[]; onOpen: () => void }) {
   const hasStatus = statusIds.length > 0;
-  const unseen = useStatusSeen(statusIds);
+  const seen = useSeenFlags(statusIds);
 
   const circle = (
     <>
       {/* Bòdi a: vèt si gen stati pou wè, gri si l deja wè yo, gradyan UpMizik la si pa gen stati */}
       <span
-        className={`relative rounded-full p-[3px] transition group-hover:scale-105 ${hasStatus ? "" : "bg-gradient-to-tr from-amber-400 via-fuchsia-500 to-violet-600"}`}
-        style={hasStatus ? statusRingStyle(unseen) : undefined}
+        className={`relative rounded-full transition group-hover:scale-105 ${hasStatus ? "p-[5px]" : "bg-gradient-to-tr from-amber-400 via-fuchsia-500 to-violet-600 p-[3px]"}`}
       >
-        <span className="block rounded-full bg-zinc-950 p-[3px]">
+        {/* Wonn stati a: yon moso pou chak stati (tankou WhatsApp) */}
+        {hasStatus && <SegmentedRing seen={seen} />}
+        <span className={`relative block rounded-full bg-zinc-950 ${hasStatus ? "p-[1px]" : "p-[3px]"}`}>
           <span className="block h-16 w-16 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700">
             {a.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element

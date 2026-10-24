@@ -39,6 +39,15 @@ export function donateShareText(name: string, isOwner: boolean) {
         `Chak ti kontribisyon ede l kontinye fè mizik! 🇭🇹`;
 }
 
+// Sit la menm (bouton pataje anba paj la)
+export function siteShareText() {
+  return (
+    `🇭🇹🎶 Ou konnen UpMizik? Se platfòm mizik 100% ayisyen an!\n` +
+    `Koute dènye tit atis nou yo GRATIS, dekouvri nouvo talan, epi sipòte yo dirèkteman 💝\n` +
+    `Vin fè yon ti vire, w ap renmen l 👇`
+  );
+}
+
 // Yon pòs Sosyal
 export function postShareText(artistName: string) {
   return `📣 Gade dènye nouvèl ${artistName} sou UpMizik! Vin koute mizik li epi sipòte l 💝🇭🇹`;

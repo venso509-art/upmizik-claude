@@ -7,7 +7,8 @@ import { FormMessage } from "@/components/auth/ui";
 import { LinkCard } from "@/components/social/PostCard";
 import { normalizeUrl } from "@/lib/links";
 import { IMAGE_TYPES, fileExtension } from "@/lib/upload";
-import { POST_IMAGE_MAX_INPUT_BYTES, POST_MAX_LENGTH, cropSquare, postState, type PostStatus } from "@/lib/posts";
+import { POST_IMAGE_MAX_INPUT_BYTES, POST_MAX_LENGTH, POST_IMAGE_SIZE, postState, type PostStatus } from "@/lib/posts";
+import { ImageCropper } from "@/components/media/ImageCropper";
 
 export type MyPost = {
   id: string;
@@ -81,11 +82,12 @@ export function PostComposer({ posts, artistId, artistName }: { posts: MyPost[];
   const [mode, setMode] = useState<"image" | "link">("image");
   const [content, setContent] = useState("");
   const [image, setImage] = useState<Blob | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null); // foto k ap santre anvan li antre nan pòs la
   const [preview, setPreview] = useState<string | null>(null);
   const [link, setLink] = useState("");
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
-  const [preparing, setPreparing] = useState(false);
+  const preparing = false; // santraj la fèt nan ImageCropper kounye a
   const [pending, startTransition] = useTransition();
   const now = Date.now();
 
@@ -104,15 +106,8 @@ export function PostComposer({ posts, artistId, artistName }: { posts: MyPost[];
     if (!file) return;
     if (!IMAGE_TYPES[fileExtension(file)]) return setError("Itilize yon imaj JPG, PNG oswa WebP.");
     if (file.size > POST_IMAGE_MAX_INPUT_BYTES) return setError("Foto a twò gwo (maksimòm 15 MB).");
-    setPreparing(true);
-    try {
-      // Koupe l kare 1:1 (tankou yon foto pwofil WhatsApp) epi rapetise l
-      setImage(await cropSquare(file));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Imaj la pa ka prepare.");
-    } finally {
-      setPreparing(false);
-    }
+    // Atis la santre foto a nan yon kare 1:1 (zouti ImageCropper la rapetise l tou)
+    setCropFile(file);
   }
 
   function submit(e: React.FormEvent) {
@@ -148,6 +143,17 @@ export function PostComposer({ posts, artistId, artistName }: { posts: MyPost[];
 
   return (
     <section id="nouvo-pos" className="mt-6 scroll-mt-24 rounded-2xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-900/20 via-zinc-900/40 to-zinc-900/40 p-6">
+      {cropFile && (
+        <ImageCropper
+          file={cropFile}
+          options={{ aspect: 1, outputWidth: POST_IMAGE_SIZE, title: "✂️ Santre foto pòs la" }}
+          onCancel={() => setCropFile(null)}
+          onDone={(f) => {
+            setImage(f);
+            setCropFile(null);
+          }}
+        />
+      )}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-bold text-white">💬 Pibliye sou UpMizik Sosyal</h2>
         <a href="/sosyal" className="text-sm font-medium text-fuchsia-300 hover:text-fuchsia-200">
@@ -198,7 +204,15 @@ export function PostComposer({ posts, artistId, artistName }: { posts: MyPost[];
                   <span className="px-2 text-[11px] text-zinc-500">Kare 1:1 · JPG, PNG, WebP</span>
                 </>
               )}
-              <input type="file" accept=".jpg,.jpeg,.png,.webp" className="sr-only" onChange={(e) => pickImage(e.target.files?.[0])} />
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                className="sr-only"
+                onChange={(e) => {
+                  void pickImage(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
             </label>
           ) : (
             <div className="space-y-2 sm:col-span-2">

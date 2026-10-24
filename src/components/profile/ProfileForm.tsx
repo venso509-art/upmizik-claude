@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { IMAGE_TYPES, fileExtension } from "@/lib/upload";
 import { Field, FormMessage, SubmitButton, inputClass } from "@/components/auth/ui";
 import { LocationSelect } from "@/components/LocationSelect";
+import { ImageCropper } from "@/components/media/ImageCropper";
 
 export type EditableProfile = {
   id: string;
@@ -72,6 +73,18 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
   const [bannerUrl, setBannerUrl] = useState(profile.banner_url);
   const [bannerBusy, setBannerBusy] = useState(false);
   const [bannerError, setBannerError] = useState<string>();
+  // Foto ki ap santre anvan li monte (pwofil oswa banyè)
+  const [cropping, setCropping] = useState<{ file: File; kind: "avatar" | "banner" } | null>(null);
+
+  // Chwazi yon foto: tcheke l, epi louvri zouti pou santre l
+  function pickImage(file: File | undefined, kind: "avatar" | "banner") {
+    const setError = kind === "avatar" ? setAvatarError : setBannerError;
+    setError(undefined);
+    if (!file) return;
+    if (!IMAGE_TYPES[fileExtension(file)]) return setError("Itilize yon imaj JPG, PNG oswa WebP.");
+    if (file.size > 20 * 1024 * 1024) return setError("Foto a twò gwo (maks 20 MB).");
+    setCropping({ file, kind });
+  }
 
   // Monte yon imaj nan bucket la, sove lyen an sou pwofil la, epi efase ansyen an
   async function uploadImage(
@@ -140,6 +153,22 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
 
   return (
     <div className="space-y-6">
+      {cropping && (
+        <ImageCropper
+          file={cropping.file}
+          options={
+            cropping.kind === "avatar"
+              ? { aspect: 1, outputWidth: 600, round: true, title: "✂️ Santre foto pwofil ou" }
+              : { aspect: 3, outputWidth: 1500, title: "✂️ Santre banyè a" }
+          }
+          onCancel={() => setCropping(null)}
+          onDone={(f) => {
+            const kind = cropping.kind;
+            setCropping(null);
+            void (kind === "avatar" ? changeAvatar(f) : changeBanner(f));
+          }}
+        />
+      )}
       {/* ===== FOTO ===== */}
       <Section id="foto" title="Foto pwofil">
         <div className="flex items-center gap-5">
@@ -156,9 +185,17 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
           <div>
             <label className={`inline-block cursor-pointer rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:text-white ${avatarBusy ? "pointer-events-none opacity-60" : ""}`}>
               {avatarBusy ? "Ap monte..." : "📷 Chanje foto"}
-              <input type="file" accept=".jpg,.jpeg,.png,.webp" className="sr-only" onChange={(e) => changeAvatar(e.target.files?.[0])} />
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                className="sr-only"
+                onChange={(e) => {
+                  pickImage(e.target.files?.[0], "avatar");
+                  e.target.value = "";
+                }}
+              />
             </label>
-            <p className="mt-2 text-xs text-zinc-500">JPG, PNG oswa WebP · Maks 2 MB</p>
+            <p className="mt-2 text-xs text-zinc-500">JPG, PNG oswa WebP · w ap ka santre l</p>
           </div>
         </div>
         <FormMessage error={avatarError} />
@@ -178,14 +215,22 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
           <div className="flex flex-wrap items-center gap-3">
             <label className={`inline-block cursor-pointer rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:text-white ${bannerBusy ? "pointer-events-none opacity-60" : ""}`}>
               {bannerBusy ? "Ap monte..." : bannerUrl ? "🖼️ Chanje banyè" : "🖼️ Mete yon banyè"}
-              <input type="file" accept=".jpg,.jpeg,.png,.webp" className="sr-only" onChange={(e) => changeBanner(e.target.files?.[0])} />
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                className="sr-only"
+                onChange={(e) => {
+                  pickImage(e.target.files?.[0], "banner");
+                  e.target.value = "";
+                }}
+              />
             </label>
             {bannerUrl && !bannerBusy && (
               <button type="button" onClick={removeBanner} className="rounded-lg px-3 py-2 text-sm text-zinc-400 transition hover:text-red-400">
                 🗑️ Retire
               </button>
             )}
-            <p className="text-xs text-zinc-500">JPG, PNG oswa WebP · Maks 5 MB</p>
+            <p className="text-xs text-zinc-500">JPG, PNG oswa WebP · w ap ka santre l</p>
           </div>
           <FormMessage error={bannerError} />
         </Section>
