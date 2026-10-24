@@ -20,3 +20,12 @@ export async function setUserStatus(userId: string, status: AccountStatus): Prom
   revalidatePath("/", "layout");
   return {};
 }
+
+// Demann "Mwen bliye modpas mwen": admin nan make kòd la "voye" oswa li anile demann lan
+export async function setPasswordResetStatus(id: string, status: "sent" | "cancelled"): Promise<{ error?: string }> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("admin_set_password_reset", { p_id: id, p_status: status });
+  if (error) return { error: `Aksyon an echwe: ${error.message}` };
+  revalidatePath("/admin/modpas");
+  return {};
+}

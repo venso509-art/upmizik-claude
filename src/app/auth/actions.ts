@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
-export type AuthState = { error?: string; message?: string } | undefined;
+// badPassword: imèl/modpas pa bon (pou paj la konte echèk yo); resetPending: imèl la gen yon demann kòd aktif
+export type AuthState = { error?: string; message?: string; badPassword?: boolean; resetPending?: boolean } | undefined;
 
 // Tradui erè Supabase yo an Kreyòl
 function translateError(error: AuthError): string {
@@ -163,7 +164,7 @@ async function artistLoginBlock(
 }
 
 // Koneksyon ak imèl + modpas, san redireksyon (paj login nan ak pop-up koutè a itilize l)
-async function passwordLogin(email: string, password: string): Promise<{ error?: string; role?: string }> {
+async function passwordLogin(email: string, password: string): Promise<{ error?: string; role?: string; badPassword?: boolean }> {
   if (!email || !password) return { error: "Ranpli imèl ak modpas ou." };
 
   const supabase = createClient();
@@ -178,7 +179,7 @@ async function passwordLogin(email: string, password: string): Promise<{ error?:
     p_user_agent: h.get("user-agent"),
   });
 
-  if (error) return { error: translateError(error) };
+  if (error) return { error: translateError(error), badPassword: error.code === "invalid_credentials" };
 
   // Atis yo ateri sou dashboard yo; koutè yo sou paj akèy la
   const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", data.user.id).single();
@@ -200,8 +201,12 @@ async function passwordLogin(email: string, password: string): Promise<{ error?:
 }
 
 export async function login(_prev: AuthState, formData: FormData): Promise<AuthState> {
-  const res = await passwordLogin(String(formData.get("email") ?? "").trim(), String(formData.get("password") ?? ""));
-  if (res.error) return { error: res.error };
+  const email = String(formData.get("email") ?? "").trim();
+  const res = await passwordLogin(email, String(formData.get("password") ?? ""));
+  if (res.error) {
+    // Si moun nan te deja mande yon kòd pou imèl sa a, paj la montre espas kòd la touswit
+    return { error: res.error, badPassword: res.badPassword, resetPending: res.badPassword ? await checkPasswordReset(email) : false };
+  }
   revalidatePath("/", "layout");
   redirect(res.role === "artist" ? "/dashboard" : "/");
 }
@@ -242,6 +247,60 @@ export async function quickSignup(formData: FormData): Promise<QuickAuthResult> 
     return { ok: true };
   }
   return { message: `Nou voye yon lyen konfimasyon bay ${email}. Klike sou li pou w aktive kont ou.` };
+}
+
+// ===== Mwen bliye modpas mwen: kòd 6 chif ekip UpMizik la voye sou WhatsApp oswa pa imèl =====
+// (fonksyon SQL yo nan migration 20261205000000_password_reset_codes.sql)
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export async function checkPasswordReset(email: string): Promise<boolean> {
+  if (!EMAIL_RE.test(email.trim())) return false;
+  const { data } = await createClient().rpc("has_password_reset", { p_email: email.trim() });
+  return data === true;
+}
+
+export async function requestPasswordReset(formData: FormData): Promise<QuickAuthResult> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const kind = formData.get("contact_kind") === "email" ? "email" : "whatsapp";
+  const contact = String(formData.get("contact") ?? "").trim();
+
+  if (!EMAIL_RE.test(email)) return { error: "Mete imèl kont ou an." };
+  if (kind === "whatsapp" && contact.replace(/\D/g, "").length < 8) return { error: "Mete yon nimewo WhatsApp valid (egz: +509 3412 3456)." };
+  if (kind === "email" && !EMAIL_RE.test(contact)) return { error: "Mete yon imèl valid kote pou n voye kòd la." };
+
+  const { error } = await createClient().rpc("request_password_reset", { p_email: email, p_contact_kind: kind, p_contact: contact });
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
+export async function verifyResetCode(email: string, code: string): Promise<QuickAuthResult> {
+  if (!/^\d{6}$/.test(code.trim())) return { error: "Kòd la gen 6 chif." };
+  const { data, error } = await createClient().rpc("verify_reset_code", { p_email: email.trim(), p_code: code.trim() });
+  if (error) return { error: `Gen yon erè ki rive: ${error.message}` };
+  if (data) return { error: String(data) };
+  return { ok: true };
+}
+
+// Chanje modpas la ak kòd la, epi konekte moun nan touswit ak nouvo modpas la
+export async function resetPasswordWithCode(formData: FormData): Promise<QuickAuthResult & { role?: string }> {
+  const email = String(formData.get("email") ?? "").trim();
+  const code = String(formData.get("code") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("password_confirm") ?? "");
+
+  const pwProblem = passwordProblem(password);
+  if (pwProblem) return { error: pwProblem };
+  if (password !== confirm) return { error: "2 modpas yo pa menm." };
+
+  const { data, error } = await createClient().rpc("reset_password_with_code", { p_email: email, p_code: code, p_new_password: password });
+  if (error) return { error: `Gen yon erè ki rive: ${error.message}` };
+  if (data) return { error: String(data) };
+
+  const res = await passwordLogin(email, password);
+  if (res.error) return { ok: true, message: `Modpas ou chanje ✅ ${res.error}` };
+  revalidatePath("/", "layout");
+  return { ok: true, role: res.role };
 }
 
 export async function logout() {

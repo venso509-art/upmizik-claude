@@ -161,6 +161,12 @@ export function ListenerAuthPrompt() {
               showStrength={signup}
             />
 
+            {!signup && (
+              <a href="/konekte?modpas=1" className="block text-right text-sm text-zinc-400 hover:text-white">
+                Mwen bliye modpas mwen
+              </a>
+            )}
+
             {error && <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
             {message && <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">{message}</p>}
 
