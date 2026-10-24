@@ -1,9 +1,9 @@
 // ===== Nivo atis yo (dwe matche ak migration 20261103000000_levels_verified_top10.sql) =====
 export type LevelKind = "donations" | "plays";
-import type { MedalIcon, MedalTier } from "@/components/badges/Medal";
+import type { MedalIcon, MedalShape, MedalTier } from "@/components/badges/Medal";
 
 // emoji = pou tèks; icon + tier = pou meday la (components/badges/Medal)
-export type Level = { threshold: number; name: string; emoji: string; icon: MedalIcon; tier: MedalTier; plaque?: boolean };
+export type Level = { threshold: number; name: string; emoji: string; icon: MedalIcon; tier: MedalTier; shape?: MedalShape; plaque?: boolean };
 
 export const DONATION_LEVELS: Level[] = [
   { threshold: 0, name: "Nouvo", emoji: "🌱", icon: "sprout", tier: "emerald" },
@@ -16,10 +16,10 @@ export const DONATION_LEVELS: Level[] = [
 export const PLAY_LEVELS: Level[] = [
   { threshold: 0, name: "Debitan", emoji: "🎵", icon: "music", tier: "emerald" },
   { threshold: 500, name: "Kalifye pou ✓", emoji: "🎯", icon: "target", tier: "sapphire" },
-  { threshold: 1000, name: "Bwonz", emoji: "🥉", icon: "medal", tier: "bronze" },
-  { threshold: 3000, name: "Ajan", emoji: "🥈", icon: "medal", tier: "silver", plaque: true },
-  { threshold: 10000, name: "Lò", emoji: "🥇", icon: "medal", tier: "gold", plaque: true },
-  { threshold: 100000, name: "Platin", emoji: "💿", icon: "disc", tier: "platinum", plaque: true },
+  { threshold: 1000, name: "Bwonz", emoji: "🥉", icon: "medal", tier: "bronze", shape: "disc" },
+  { threshold: 3000, name: "Ajan", emoji: "🥈", icon: "medal", tier: "silver", shape: "disc", plaque: true },
+  { threshold: 10000, name: "Lò", emoji: "🥇", icon: "medal", tier: "gold", shape: "disc", plaque: true },
+  { threshold: 100000, name: "Platin", emoji: "💿", icon: "disc", tier: "platinum", shape: "disc", plaque: true },
 ];
 
 // Plak fizik yo mande omwen $100 don tou

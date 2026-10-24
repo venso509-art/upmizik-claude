@@ -79,7 +79,7 @@ export function ArtistLevelsTable({ artists }: { artists: AdminArtistLevel[] }) 
                   </td>
                   <td className="py-3 pr-3">
                     <p className="flex items-center gap-2 text-white">
-                      <Medal icon={p.current.icon} tier={p.current.tier} size="xs" /> {p.current.name}
+                      <Medal icon={p.current.icon} tier={p.current.tier} shape={p.current.shape} size="xs" /> {p.current.name}
                     </p>
                     <p className="text-xs text-zinc-500">
                       {formatPlays(a.plays)} ekout{p.next ? ` · ${Math.round(p.progress * 100)}% → ${p.next.name}` : ""}
@@ -87,7 +87,7 @@ export function ArtistLevelsTable({ artists }: { artists: AdminArtistLevel[] }) 
                   </td>
                   <td className="py-3 pr-3">
                     <p className="flex items-center gap-2 text-white">
-                      <Medal icon={d.current.icon} tier={d.current.tier} size="xs" /> {d.current.name}
+                      <Medal icon={d.current.icon} tier={d.current.tier} shape={d.current.shape} size="xs" /> {d.current.name}
                     </p>
                     <p className="text-xs text-zinc-500">
                       ${a.donationsUsd.toLocaleString("en-US")}
@@ -119,7 +119,7 @@ function PlaqueCard({ p }: { p: PlaqueItem }) {
       <p className="flex items-center gap-3 text-lg font-bold text-white">
         {(() => {
           const l = levelAt("plays", p.threshold);
-          return l ? <Medal icon={l.icon} tier={l.tier} size="sm" /> : null;
+          return l ? <Medal icon={l.icon} tier={l.tier} shape={l.shape} size="sm" /> : null;
         })()}
         Plak {levelAt("plays", p.threshold)?.name ?? formatPlays(p.threshold)}
       </p>

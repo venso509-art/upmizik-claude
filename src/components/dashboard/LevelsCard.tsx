@@ -11,7 +11,7 @@ function LevelBar({ title, kind, value, format }: { title: string; kind: LevelKi
     <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-5">
       <p className="text-sm text-zinc-400">{title}</p>
       <div className="mt-3 flex items-center gap-4">
-        <Medal icon={current.icon} tier={current.tier} size="lg" />
+        <Medal icon={current.icon} tier={current.tier} shape={current.shape} size="lg" />
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-widest text-zinc-500">Nivo aktyèl</p>
           <p className="text-2xl font-extrabold text-white">{current.name}</p>
@@ -21,7 +21,7 @@ function LevelBar({ title, kind, value, format }: { title: string; kind: LevelKi
         <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-zinc-800">
           <div className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-citron-400" style={{ width: `${progress * 100}%` }} />
         </div>
-        {next && <Medal icon={next.icon} tier={next.tier} size="xs" locked title={next.name} />}
+        {next && <Medal icon={next.icon} tier={next.tier} shape={next.shape} size="xs" locked title={next.name} />}
       </div>
       <p className="mt-2 text-xs text-zinc-400">
         {next ? (
@@ -90,7 +90,7 @@ export async function LevelsCard({ artistId, verified }: { artistId: string; ver
             return (
               <li key={l.threshold} className={`rounded-xl border p-3 text-sm ${reached ? "border-amber-500/40 bg-zinc-950" : "border-zinc-800 bg-zinc-950/50"}`}>
                 <div className="flex items-center gap-3">
-                  <Medal icon={l.icon} tier={l.tier} size="sm" locked={!reached} />
+                  <Medal icon={l.icon} tier={l.tier} shape={l.shape} size="sm" locked={!reached} />
                   <div>
                     <p className="font-semibold text-white">Plak {l.name}</p>
                     <p className="text-xs text-zinc-400">{formatPlays(l.threshold)} ekout</p>

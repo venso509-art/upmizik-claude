@@ -465,7 +465,7 @@ export default async function ArtistPage({ params }: Props) {
                   <ul className="grid grid-cols-3 gap-x-2 gap-y-4">
                     {earned.map((t) => (
                       <li key={t.id} className="flex flex-col items-center text-center" title={t.description}>
-                        <Medal icon={t.icon} tier={t.tier} size="md" />
+                        <Medal icon={t.icon} tier={t.tier} shape={t.shape} size="md" />
                         <p className="mt-2 text-[11px] font-semibold leading-tight text-white">{t.name}</p>
                       </li>
                     ))}
@@ -482,7 +482,7 @@ export default async function ArtistPage({ params }: Props) {
                           .filter((t) => !t.earned)
                           .map((t) => (
                             <li key={t.id} className="flex items-center gap-3">
-                              <Medal icon={t.icon} tier={t.tier} size="sm" locked />
+                              <Medal icon={t.icon} tier={t.tier} shape={t.shape} size="sm" locked />
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-xs font-semibold text-zinc-200">{t.name}</p>
                                 <p className="truncate text-[11px] text-zinc-500">{t.description}</p>

@@ -1,7 +1,10 @@
 // ===== Meday trofe ak nivo yo: yon disk metal (bwonz, ajan, lò...) ak yon ikòn liy pwòp =====
 // Pa gen emoji: menm stil sou tout aparèy. Gradyan yo an CSS (pa gen id SVG), kidonk li mache nan konpozan sèvè yo.
 
-export type MedalTier = "bronze" | "silver" | "gold" | "platinum" | "emerald" | "sapphire" | "ruby" | "violet";
+export type MedalTier = "bronze" | "silver" | "gold" | "platinum" | "diamond" | "emerald" | "sapphire" | "ruby" | "violet";
+
+// medal = meday won ak yon ikòn; disc = disk sètifye nan yon ankadreman (Disk Lò, Disk Platin...)
+export type MedalShape = "medal" | "disc";
 
 export type MedalIcon =
   | "mic"
@@ -29,9 +32,10 @@ export type MedalIcon =
 // [limyè, mitan, fonse] pou chak metal
 const TIERS: Record<MedalTier, [string, string, string]> = {
   bronze: ["#F6D2B0", "#C27C45", "#6E3D1C"],
-  silver: ["#FFFFFF", "#BCC6D1", "#5E6B7A"],
+  silver: ["#FFFFFF", "#C4C8CC", "#5F6368"],
   gold: ["#FFF4B8", "#F2C230", "#8A5A00"],
-  platinum: ["#F1F8FF", "#A9C8E8", "#46678E"],
+  platinum: ["#F7FBFF", "#B9D3EA", "#3E5F86"],
+  diamond: ["#FFFFFF", "#D6F3FF", "#7FB6D6"],
   emerald: ["#B9F3D6", "#22A36A", "#0A4D2E"],
   sapphire: ["#CDE3FF", "#3B82F6", "#1E3A8A"],
   ruby: ["#FFD0D8", "#E0405E", "#7F1230"],
@@ -127,6 +131,7 @@ export function MedalGlyph({ icon, className = "h-5 w-5", strokeWidth = 2 }: { i
 export function Medal({
   icon,
   tier,
+  shape = "medal",
   size = "md",
   locked = false,
   title,
@@ -134,11 +139,13 @@ export function Medal({
 }: {
   icon: MedalIcon;
   tier: MedalTier;
+  shape?: MedalShape;
   size?: keyof typeof SIZES;
   locked?: boolean;
   title?: string;
   className?: string;
 }) {
+  if (shape === "disc") return <RecordPlaque tier={tier} size={size} locked={locked} title={title} className={className} />;
   const s = SIZES[size];
   const [light, mid, dark] = locked ? ["#3A4560", "#262F47", "#141B30"] : TIERS[tier];
   return (
@@ -163,6 +170,78 @@ export function Medal({
       {locked && (
         <span className="absolute -bottom-0.5 -right-0.5 flex h-[40%] w-[40%] items-center justify-center rounded-full bg-zinc-800 text-zinc-300 ring-2 ring-zinc-950">
           <MedalGlyph icon="lock" className="h-[60%] w-[60%]" strokeWidth={2.4} />
+        </span>
+      )}
+    </span>
+  );
+}
+
+// ===== Disk sètifye (tankou plak "Disque d'Or" estidyo yo): yon disk metal ak siyon, nan yon ankadreman nwa =====
+const PLAQUE_SIZES = {
+  xs: { box: "h-7 w-7", pad: "p-[3px]", lock: "h-3 w-3" },
+  sm: { box: "h-10 w-10", pad: "p-1", lock: "h-4 w-4" },
+  md: { box: "h-14 w-14", pad: "p-[5px]", lock: "h-5 w-5" },
+  lg: { box: "h-20 w-20", pad: "p-2", lock: "h-7 w-7" },
+} as const;
+
+function RecordPlaque({
+  tier,
+  size,
+  locked,
+  title,
+  className,
+}: {
+  tier: MedalTier;
+  size: keyof typeof PLAQUE_SIZES;
+  locked: boolean;
+  title?: string;
+  className: string;
+}) {
+  const s = PLAQUE_SIZES[size];
+  const [light, mid, dark] = locked ? ["#4A5470", "#2C3550", "#161D33"] : TIERS[tier];
+  return (
+    <span
+      className={`relative inline-flex shrink-0 rounded-[22%] bg-gradient-to-br from-zinc-700 via-zinc-900 to-black ring-1 ring-white/10 ${s.box} ${s.pad} ${
+        locked ? "" : "shadow-[0_8px_20px_-8px_rgba(0,0,0,0.8)]"
+      } ${className}`}
+      title={title}
+      role={title ? "img" : undefined}
+      aria-label={title}
+    >
+      {/* Disk la: siyon yo + metal ki reflete limyè */}
+      <span
+        className="relative block h-full w-full overflow-hidden rounded-full"
+        style={{
+          background:
+            tier === "diamond" && !locked
+              ? // Diaman: reflè lakansyèl (ble, woz, vèt) sou yon disk prèske blan
+                "repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.10) 0 0.6px, rgba(255,255,255,0.10) 0.6px 1.6px), conic-gradient(from 200deg, #FFFFFF, #BFEFFF, #FFFFFF, #FFD6F5, #FFFFFF, #C9FFE9, #FFFFFF, #D6E4FF, #FFFFFF)"
+              : `repeating-radial-gradient(circle at 50% 50%, rgba(0,0,0,0.16) 0 0.6px, rgba(255,255,255,0.06) 0.6px 1.6px), conic-gradient(from 220deg, ${light}, ${mid}, ${dark}, ${mid}, ${light}, ${mid}, ${dark}, ${mid}, ${light})`,
+          boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.25), inset 0 -2px 6px rgba(0,0,0,0.35)",
+        }}
+      >
+        {/* Etikèt sant lan ak twou a */}
+        <span
+          className="absolute inset-[31%] rounded-full"
+          style={{ background: locked ? "#1F2740" : `radial-gradient(circle at 35% 30%, ${mid}, ${dark})`, boxShadow: "0 0 0 1px rgba(0,0,0,0.35)" }}
+        />
+        <span className="absolute inset-[45%] rounded-full bg-zinc-950" />
+        {/* Reflè limyè */}
+        {!locked && <span className="pointer-events-none absolute -left-1/4 top-0 h-full w-1/3 rotate-[25deg] bg-white/25 blur-[3px]" />}
+        {tier === "diamond" && !locked && (
+          <>
+            <span className="pointer-events-none absolute right-[10%] top-[6%] text-[11px] leading-none text-white drop-shadow-[0_0_3px_#9BE7FF]" aria-hidden>
+              ✦
+            </span>
+            <span className="pointer-events-none absolute bottom-[12%] left-[10%] text-[7px] leading-none text-white drop-shadow-[0_0_3px_#FFC2F0]" aria-hidden>
+              ✦
+            </span>
+          </>
+        )}
+      </span>
+      {locked && (
+        <span className={`absolute -bottom-1 -right-1 flex items-center justify-center rounded-full bg-zinc-800 p-0.5 text-zinc-300 ring-2 ring-zinc-950 ${s.lock}`}>
+          <MedalGlyph icon="lock" className="h-full w-full" strokeWidth={2.4} />
         </span>
       )}
     </span>
