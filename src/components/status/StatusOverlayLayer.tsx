@@ -19,8 +19,8 @@ export function OverlayItemView({ item, selected = false }: { item: OverlayItem;
               maxWidth: "90cqw",
               padding: "0.15em 0.45em",
               borderRadius: "0.4em",
-              background: item.c === "#0B132B" ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.45)",
-              textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+              background: item.b === false ? "transparent" : item.c === "#0B132B" ? "rgba(255,255,255,0.88)" : "rgba(0,0,0,0.5)",
+              textShadow: item.b === false ? "0 2px 6px rgba(0,0,0,0.8)" : "0 1px 3px rgba(0,0,0,0.5)",
             }
           : { filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.45))" }),
       }}
