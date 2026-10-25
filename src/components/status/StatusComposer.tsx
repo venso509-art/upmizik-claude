@@ -51,6 +51,7 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
   const [edited, setEdited] = useState<EditedStatus | null>(null);
   // Like ak repons fanatik yo sou chak stati
   const [activity, setActivity] = useState<Record<string, { likes: number; replies: { id: string; body: string; created_at: string; name: string }[] }>>({});
+  const [views, setViews] = useState<Record<string, number>>({});
 
   // Stati m yo ki poko ekspire, ak konbyen m poste nan dènye 24 è yo
   const refresh = useCallback(async () => {
@@ -66,6 +67,11 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
     // Like + repons (vid si migration repons yo poko kouri)
     const ids = (data ?? []).map((s) => s.id);
     if (ids.length) {
+      void supabase.rpc("status_stats", { p_ids: ids }).then(({ data }) => {
+        const v: Record<string, number> = {};
+        for (const r of (data ?? []) as { status_id: string; views: number }[]) v[r.status_id] = Number(r.views);
+        setViews(v);
+      });
       const [{ data: likes }, { data: replies }] = await Promise.all([
         supabase.from("status_likes").select("status_id").in("status_id", ids),
         supabase
@@ -391,7 +397,7 @@ export function StatusComposer({ pro, artist }: { pro: boolean; artist: { id: st
                 <div className="min-w-0 flex-1 text-sm">
                   <p className="truncate text-white">{s.body || KIND_LABEL[s.kind]}</p>
                   <p className="text-xs text-zinc-500">
-                    {KIND_LABEL[s.kind]} · {timeAgo(s.created_at)} · ❤️ {activity[s.id]?.likes ?? 0} · 💬 {activity[s.id]?.replies.length ?? 0}
+                    {KIND_LABEL[s.kind]} · {timeAgo(s.created_at)} · 👁 {views[s.id] ?? 0} · ❤️ {activity[s.id]?.likes ?? 0} · 💬 {activity[s.id]?.replies.length ?? 0}
                   </p>
                   {(activity[s.id]?.replies.length ?? 0) > 0 && (
                     <details className="mt-1">

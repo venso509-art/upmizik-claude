@@ -8,11 +8,24 @@ import { Portal } from "@/components/Portal";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import { StatusOverlayLayer } from "@/components/status/StatusOverlayLayer";
+import { StatusAudience, type StatusStat } from "@/components/status/StatusAudience";
 import { statusFontClass } from "@/lib/statusFonts";
 import { timeAgo } from "@/lib/posts";
 import { QUICK_REACTIONS, STATUS_SECONDS, loadArtistStatuses, markSeen, statusMediaUrl, type ArtistStatus } from "@/lib/statuses";
 
 export type StatusArtist = { id: string; name: string; avatarUrl: string | null; verified?: boolean };
+
+// Yon id pa sesyon navigatè: pou konte vizitè san kont yon sèl fwa pa stati
+function viewerSession() {
+  try {
+    const k = "upmizik-session";
+    const v = sessionStorage.getItem(k) ?? crypto.randomUUID();
+    sessionStorage.setItem(k, v);
+    return v;
+  } catch {
+    return crypto.randomUUID();
+  }
+}
 
 // Ekran stati a (plen ekran, tankou WhatsApp): ba pwogrè anlè, tape adwat/agoch pou chanje, kenbe pou pran poz.
 // Anba a: like ❤️, repons rapid (emoji) ak yon ti mesaj ki ale bay atis la sèlman.
@@ -30,11 +43,25 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [reply, setReply] = useState("");
   const [toast, setToast] = useState<string>();
+  const [stats, setStats] = useState<Record<string, StatusStat>>({}); // atis la: wè + like chak stati
+  const [showAudience, setShowAudience] = useState(false);
+  const swipeY = useRef<number | null>(null);
   const mediaRef = useRef<HTMLVideoElement & HTMLAudioElement>(null);
   const pausedMusic = useRef(false);
   const pressedAt = useRef(0); // pou fè diferans ant yon ti tape ak "kenbe pou poz"
   const supabase = useRef(createClient()).current;
-  const paused = held || typing;
+  const paused = held || typing || showAudience;
+
+  // Atis la: kantite wè + like chak stati
+  const loadStats = useCallback(
+    async (ids: string[]) => {
+      const { data } = await supabase.rpc("status_stats", { p_ids: ids });
+      const next: Record<string, StatusStat> = {};
+      for (const r of (data ?? []) as { status_id: string; views: number; likes: number }[]) next[r.status_id] = { views: Number(r.views), likes: Number(r.likes) };
+      setStats(next);
+    },
+    [supabase],
+  );
 
   // Chaje stati yo + moun ki konekte a + like li yo
   useEffect(() => {
@@ -47,13 +74,14 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
         const { data: mine } = await supabase.from("status_likes").select("status_id").eq("user_id", uid).in("status_id", list.map((s) => s.id));
         setLiked(new Set(((mine ?? []) as { status_id: string }[]).map((l) => l.status_id)));
       }
+      if (uid && uid === artist.id && list.length) await loadStats(list.map((s) => s.id));
     })();
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = overflow;
     };
-  }, [artist.id, supabase]);
+  }, [artist.id, supabase, loadStats]);
 
   // Mete mizik k ap jwe a an poz pandan moun nan ap gade (tankou WhatsApp)
   useEffect(() => {
@@ -82,10 +110,12 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
     setProgress(0);
   };
 
-  // Make stati a "wè"
+  // Make stati a "wè" (sou aparèy la), epi anrejistre l pou atis la ka wè kiyès ki pase
   useEffect(() => {
-    if (current) markSeen([current.id]);
-  }, [current]);
+    if (!current) return;
+    markSeen([current.id]);
+    void supabase.rpc("record_status_view", { p_status: current.id, p_session: viewerSession() });
+  }, [current, supabase]);
 
   // Tèks / foto: revèy 10 segonn. Videyo / odyo: swiv tan fichye a.
   useEffect(() => {
@@ -302,7 +332,32 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
               {toast && <p className="mb-2 text-center text-xs font-semibold text-emerald-300">{toast}</p>}
 
               {isOwner ? (
-                <p className="text-center text-xs text-white/60">Se stati ou. Wè like ak repons yo nan dashboard ou (📸 Stati 24 è).</p>
+                // Stati pa w: peze (oswa glise monte) pou wè kiyès ki gade l ak kiyès ki like li
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAudience(true);
+                    if (statuses) void loadStats(statuses.map((s) => s.id));
+                  }}
+                  onPointerDown={(e) => (swipeY.current = e.clientY)}
+                  onPointerUp={(e) => {
+                    if (swipeY.current !== null && swipeY.current - e.clientY > 30) setShowAudience(true);
+                    swipeY.current = null;
+                  }}
+                  className="group mx-auto flex flex-col items-center gap-1.5 text-white"
+                  aria-label="Wè kiyès ki gade stati a"
+                >
+                  <span className="text-lg leading-none text-white/80 transition group-hover:-translate-y-0.5 motion-safe:animate-bounce">⌃</span>
+                  <span className="flex items-center gap-3 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold ring-1 ring-white/15 backdrop-blur-md">
+                    <span className="flex items-center gap-1.5">
+                      👁 <span className="tabular-nums">{(stats[current.id]?.views ?? 0).toLocaleString("fr-HT")}</span>
+                    </span>
+                    <span className="h-4 w-px bg-white/25" />
+                    <span className="flex items-center gap-1.5">
+                      ❤️ <span className="tabular-nums">{(stats[current.id]?.likes ?? 0).toLocaleString("fr-HT")}</span>
+                    </span>
+                  </span>
+                </button>
               ) : userId === null ? (
                 <Link
                   href="/konekte"
@@ -365,6 +420,11 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
                 </>
               ) : null}
             </div>
+          )}
+
+          {/* Panèl: kiyès ki wè / like stati a (atis la sèlman) */}
+          {isOwner && showAudience && current && (
+            <StatusAudience supabase={supabase} statusId={current.id} stat={stats[current.id]} onClose={() => setShowAudience(false)} />
           )}
         </div>
       </div>
