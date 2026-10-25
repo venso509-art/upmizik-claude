@@ -29,7 +29,12 @@ const SAMPLES: Partial<Record<FxId, Layer[]>> = {
   kè: [{ file: "ke", repeat: 4, gap: 0.75 }],
 };
 const GIFT_SAMPLES: Record<string, Layer[]> = {
-  lyon: [{ file: "lyon", at: 1.0, vol: 1 }, { file: "lyon-growl", at: 1.55, vol: 0.9 }], // lè lyon an louvri bouch li sou ekran an
+  // Animasyon lyon an louvri bouch li a 0.35 s, epi ankò a 2.68 s (li repete chak 2.33 s): gwonde a tonbe la menm
+  lyon: [
+    { file: "lyon", at: 0.35, vol: 1.4 },
+    { file: "lyon-growl", at: 0.9, vol: 0.9 },
+    { file: "lyon", at: 2.68, vol: 1.3 },
+  ],
   default: [{ file: "fanfa", max: 3.5 }],
 };
 
@@ -49,10 +54,48 @@ function loadBuf(c: AudioContext, file: string) {
   return p;
 }
 
-// Chaje davans (atis la: tout FX yo; tout moun: son gwo kado yo)
+// Navigatè yo bloke son an jiskaske moun nan touche ekran an. Premye fwa moun nan touche NENPÒT kote
+// (bouton kado, chat, like...), nou debloke son an (iPhone: fòk yon ti son jwe pandan tap la).
+let unlockInstalled = false;
+function installUnlock() {
+  if (unlockInstalled || typeof window === "undefined") return;
+  unlockInstalled = true;
+  const EVENTS = ["pointerdown", "touchend", "click", "keydown"] as const;
+  const unlock = () => {
+    const c = ac();
+    if (!c) return;
+    const src = c.createBufferSource();
+    src.buffer = c.createBuffer(1, 1, 22050);
+    src.connect(c.destination);
+    src.start(0);
+    if (c.state === "running") for (const ev of EVENTS) window.removeEventListener(ev, unlock, true);
+  };
+  for (const ev of EVENTS) window.addEventListener(ev, unlock, true);
+}
+
+// Animasyon lyon k ap gwonde a (Google Noto Animated Emoji, CC BY 4.0), chaje yon sèl fwa
+let lionBlob: Promise<Blob | null> | null = null;
+function loadLion() {
+  lionBlob ??= fetch("/fx/lyon.webp")
+    .then((r) => (r.ok ? r.blob() : null))
+    .catch(() => {
+      lionBlob = null;
+      return null;
+    });
+  return lionBlob;
+}
+// Yon nouvo adrès chak fwa: konsa animasyon an rekòmanse depi kòmansman (bouch fèmen, epi gwonde)
+export async function lionImageUrl() {
+  const b = await loadLion();
+  return b ? URL.createObjectURL(b) : null;
+}
+
+// Chaje davans (atis la: tout FX yo; tout moun: son gwo kado yo + lyon an)
 export function preloadFx(kind: "host" | "gifts") {
+  installUnlock();
   const c = ac();
   if (!c) return;
+  if (kind === "gifts") setTimeout(() => void loadLion(), 4000);
   const layers = kind === "host" ? Object.values(SAMPLES).flat() : Object.values(GIFT_SAMPLES).flat();
   for (const l of layers) if (l) void loadBuf(c, l.file);
 }
@@ -342,11 +385,15 @@ export function playGiftSound(giftId: string) {
   const fallback = () => {
     const out = master(c, 0.8);
     const t = c.currentTime + 0.02;
-    if (giftId === "lyon") roar(c, out, t + 1.0); // menm moman lyon an louvri bouch li sou ekran an
+    if (giftId === "lyon") roar(c, out, t + 0.35); // menm moman lyon an louvri bouch li sou ekran an
     else fanfare(c, out, t);
   };
   void playLayers(c, GIFT_SAMPLES[giftId] ?? GIFT_SAMPLES.default, 0.95).then((ok) => {
     if (!ok) fallback();
-    else if (giftId === "lyon") kick(c, master(c, 0.8), c.currentTime + 1.0, 1); // kou tanbou grav anba gwonde a
+    else if (giftId === "lyon") {
+      // kou tanbou grav anba chak gwonde
+      kick(c, master(c, 0.8), c.currentTime + 0.35, 1);
+      kick(c, master(c, 0.8), c.currentTime + 2.68, 1);
+    }
   });
 }

@@ -11,7 +11,7 @@ import { shareLink } from "@/lib/share";
 import { openPortraitCamera, type PortraitCamera } from "@/lib/portraitCamera";
 import { CameraHelp } from "./CameraHelp";
 import { LiveDiagnostics } from "./LiveDiagnostics";
-import { FX, playFx, playGiftSound, preloadFx, unlockFx, type FxId } from "@/lib/liveFx";
+import { FX, lionImageUrl, playFx, playGiftSound, preloadFx, unlockFx, type FxId } from "@/lib/liveFx";
 import {
   HEARTBEAT_MS,
   LIKE_FLUSH_MS,
@@ -33,7 +33,7 @@ type FloatingHeart = { id: number; x: number; y: number; hue: number; rot: numbe
 const CAPTURE = { resolution: { width: 1920, height: 1080, frameRate: 30 } };
 type GiftAnim = { key: string; emoji: string; name: string; sender: string; quantity: number; big: boolean };
 // Gwo kado (250+ goud): animasyon plen ekran; lyon an antre epi l gwonde
-type PremiumAnim = { key: string; giftId: string; emoji: string; name: string; sender: string; quantity: number };
+type PremiumAnim = { key: string; giftId: string; emoji: string; name: string; sender: string; quantity: number; lionSrc?: string | null };
 const CONFETTI = Array.from({ length: 28 }, (_, i) => ({
   left: (i * 37) % 100,
   delay: (i % 7) * 0.28,
@@ -400,9 +400,22 @@ export function LiveRoom({
         setGiftAnims((cur) => [...cur.slice(-3), { key, emoji: type?.emoji ?? "🎁", name: type?.name ?? "Kado", sender: g.sender_name, quantity: g.quantity, big: g.credits >= 100 && !isPremium }]);
         setTimeout(() => setGiftAnims((cur) => cur.filter((a) => a.key !== key)), 4200);
         if (isPremium) {
-          setPremium({ key, giftId: g.gift_id, emoji: type?.emoji ?? "🎁", name: type?.name ?? "Kado", sender: g.sender_name, quantity: g.quantity });
-          playGiftSound(g.gift_id);
-          setTimeout(() => setPremium((cur) => (cur?.key === key ? null : cur)), 5000);
+          const base = { key, giftId: g.gift_id, emoji: type?.emoji ?? "🎁", name: type?.name ?? "Kado", sender: g.sender_name, quantity: g.quantity };
+          if (g.gift_id === "lyon") {
+            // Vrè lyon k ap gwonde: son an kòmanse lè imaj la parèt (onLoad), pou bouch la ak gwonde a ansanm
+            void lionImageUrl().then((lionSrc) => {
+              setPremium({ ...base, lionSrc });
+              if (!lionSrc) playGiftSound("lyon");
+              setTimeout(() => {
+                setPremium((cur) => (cur?.key === key ? null : cur));
+                if (lionSrc) URL.revokeObjectURL(lionSrc);
+              }, 5200);
+            });
+          } else {
+            setPremium(base);
+            playGiftSound(g.gift_id);
+            setTimeout(() => setPremium((cur) => (cur?.key === key ? null : cur)), 5000);
+          }
         }
         refreshCapacity();
       })
@@ -911,20 +924,37 @@ export function LiveRoom({
               }}
             />
             {premium.giftId === "lyon" &&
-              [1.1, 1.35, 1.6].map((d) => (
+              [0.35, 0.55, 0.75, 2.68, 2.88, 3.08].map((d) => (
                 <span
                   key={d}
                   className="absolute left-1/2 top-[40%] h-64 w-64 rounded-full border-4 border-amber-400/80 opacity-0 motion-safe:animate-roar-ring"
                   style={{ animationDelay: `${d}s` }}
                 />
               ))}
-            <div className={`absolute inset-x-0 top-[22%] flex justify-center ${premium.giftId === "lyon" ? "motion-safe:animate-screen-shake [animation-delay:1.1s]" : ""}`}>
-              <span
-                className={`block text-[10rem] leading-none drop-shadow-[0_0_45px_rgba(255,190,0,0.85)] ${premium.giftId === "lyon" ? "motion-safe:animate-lion-enter" : "motion-safe:animate-premium-gift"}`}
-              >
-                {premium.emoji}
-              </span>
-            </div>
+            {premium.giftId === "lyon" ? (
+              // Ekran an tranble chak fwa lyon an gwonde (0.35 s ak 2.68 s)
+              <div className="absolute inset-x-0 top-[14%] flex justify-center motion-safe:animate-screen-shake [animation-delay:0.4s]">
+                <div className="motion-safe:animate-screen-shake [animation-delay:2.7s]">
+                  <div className="motion-safe:animate-lion-enter">
+                    {premium.lionSrc ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={premium.lionSrc}
+                        alt="Lyon k ap gwonde"
+                        onLoad={() => playGiftSound("lyon")}
+                        className="h-72 w-72 drop-shadow-[0_0_50px_rgba(255,190,0,0.9)]"
+                      />
+                    ) : (
+                      <span className="block text-[10rem] leading-none drop-shadow-[0_0_45px_rgba(255,190,0,0.85)]">{premium.emoji}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="absolute inset-x-0 top-[22%] flex justify-center">
+                <span className="block text-[10rem] leading-none drop-shadow-[0_0_45px_rgba(255,190,0,0.85)] motion-safe:animate-premium-gift">{premium.emoji}</span>
+              </div>
+            )}
             {CONFETTI.map((c, i) => (
               <span
                 key={i}
@@ -1341,6 +1371,13 @@ export function LiveRoom({
                   </button>
                 ))}
               </div>
+              {/* Lisans animasyon lyon an (CC BY 4.0) mande yon ti kredi */}
+              <p className="mt-2 text-center text-[10px] text-white/35">
+                Animasyon lyon: Noto Emoji © Google,{" "}
+                <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" className="underline">
+                  CC BY 4.0
+                </a>
+              </p>
               {balance < (gifts[0]?.credits ?? 0) && (
                 <Link href="/kredi" className="btn-primary mt-4 block rounded-xl px-4 py-3 text-center">
                   🪙 Achte kredi pou voye kado
