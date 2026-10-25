@@ -10,6 +10,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { shareLink } from "@/lib/share";
 import { openPortraitCamera, type PortraitCamera } from "@/lib/portraitCamera";
 import { CameraHelp } from "./CameraHelp";
+import { LiveDiagnostics } from "./LiveDiagnostics";
 import { FX, playFx, playGiftSound, unlockFx, type FxId } from "@/lib/liveFx";
 import {
   HEARTBEAT_MS,
@@ -180,6 +181,7 @@ export function LiveRoom({
   const [connError, setConnError] = useState<string>();
   const [canPublish, setCanPublish] = useState(false);
   const [camErr, setCamErr] = useState<unknown>(null); // kamera/mikwo pa louvri (otorizasyon)
+  const [showDiag, setShowDiag] = useState(false); // 🔧 Tcheke
   const [needAudioTap, setNeedAudioTap] = useState(false);
   const [camOn, setCamOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
@@ -301,28 +303,52 @@ export function LiveRoom({
 
   // Louvri kamera + mikwo; si telefòn nan refize, nou montre etap pou bay otorizasyon an
   async function startMedia(room: Room) {
+    const lp = room.localParticipant;
+    let failed: unknown = null;
     try {
-      if (!room.localParticipant.getTrackPublication(Track.Source.Camera)) await publishCamera(room, facing);
-      await room.localParticipant.setMicrophoneEnabled(true);
+      const pub = lp.getTrackPublication(Track.Source.Camera);
+      if (!pub) await publishCamera(room, facing);
+      else if (pub.isMuted) await pub.unmute();
       setCamOn(true);
-      setMicOn(true);
-      setCamErr(null);
     } catch (e) {
-      setCamErr(e);
+      failed = e;
+      setCamOn(false);
     }
+    try {
+      await lp.setMicrophoneEnabled(true);
+    } catch (e) {
+      failed ??= e;
+    }
+    setMicOn(lp.isMicrophoneEnabled);
+    setCamErr(failed);
+    setVersion((v) => v + 1);
   }
 
   // Envite: lè atis la aksepte m (oswa retire m), rekonekte ak bon dwa yo
   const acceptedNow = !!me && onStage.some((g) => g.user_id === me.id);
-  const firstStageCheck = useRef(true);
+  const stageRetries = useRef(0);
   useEffect(() => {
-    if (firstStageCheck.current) {
-      firstStageCheck.current = false;
-      return;
-    }
-    if (!isHost && me) void connect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    stageRetries.current = 0;
   }, [acceptedNow]);
+  useEffect(() => {
+    if (isHost || !me || connState !== "connected" || acceptedNow === canPublish) return;
+    if (stageRetries.current >= 3) return;
+    stageRetries.current += 1;
+    const t = setTimeout(() => void connect(), stageRetries.current === 1 ? 0 : 2500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acceptedNow, canPublish, connState]);
+
+  // Pandan m ap tann (demann / envitasyon), tcheke sèn nan chak 4 segonn an plis Realtime (si yon chanjman pa rive)
+  const waitingStage = !isHost && !!myGuest && (myGuest.status !== "accepted" || !canPublish);
+  useEffect(() => {
+    if (!waitingStage) return;
+    const t = setInterval(async () => {
+      const { data } = await supabase.from("live_guests").select("*").eq("live_id", live.id);
+      if (data) setGuests(data as LiveGuest[]);
+    }, 4000);
+    return () => clearInterval(t);
+  }, [waitingStage, live.id, supabase]);
 
   const myId = me?.id;
   // ===== An dirèk: like, kado, chat, sèn nan, fen live la =====
@@ -452,8 +478,8 @@ export function LiveRoom({
   }
   async function openMyMic() {
     setMicAsk(false);
-    await roomRef.current?.localParticipant.setMicrophoneEnabled(true);
-    setMicOn(true);
+    const room = roomRef.current;
+    if (room) await startMedia(room);
   }
 
   // Fèt 🥳: "X bay 100 like!" sou ekran tout moun
@@ -546,8 +572,13 @@ export function LiveRoom({
   async function toggleMic() {
     const lp = roomRef.current?.localParticipant;
     if (!lp) return;
-    await lp.setMicrophoneEnabled(!micOn);
-    setMicOn(!micOn);
+    try {
+      await lp.setMicrophoneEnabled(!lp.isMicrophoneEnabled);
+    } catch (e) {
+      setCamErr(e); // otorizasyon bloke: montre etap yo
+    }
+    setMicOn(lp.isMicrophoneEnabled);
+    setVersion((v) => v + 1);
   }
   // Vire kamera a (devan/dèyè), toujou an potrè
   async function flipCam() {
@@ -595,7 +626,10 @@ export function LiveRoom({
 
   async function respondInvite(guestId: string, accept: boolean) {
     const { error } = await supabase.rpc("respond_live_invite", { p_guest: guestId, p_accept: accept });
-    if (error) flash(error.message);
+    if (error) return flash(error.message);
+    // Pa tann Realtime: mete sèn nan ajou touswit (sa lanse rekoneksyon ak dwa pou pale)
+    const { data } = await supabase.from("live_guests").select("*").eq("live_id", live.id);
+    if (data) setGuests(data as LiveGuest[]);
   }
 
   async function shareLive() {
@@ -768,6 +802,17 @@ export function LiveRoom({
           <span className={`flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-semibold ${glass}`}>
             <EyeIcon className="h-4 w-4" /> {formatCount(watching)}
           </span>
+          {(isHost || !!myGuest) && (
+            <button
+              type="button"
+              onClick={() => setShowDiag(true)}
+              className={`relative flex h-8 w-8 items-center justify-center rounded-full text-sm ${glass}`}
+              aria-label="Tcheke mikwo ak kamera"
+            >
+              🔧
+              {canPublish && (!micOn || !!camErr) && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500" />}
+            </button>
+          )}
           {isHost ? (
             <button type="button" onClick={() => void openMenu()} className={`relative flex h-8 w-8 items-center justify-center rounded-full ${glass}`} aria-label="Plis opsyon">
               <MoreIcon className="h-5 w-5" />
@@ -1049,6 +1094,34 @@ export function LiveRoom({
             <UsersIcon className="h-4 w-4" /> {onStage.length}/{capacity}
           </span>
         </form>
+
+        {/* Ou aksepte sou sèn nan men koneksyon an poko gen dwa pale: bouton pou monte kounye a */}
+        {!isHost && acceptedNow && !canPublish && connState === "connected" && (
+          <button
+            type="button"
+            onClick={() => void connect()}
+            className="absolute inset-x-6 top-[calc(env(safe-area-inset-top)+6.75rem)] z-40 rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-bold text-zinc-950 shadow-2xl"
+          >
+            🎤 Ou aksepte! Peze la a pou monte sou sèn nan
+          </button>
+        )}
+
+        {/* 🔧 Tcheke: otorizasyon, koneksyon, mikwo */}
+        {showDiag && (
+          <LiveDiagnostics
+            room={roomRef.current}
+            version={version}
+            connState={connState}
+            canPublish={canPublish}
+            isHost={isHost}
+            guestStatus={myGuest?.status}
+            onClose={() => setShowDiag(false)}
+            onReconnect={() => void connect()}
+            onStartMedia={async () => {
+              if (roomRef.current) await startMedia(roomRef.current);
+            }}
+          />
+        )}
 
         {/* Kamera/mikwo bloke: etap pou bay app la otorizasyon */}
         {canPublish && !!camErr && !ended && (
