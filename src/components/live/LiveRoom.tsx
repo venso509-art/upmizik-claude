@@ -11,7 +11,7 @@ import { shareLink } from "@/lib/share";
 import { openPortraitCamera, type PortraitCamera } from "@/lib/portraitCamera";
 import { CameraHelp } from "./CameraHelp";
 import { LiveDiagnostics } from "./LiveDiagnostics";
-import { FX, playFx, playGiftSound, unlockFx, type FxId } from "@/lib/liveFx";
+import { FX, playFx, playGiftSound, preloadFx, unlockFx, type FxId } from "@/lib/liveFx";
 import {
   HEARTBEAT_MS,
   LIKE_FLUSH_MS,
@@ -323,6 +323,12 @@ export function LiveRoom({
     setCamErr(failed);
     setVersion((v) => v + 1);
   }
+
+  // Chaje son yo davans: atis la (tout FX yo), tout moun (son gwo kado yo)
+  useEffect(() => {
+    preloadFx("gifts");
+    if (isHost) preloadFx("host");
+  }, [isHost]);
 
   // Envite: lè atis la aksepte m (oswa retire m), rekonekte ak bon dwa yo
   const acceptedNow = !!me && onStage.some((g) => g.user_id === me.id);

@@ -1,7 +1,8 @@
-// Efè son live la (FX), fabrike dirèkteman nan navigatè a ak Web Audio: pa gen fichye pou telechaje
-// (bon pou entènèt fèb). Atis la peze yon bouton; tout moun k ap gade a tande l.
+// Efè son live la (FX). Atis la peze yon bouton; tout moun k ap gade a tande l.
+// Son yo se VRÈ anrejistreman (public/fx, Mixkit: lisans gratis pou sit/app), chaje sèlman lè yo sèvi.
+// Klaksonn nan fabrike ak Web Audio; si yon fichye pa rive (entènèt), nou jwe vèsyon fabrike a.
 
-export type FxId = "mesi" | "bravo" | "klaxon" | "tanbou" | "badum" | "wow" | "fet" | "kè";
+export type FxId = "mesi" | "bravo" | "klaxon" | "tanbou" | "badum" | "wow" | "fet" | "kè" | "ri";
 
 export const FX: { id: FxId; emoji: string; label: string }[] = [
   { id: "mesi", emoji: "🙏", label: "Mèsi" },
@@ -10,9 +11,77 @@ export const FX: { id: FxId; emoji: string; label: string }[] = [
   { id: "tanbou", emoji: "🥁", label: "Tanbou" },
   { id: "fet", emoji: "🎉", label: "Fèt" },
   { id: "wow", emoji: "😮", label: "Wow" },
+  { id: "ri", emoji: "😂", label: "Ri" },
   { id: "badum", emoji: "🤣", label: "Ba-dum" },
   { id: "kè", emoji: "💓", label: "Kè" },
 ];
+
+// Fichye pou chak son: max = kantite segonn (fade-out), repeat = konbyen fwa (kè a)
+type Layer = { file: string; at?: number; max?: number; repeat?: number; gap?: number; vol?: number };
+const SAMPLES: Partial<Record<FxId, Layer[]>> = {
+  mesi: [{ file: "mesi", max: 3.5 }],
+  bravo: [{ file: "bravo", max: 5.5 }],
+  tanbou: [{ file: "tanbou", max: 5 }],
+  fet: [{ file: "fet-horn" }, { file: "fet", at: 0.15, max: 4.5 }],
+  wow: [{ file: "wow", max: 3 }],
+  ri: [{ file: "ri", max: 4 }],
+  badum: [{ file: "badum", max: 2.5 }],
+  kè: [{ file: "ke", repeat: 4, gap: 0.75 }],
+};
+const GIFT_SAMPLES: Record<string, Layer[]> = {
+  lyon: [{ file: "lyon", at: 1.0, vol: 1 }, { file: "lyon-growl", at: 1.55, vol: 0.9 }], // lè lyon an louvri bouch li sou ekran an
+  default: [{ file: "fanfa", max: 3.5 }],
+};
+
+const buffers = new Map<string, Promise<AudioBuffer | null>>();
+function loadBuf(c: AudioContext, file: string) {
+  let p = buffers.get(file);
+  if (!p) {
+    p = fetch(`/fx/${file}.mp3`)
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+      .then((b) => c.decodeAudioData(b))
+      .catch(() => {
+        buffers.delete(file); // eseye ankò pwochen fwa
+        return null;
+      });
+    buffers.set(file, p);
+  }
+  return p;
+}
+
+// Chaje davans (atis la: tout FX yo; tout moun: son gwo kado yo)
+export function preloadFx(kind: "host" | "gifts") {
+  const c = ac();
+  if (!c) return;
+  const layers = kind === "host" ? Object.values(SAMPLES).flat() : Object.values(GIFT_SAMPLES).flat();
+  for (const l of layers) if (l) void loadBuf(c, l.file);
+}
+
+async function playLayers(c: AudioContext, layers: Layer[], vol: number) {
+  const bufs = await Promise.all(layers.map((l) => loadBuf(c, l.file)));
+  if (bufs.some((b) => !b)) return false;
+  const out = master(c, vol);
+  const t = c.currentTime + 0.03;
+  layers.forEach((l, i) => {
+    const buf = bufs[i]!;
+    for (let r = 0; r < (l.repeat ?? 1); r++) {
+      const at = t + (l.at ?? 0) + r * (l.gap ?? 0);
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      const g = c.createGain();
+      g.gain.value = l.vol ?? 1;
+      const dur = Math.min(buf.duration, l.max ?? buf.duration);
+      if (dur < buf.duration) {
+        g.gain.setValueAtTime(l.vol ?? 1, at + Math.max(0, dur - 0.5));
+        g.gain.linearRampToValueAtTime(0.0001, at + dur);
+      }
+      src.connect(g).connect(out);
+      src.start(at);
+      src.stop(at + dur + 0.05);
+    }
+  });
+  return true;
+}
 
 let ctx: AudioContext | null = null;
 let noiseBuf: AudioBuffer | null = null;
@@ -201,6 +270,13 @@ function fanfare(c: AudioContext, out: AudioNode, t: number) {
 export function playFx(id: FxId) {
   const c = ac();
   if (!c) return;
+  const layers = SAMPLES[id];
+  if (!layers) return synthFx(c, id);
+  void playLayers(c, layers, 0.9).then((ok) => !ok && synthFx(c, id));
+}
+
+// Vèsyon fabrike yo (klaksonn nan, oswa si fichye a pa rive)
+function synthFx(c: AudioContext, id: FxId) {
   const out = master(c);
   const t = c.currentTime + 0.02;
   switch (id) {
@@ -253,6 +329,9 @@ export function playFx(id: FxId) {
         kick(c, out, t + i * 0.7 + 0.18, 0.55);
       }
       break;
+    case "ri":
+      applause(c, out, t, 1.5, 0.1);
+      break;
   }
 }
 
@@ -260,8 +339,14 @@ export function playFx(id: FxId) {
 export function playGiftSound(giftId: string) {
   const c = ac();
   if (!c) return;
-  const out = master(c, 0.8);
-  const t = c.currentTime + 0.02;
-  if (giftId === "lyon") roar(c, out, t + 1.0); // menm moman lyon an louvri bouch li sou ekran an
-  else fanfare(c, out, t);
+  const fallback = () => {
+    const out = master(c, 0.8);
+    const t = c.currentTime + 0.02;
+    if (giftId === "lyon") roar(c, out, t + 1.0); // menm moman lyon an louvri bouch li sou ekran an
+    else fanfare(c, out, t);
+  };
+  void playLayers(c, GIFT_SAMPLES[giftId] ?? GIFT_SAMPLES.default, 0.95).then((ok) => {
+    if (!ok) fallback();
+    else if (giftId === "lyon") kick(c, master(c, 0.8), c.currentTime + 1.0, 1); // kou tanbou grav anba gwonde a
+  });
 }
