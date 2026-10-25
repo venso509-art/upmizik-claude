@@ -147,6 +147,42 @@ const config: Config = {
           "0%": { opacity: "1", transform: "translateY(0) scale(0.6)" },
           "100%": { opacity: "0", transform: "translateY(-220px) scale(1.3)" },
         },
+        // Gwo kado (250+ goud): reyon limyè k ap vire, konfeti, lyon ki antre epi ki gwonde
+        "rays-spin": { from: { transform: "translate(-50%, -50%) rotate(0deg)" }, to: { transform: "translate(-50%, -50%) rotate(360deg)" } },
+        "premium-in": {
+          "0%": { opacity: "0" },
+          "8%, 85%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
+        "premium-gift": {
+          "0%": { opacity: "0", transform: "scale(0.1) translateY(120px)" },
+          "22%": { opacity: "1", transform: "scale(1.25) translateY(0)" },
+          "32%, 82%": { opacity: "1", transform: "scale(1) translateY(0)" },
+          "100%": { opacity: "0", transform: "scale(1.8) translateY(-80px)" },
+        },
+        "lion-enter": {
+          "0%": { opacity: "0", transform: "translateY(70%) scale(0.4)" },
+          "18%": { opacity: "1", transform: "translateY(0) scale(1)" },
+          "24%": { transform: "translateY(0) scale(1.35)" },
+          "28%": { transform: "translateY(0) scale(1.15) rotate(-4deg)" },
+          "32%": { transform: "translateY(0) scale(1.3) rotate(4deg)" },
+          "36%": { transform: "translateY(0) scale(1.2) rotate(-3deg)" },
+          "40%, 84%": { opacity: "1", transform: "translateY(0) scale(1.15) rotate(0deg)" },
+          "100%": { opacity: "0", transform: "translateY(-40%) scale(1.6)" },
+        },
+        "roar-ring": {
+          "0%": { opacity: "0.9", transform: "translate(-50%, -50%) scale(0.3)" },
+          "100%": { opacity: "0", transform: "translate(-50%, -50%) scale(2.6)" },
+        },
+        "screen-shake": {
+          "0%, 100%": { transform: "translate(0, 0)" },
+          "10%, 50%, 90%": { transform: "translate(-7px, 3px)" },
+          "30%, 70%": { transform: "translate(7px, -3px)" },
+        },
+        "confetti-fall": {
+          "0%": { opacity: "1", transform: "translateY(-10vh) rotate(0deg)" },
+          "100%": { opacity: "0", transform: "translateY(105vh) rotate(720deg)" },
+        },
         // Disk vinil lektè a k ap woule
         "vinyl-spin": { from: { transform: "rotate(0deg)" }, to: { transform: "rotate(360deg)" } },
         // Bwat "pa gen entènèt" la souke lè yon klik bloke
@@ -161,6 +197,13 @@ const config: Config = {
         "gift-big": "gift-big 2.6s cubic-bezier(0.22, 1, 0.36, 1) both",
         "heart-float": "heart-float 1.8s ease-out both",
         "heart-pop": "heart-pop 1.3s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "rays-spin": "rays-spin 6s linear infinite",
+        "premium-in": "premium-in 5s ease-out both",
+        "premium-gift": "premium-gift 5s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "lion-enter": "lion-enter 5s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "roar-ring": "roar-ring 1.2s ease-out both",
+        "screen-shake": "screen-shake 0.5s ease-in-out 3",
+        "confetti-fall": "confetti-fall 3.2s linear both",
         vinyl: "vinyl-spin 5s linear infinite",
         shake: "shake 0.4s ease-in-out",
         equalizer: "equalizer 1.2s ease-in-out infinite",

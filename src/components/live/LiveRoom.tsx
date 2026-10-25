@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { shareLink } from "@/lib/share";
 import { openPortraitCamera, type PortraitCamera } from "@/lib/portraitCamera";
+import { FX, playFx, playGiftSound, unlockFx, type FxId } from "@/lib/liveFx";
 import {
   HEARTBEAT_MS,
   LIKE_FLUSH_MS,
@@ -29,9 +30,32 @@ type FloatingHeart = { id: number; x: number; y: number; hue: number; rot: numbe
 // (4K pa itilize: li twò lou pou entènèt fanatik yo ak pou batri telefòn atis la)
 const CAPTURE = { resolution: { width: 1080, height: 1920, frameRate: 30 } };
 type GiftAnim = { key: string; emoji: string; name: string; sender: string; quantity: number; big: boolean };
+// Gwo kado (250+ goud): animasyon plen ekran; lyon an antre epi l gwonde
+type PremiumAnim = { key: string; giftId: string; emoji: string; name: string; sender: string; quantity: number };
+const CONFETTI = Array.from({ length: 28 }, (_, i) => ({
+  left: (i * 37) % 100,
+  delay: (i % 7) * 0.28,
+  color: ["#facc15", "#f43f5e", "#22c55e", "#38bdf8", "#e879f9"][i % 5],
+  size: 6 + (i % 3) * 3,
+}));
 
 // ===== Kare videyo yon moun sou sèn nan =====
-function VideoTile({ participant, version, mirror, label, big }: { participant: Participant; version: number; mirror: boolean; label?: string; big?: boolean }) {
+function VideoTile({
+  participant,
+  version,
+  mirror,
+  label,
+  big,
+  avatarUrl,
+}: {
+  participant: Participant;
+  version: number;
+  mirror: boolean;
+  label?: string;
+  big?: boolean;
+  avatarUrl?: string | null;
+}) {
+  const micOff = !participant.isMicrophoneEnabled;
   const videoRef = useRef<HTMLVideoElement>(null);
   const bgRef = useRef<HTMLVideoElement>(null); // kopi flou dèyè a (gwo ekran sèlman)
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -72,11 +96,36 @@ function VideoTile({ participant, version, mirror, label, big }: { participant: 
         muted={participant.isLocal}
         className={`relative h-full w-full object-cover ${mirror ? "-scale-x-100" : ""} ${hasVideo ? "" : "hidden"}`}
       />
+      {/* Kamera fèmen: foto pwofil moun nan */}
       {!hasVideo && (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-fuchsia-900/60 to-zinc-950 text-4xl text-white/70">🎤</div>
+        <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-fuchsia-900/60 to-zinc-950">
+          {avatarUrl ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={avatarUrl} alt="" className="absolute inset-0 h-full w-full scale-125 object-cover opacity-40 blur-xl" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={avatarUrl} alt="" className={`relative rounded-full object-cover ring-2 ring-white/40 ${big ? "h-28 w-28" : "h-14 w-14"}`} />
+            </>
+          ) : (
+            <span className={`relative flex items-center justify-center rounded-full bg-fuchsia-700 font-black text-white ${big ? "h-28 w-28 text-4xl" : "h-14 w-14 text-xl"}`}>
+              {(label ?? participant.name ?? "?").charAt(0).toUpperCase()}
+            </span>
+          )}
+        </div>
       )}
       <audio ref={audioRef} autoPlay />
-      {label && <span className="absolute bottom-2 left-2 max-w-[90%] truncate rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white">{label}</span>}
+      {label && (
+        <span className="absolute inset-x-1.5 bottom-1.5 flex items-center gap-1 rounded-full bg-black/60 py-0.5 pl-0.5 pr-2 text-[11px] font-semibold text-white backdrop-blur-sm">
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatarUrl} alt="" className="h-5 w-5 shrink-0 rounded-full object-cover" />
+          ) : (
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-fuchsia-700 text-[10px]">{label.charAt(0).toUpperCase()}</span>
+          )}
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+          {micOff && <MicOffIcon className="h-3.5 w-3.5 shrink-0 text-red-400" />}
+        </span>
+      )}
     </div>
   );
 }
@@ -133,6 +182,11 @@ export function LiveRoom({
   // UI
   const [hearts, setHearts] = useState<FloatingHeart[]>([]);
   const [giftAnims, setGiftAnims] = useState<GiftAnim[]>([]);
+  const [premium, setPremium] = useState<PremiumAnim | null>(null);
+  const [fxPop, setFxPop] = useState<{ key: number; emoji: string; label: string } | null>(null);
+  const [micAsk, setMicAsk] = useState(false); // atis la mande envite a ouvri mikwo li
+  const [avatars, setAvatars] = useState<Record<string, string | null>>({});
+  const lastFx = useRef(0);
   // Fèt 🥳 chak fwa yon moun rive 100, 200, 300... like
   const [parties, setParties] = useState<{ key: number; name: string; count: number; mine: boolean }[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -256,6 +310,7 @@ export function LiveRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acceptedNow]);
 
+  const myId = me?.id;
   // ===== An dirèk: like, kado, chat, sèn nan, fen live la =====
   useEffect(() => {
     const refreshCapacity = () => void supabase.rpc("live_capacity", { p_live: live.id }).then(({ data }) => typeof data === "number" && setCapacity(data));
@@ -272,6 +327,18 @@ export function LiveRoom({
         setLive((cur) => ({ ...cur, ...row, likes: Math.max(cur.likes, Number(row.likes)) }));
         if (row.status !== "live") setConnState("ended");
       })
+      .on("broadcast", { event: "fx" }, ({ payload }) => {
+        const fx = FX.find((f) => f.id === (payload as { id?: string })?.id);
+        if (fx) showFx(fx.id, false);
+      })
+      .on("broadcast", { event: "mic" }, ({ payload }) => {
+        const m = payload as { user?: string; action?: string };
+        if (!myId || m?.user !== myId) return;
+        if (m.action === "mute") {
+          void roomRef.current?.localParticipant.setMicrophoneEnabled(false).then(() => setMicOn(false));
+          flash("🔇 Atis la fèmen mikwo w");
+        } else if (m.action === "ask") setMicAsk(true);
+      })
       .on("broadcast", { event: "milestone" }, ({ payload }) => {
         const m = payload as { name?: string; count?: number };
         if (m?.name && m.count) celebrate(String(m.name).slice(0, 40), Number(m.count), false);
@@ -283,8 +350,14 @@ export function LiveRoom({
         const g = p.new as LiveGiftEvent;
         const type = giftById.get(g.gift_id);
         const key = g.id;
-        setGiftAnims((cur) => [...cur.slice(-3), { key, emoji: type?.emoji ?? "🎁", name: type?.name ?? "Kado", sender: g.sender_name, quantity: g.quantity, big: g.credits >= 100 }]);
+        const isPremium = g.credits >= 250 || g.gift_id === "lyon";
+        setGiftAnims((cur) => [...cur.slice(-3), { key, emoji: type?.emoji ?? "🎁", name: type?.name ?? "Kado", sender: g.sender_name, quantity: g.quantity, big: g.credits >= 100 && !isPremium }]);
         setTimeout(() => setGiftAnims((cur) => cur.filter((a) => a.key !== key)), 4200);
+        if (isPremium) {
+          setPremium({ key, giftId: g.gift_id, emoji: type?.emoji ?? "🎁", name: type?.name ?? "Kado", sender: g.sender_name, quantity: g.quantity });
+          playGiftSound(g.gift_id);
+          setTimeout(() => setPremium((cur) => (cur?.key === key ? null : cur)), 5000);
+        }
         refreshCapacity();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "live_guests", filter: `live_id=eq.${live.id}` }, (p) => {
@@ -297,7 +370,7 @@ export function LiveRoom({
       channelRef.current = null;
       void supabase.removeChannel(channel);
     };
-  }, [live.id, supabase, giftById]);
+  }, [live.id, supabase, giftById, flash, myId]);
 
   // Kapasite a chanje lè like yo pase 100
   const likesOver100 = live.likes >= 100;
@@ -338,6 +411,37 @@ export function LiveRoom({
     }
   }
 
+  // FX: son an jwe sou aparèy chak moun, ak yon ti etikèt sou ekran an
+  function showFx(id: FxId, mine: boolean) {
+    const now = Date.now();
+    if (!mine && now - lastFx.current < 300) return;
+    lastFx.current = now;
+    const fx = FX.find((f) => f.id === id);
+    if (!fx) return;
+    playFx(id);
+    const key = now + Math.random();
+    setFxPop({ key, emoji: fx.emoji, label: fx.label });
+    setTimeout(() => setFxPop((cur) => (cur?.key === key ? null : cur)), 1600);
+  }
+  const fxCooldown = useRef(0);
+  function sendFx(id: FxId) {
+    const now = Date.now();
+    if (now - fxCooldown.current < 350) return;
+    fxCooldown.current = now;
+    showFx(id, true);
+    void channelRef.current?.send({ type: "broadcast", event: "fx", payload: { id } });
+  }
+  // Atis la: fèmen mikwo yon envite, oswa mande l ouvri l
+  function guestMic(userId: string, action: "mute" | "ask") {
+    void channelRef.current?.send({ type: "broadcast", event: "mic", payload: { user: userId, action } });
+    flash(action === "mute" ? "🔇 Mikwo envite a fèmen" : "🎤 Ou mande envite a ouvri mikwo li");
+  }
+  async function openMyMic() {
+    setMicAsk(false);
+    await roomRef.current?.localParticipant.setMicrophoneEnabled(true);
+    setMicOn(true);
+  }
+
   // Fèt 🥳: "X bay 100 like!" sou ekran tout moun
   function celebrate(name: string, count: number, mine: boolean) {
     const key = Date.now() + Math.random();
@@ -367,6 +471,7 @@ export function LiveRoom({
   const lastTap = useRef(0);
   const comboUntil = useRef(0);
   function stageTap(e: React.PointerEvent<HTMLDivElement>) {
+    unlockFx();
     const now = Date.now();
     const rect = e.currentTarget.getBoundingClientRect();
     if (now < comboUntil.current || now - lastTap.current < 320) {
@@ -488,6 +593,24 @@ export function LiveRoom({
     if (res === "copied") flash("✓ Lyen live la kopye");
   }
 
+  // Foto pwofil envite yo (pou kare yo anlè a)
+  const stageIds = onStage.map((g) => g.user_id).sort().join(",");
+  useEffect(() => {
+    const ids = stageIds ? stageIds.split(",").filter((id) => !(id in avatars)) : [];
+    if (!ids.length) return;
+    void supabase
+      .from("profiles")
+      .select("id, avatar_url")
+      .in("id", ids)
+      .then(({ data }) => {
+        const next: Record<string, string | null> = {};
+        for (const id of ids) next[id] = null;
+        for (const r of (data ?? []) as { id: string; avatar_url: string | null }[]) next[r.id] = r.avatar_url;
+        setAvatars((cur) => ({ ...cur, ...next }));
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stageIds, supabase]);
+
   // Moun ki sou sèn nan: atis la + envite aksepte yo
   const room = roomRef.current;
   const allParticipants: Participant[] = room ? [room.localParticipant, ...Array.from(room.remoteParticipants.values())] : [];
@@ -496,6 +619,7 @@ export function LiveRoom({
     .map((g) => ({ g, p: allParticipants.find((p) => p.identity === g.user_id) }))
     .filter((x): x is { g: LiveGuest; p: Participant } => !!x.p);
   const watching = Math.max(0, (room?.numParticipants ?? 1) - 1);
+  const iAmGuest = canPublish && !isHost; // envite ki sou sèn nan
   const glass = "bg-black/35 backdrop-blur-md ring-1 ring-white/15";
 
   // Bouton kolòn adwat la (ikòn + etikèt anba l, tankou TikTok)
@@ -565,7 +689,18 @@ export function LiveRoom({
           <div className="absolute right-3 top-[calc(env(safe-area-inset-top)+5.5rem)] z-20 flex w-28 flex-col gap-2">
             {guestPs.map(({ g, p }) => (
               <div key={g.id} className="relative aspect-[3/4] overflow-hidden rounded-2xl shadow-xl">
-                <VideoTile participant={p} version={version} mirror={p.isLocal && facing === "user"} label={g.guest_name} />
+                <VideoTile participant={p} version={version} mirror={p.isLocal && facing === "user"} label={g.guest_name} avatarUrl={avatars[g.user_id]} />
+                {/* Atis la: fèmen mikwo envite a, oswa mande l ouvri l */}
+                {isHost && (
+                  <button
+                    type="button"
+                    onClick={() => guestMic(g.user_id, p.isMicrophoneEnabled ? "mute" : "ask")}
+                    className={`absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full ${p.isMicrophoneEnabled ? "bg-black/60" : "bg-red-600"}`}
+                    aria-label={p.isMicrophoneEnabled ? "Fèmen mikwo envite a" : "Mande envite a ouvri mikwo li"}
+                  >
+                    {p.isMicrophoneEnabled ? <MicIcon className="h-3.5 w-3.5" /> : <MicOffIcon className="h-3.5 w-3.5" />}
+                  </button>
+                )}
                 {(isHost || g.user_id === me?.id) && (
                   <button
                     type="button"
@@ -652,7 +787,10 @@ export function LiveRoom({
         {needAudioTap && (
           <button
             type="button"
-            onClick={() => void roomRef.current?.startAudio().then(() => setNeedAudioTap(false))}
+            onClick={() => {
+              unlockFx();
+              void roomRef.current?.startAudio().then(() => setNeedAudioTap(false));
+            }}
             className="absolute left-1/2 top-1/3 z-30 -translate-x-1/2 rounded-full bg-white px-5 py-3 text-sm font-bold text-zinc-950 shadow-xl"
           >
             🔊 Tape pou tande live la
@@ -696,6 +834,50 @@ export function LiveRoom({
             </div>
           ))}
 
+        {/* ===== GWO KADO (250+ goud): plen ekran; lyon an antre epi l gwonde ===== */}
+        {premium && (
+          <div key={premium.key} className={`pointer-events-none absolute inset-0 z-[45] overflow-hidden motion-safe:animate-premium-in ${premium.giftId === "lyon" ? "bg-black/55" : "bg-black/35"}`}>
+            <div
+              className="absolute left-1/2 top-[40%] h-[150vw] max-h-[850px] w-[150vw] max-w-[850px] rounded-full opacity-70 motion-safe:animate-rays-spin"
+              style={{
+                background: "repeating-conic-gradient(from 0deg, rgba(255,200,0,0.38) 0deg 9deg, transparent 9deg 24deg)",
+                WebkitMaskImage: "radial-gradient(circle, black 15%, transparent 62%)",
+                maskImage: "radial-gradient(circle, black 15%, transparent 62%)",
+              }}
+            />
+            {premium.giftId === "lyon" &&
+              [1.1, 1.35, 1.6].map((d) => (
+                <span
+                  key={d}
+                  className="absolute left-1/2 top-[40%] h-64 w-64 rounded-full border-4 border-amber-400/80 opacity-0 motion-safe:animate-roar-ring"
+                  style={{ animationDelay: `${d}s` }}
+                />
+              ))}
+            <div className={`absolute inset-x-0 top-[22%] flex justify-center ${premium.giftId === "lyon" ? "motion-safe:animate-screen-shake [animation-delay:1.1s]" : ""}`}>
+              <span
+                className={`block text-[10rem] leading-none drop-shadow-[0_0_45px_rgba(255,190,0,0.85)] ${premium.giftId === "lyon" ? "motion-safe:animate-lion-enter" : "motion-safe:animate-premium-gift"}`}
+              >
+                {premium.emoji}
+              </span>
+            </div>
+            {CONFETTI.map((c, i) => (
+              <span
+                key={i}
+                className="absolute top-0 rounded-sm opacity-0 motion-safe:animate-confetti-fall"
+                style={{ left: `${c.left}%`, width: c.size, height: c.size * 1.6, background: c.color, animationDelay: `${0.6 + c.delay}s` }}
+              />
+            ))}
+            <div className="absolute inset-x-4 top-[60%] flex justify-center">
+              <span className="rounded-3xl bg-gradient-to-r from-amber-400 via-rose-500 to-fuchsia-600 px-6 py-3 text-center shadow-2xl shadow-amber-500/30 motion-safe:animate-fade-up [animation-delay:0.6s]">
+                <span className="block text-lg font-black">{premium.sender}</span>
+                <span className="text-sm font-bold text-white/95">
+                  {premium.giftId === "lyon" ? "🦁 voye yon LYON! Rrrraaah!" : `voye ${premium.name}${premium.quantity > 1 ? ` x${premium.quantity}` : ""}!`}
+                </span>
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Kè bouton like la k ap monte */}
         <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom)+15rem)] right-6 z-30">
           {hearts
@@ -708,7 +890,11 @@ export function LiveRoom({
         </div>
 
         {/* ===== CHAT ===== */}
-        <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] left-3 z-20 max-h-[30vh] w-[70%] space-y-1.5 overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent,black_22%)] [scrollbar-width:none]">
+        <div
+          className={`absolute left-3 z-20 max-h-[30vh] w-[70%] space-y-1.5 overflow-y-auto [mask-image:linear-gradient(to_bottom,transparent,black_22%)] [scrollbar-width:none] ${
+            isHost ? "bottom-[calc(env(safe-area-inset-bottom)+9rem)]" : "bottom-[calc(env(safe-area-inset-bottom)+4.5rem)]"
+          }`}
+        >
           {messages.slice(-30).map((m) => (
             <p key={m.id} className="w-fit max-w-full break-words rounded-2xl bg-black/30 px-3 py-1.5 text-[13px] leading-snug backdrop-blur-sm">
               <span className="font-bold text-citron-300">{m.sender_name}</span> <span className="text-white/95">{m.body}</span>
@@ -717,7 +903,7 @@ export function LiveRoom({
         </div>
 
         {/* ===== KOLÒN ADWAT (fanatik yo) ===== */}
-        {!isHost && (
+        {!isHost && !iAmGuest && (
           <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-3 z-20 flex flex-col items-center gap-4">
             <RailButton onClick={tapLike} label={formatCount(live.likes)} ariaLabel="Like">
               <HeartIcon className="h-7 w-7 text-rose-500" />
@@ -737,9 +923,78 @@ export function LiveRoom({
           </div>
         )}
 
+        {/* ===== KONTWÒL ENVITE A (sou sèn nan): mikwo, kamera, vire, desann ===== */}
+        {iAmGuest && (
+          <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] right-3 z-20 flex flex-col items-center gap-3">
+            <HostButton onClick={() => void toggleMic()} label={micOn ? "Mikwo" : "Bèbè"} active={micOn}>
+              {micOn ? <MicIcon className="h-6 w-6" /> : <MicOffIcon className="h-6 w-6" />}
+            </HostButton>
+            <HostButton onClick={() => void toggleCam()} label={camOn ? "Kamera" : "Fèmen"} active={camOn}>
+              {camOn ? <CamIcon className="h-6 w-6" /> : <CamOffIcon className="h-6 w-6" />}
+            </HostButton>
+            <HostButton onClick={() => void flipCam()} label="Vire" active>
+              <FlipIcon className="h-6 w-6" />
+            </HostButton>
+            <RailButton onClick={() => setShowGifts(true)} label="Kado" ariaLabel="Voye yon kado" accent="bg-gradient-to-br from-fuchsia-500 via-rose-500 to-amber-400 shadow-lg shadow-fuchsia-500/40">
+              <GiftIcon className="h-6 w-6" />
+            </RailButton>
+            {myGuest && (
+              <button type="button" onClick={() => void leaveStage(myGuest.id)} className="flex w-16 flex-col items-center gap-1" aria-label="Desann sèn nan">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 shadow-lg shadow-red-600/40 transition active:scale-90">
+                  <CloseIcon className="h-6 w-6" />
+                </span>
+                <span className="text-[11px] font-semibold text-white/85">Desann</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ===== ATIS LA MANDE M OUVRI MIKWO M ===== */}
+        {iAmGuest && micAsk && !micOn && (
+          <div className="absolute inset-x-3 top-[calc(env(safe-area-inset-top)+6.75rem)] z-40 flex items-center gap-3 rounded-2xl bg-zinc-900/95 p-3 shadow-2xl ring-1 ring-emerald-500/40 backdrop-blur motion-safe:animate-fade-up">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">
+              <MicIcon className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1 text-sm font-bold">{artist.name} mande w ouvri mikwo w</span>
+            <button type="button" onClick={() => setMicAsk(false)} className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
+              Pita
+            </button>
+            <button type="button" onClick={() => void openMyMic()} className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-bold text-zinc-950">
+              Ouvri
+            </button>
+          </div>
+        )}
+
+        {/* ===== EFÈ SON (FX) ATIS LA: peze pou tout moun tande ===== */}
+        {isHost && !ended && (
+          <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4rem)] z-20 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]">
+            {FX.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => sendFx(f.id)}
+                className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl transition active:scale-90 active:bg-white/25 ${glass}`}
+                aria-label={`Efè son: ${f.label}`}
+              >
+                <span className="text-xl leading-none">{f.emoji}</span>
+                <span className="mt-0.5 text-[10px] font-semibold text-white/85">{f.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Etikèt FX la (tout moun wè l) */}
+        {fxPop && (
+          <div key={fxPop.key} className="pointer-events-none absolute inset-x-0 top-[22%] z-30 flex justify-center">
+            <span className="flex items-center gap-2 rounded-full bg-black/55 px-5 py-2 text-lg font-black shadow-xl backdrop-blur motion-safe:animate-gift-big">
+              <span className="text-3xl">{fxPop.emoji}</span> {fxPop.label}!
+            </span>
+          </div>
+        )}
+
         {/* ===== KONTWÒL ATIS LA ===== */}
         {isHost && (
-          <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] right-3 z-20 flex flex-col items-center gap-3">
+          <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+9rem)] right-3 z-20 flex flex-col items-center gap-3">
             {canPublish && (
               <>
                 <HostButton onClick={() => void toggleMic()} label={micOn ? "Mikwo" : "Bèbè"} active={micOn}>
