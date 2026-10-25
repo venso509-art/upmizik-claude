@@ -64,7 +64,7 @@ export function StartLiveForm() {
           </span>
         ))}
       </div>
-      {!!camError && <CameraHelp error={camError} onRetry={() => void openCamera()} />}
+      {!!camError && <CameraHelp error={camError} onClose={() => setCamError(null)} onRetry={() => void openCamera()} />}
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value.slice(0, 100))}

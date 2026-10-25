@@ -1132,7 +1132,7 @@ export function LiveRoom({
         {/* Kamera/mikwo bloke: etap pou bay app la otorizasyon */}
         {canPublish && !!camErr && !ended && (
           <div className="absolute inset-x-3 top-[calc(env(safe-area-inset-top)+5rem)] z-50 max-h-[70vh] overflow-y-auto">
-            <CameraHelp compact error={camErr} onRetry={() => roomRef.current && void startMedia(roomRef.current)} />
+            <CameraHelp compact error={camErr} onClose={() => setCamErr(null)} onRetry={() => roomRef.current && void startMedia(roomRef.current)} />
           </div>
         )}
 

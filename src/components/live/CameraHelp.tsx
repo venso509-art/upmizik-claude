@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Lè kamera a / mikwo a pa louvri: eksplike poukisa, ak etap egzak pou telefòn moun nan
 // (app enstale a pa gen ba adrès ak 🔒, kidonk etap yo diferan)
@@ -59,13 +59,60 @@ const STEPS: Record<Platform, string[]> = {
   ],
 };
 
-export function CameraHelp({ error, onRetry, compact }: { error: unknown; onRetry: () => void; compact?: boolean }) {
+type Perm = "granted" | "denied" | "prompt" | "unknown";
+
+export function CameraHelp({ error, onRetry, onClose, compact }: { error: unknown; onRetry: () => void; onClose?: () => void; compact?: boolean }) {
   const [plat, setPlat] = useState<Platform>("desktop");
+  const [perms, setPerms] = useState<{ cam: Perm; mic: Perm }>({ cam: "unknown", mic: "unknown" });
   useEffect(() => setPlat(platform()), []);
-  const kind = cameraErrorKind(error);
+  const retryRef = useRef(onRetry);
+  retryRef.current = onRetry;
+  const wasOk = useRef(false);
+
+  // Swiv otorizasyon yo: depi moun nan bay yo (nan paramèt telefòn nan), nou eseye ankò poukont nou
+  useEffect(() => {
+    let alive = true;
+    const statuses: PermissionStatus[] = [];
+    const read = () => {
+      if (!alive) return;
+      const [c, m] = statuses;
+      const next = { cam: (c?.state ?? "unknown") as Perm, mic: (m?.state ?? "unknown") as Perm };
+      setPerms(next);
+      const nowOk = next.cam === "granted" && next.mic === "granted";
+      if (nowOk && !wasOk.current) retryRef.current();
+      wasOk.current = nowOk;
+    };
+    void (async () => {
+      try {
+        statuses.push(await navigator.permissions.query({ name: "camera" as PermissionName }));
+        statuses.push(await navigator.permissions.query({ name: "microphone" as PermissionName }));
+        statuses.forEach((st) => (st.onchange = read));
+        read();
+      } catch {
+        // Safari/iPhone pa toujou di: nou kite moun nan peze « Eseye ankò »
+      }
+    })();
+    // Lè moun nan tounen soti nan paramèt telefòn nan
+    const onVisible = () => document.visibilityState === "visible" && read();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      statuses.forEach((st) => (st.onchange = null));
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
+  const allowed = perms.cam === "granted" && perms.mic === "granted";
+  // Otorizasyon yo deja bon: pa montre etap paramèt yo (se yon lòt pwoblèm)
+  const raw = cameraErrorKind(error);
+  const kind = allowed && (raw === "denied" || raw === "other") ? "other" : raw;
 
   const title =
-    kind === "busy"
+    kind === "other"
+      ? allowed
+        ? "Kamera a pa louvri (otorizasyon yo bon ✓)"
+        : "Kamera a oswa mikwo a pa louvri"
+      : kind === "busy"
       ? "Yon lòt app ap itilize kamera a"
       : kind === "missing"
         ? "Nou pa jwenn kamera oswa mikwo"
@@ -74,11 +121,23 @@ export function CameraHelp({ error, onRetry, compact }: { error: unknown; onRetr
           : "Bay UpMizik otorizasyon pou kamera ak mikwo";
 
   return (
-    <div className={`w-full rounded-2xl bg-zinc-900/95 text-left ring-1 ring-white/10 ${compact ? "p-3" : "p-4"}`}>
-      <p className="flex items-center gap-2 font-bold text-white">
+    <div className={`relative w-full rounded-2xl bg-zinc-900/95 text-left ring-1 ring-white/10 ${compact ? "p-3" : "p-4"}`}>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20"
+          aria-label="Fèmen"
+        >
+          ✕
+        </button>
+      )}
+      <p className={`flex items-center gap-2 font-bold text-white ${onClose ? "pr-9" : ""}`}>
         <span className="text-xl">📷</span> {title}
       </p>
-      {kind === "busy" ? (
+      {kind === "other" && allowed ? (
+        <p className="mt-2 text-sm text-zinc-300">Fèmen lòt app ki ka ap itilize kamera a, epi peze « Eseye ankò ». Si sa pa mache, fèmen UpMizik nèt epi louvri l ankò.</p>
+      ) : kind === "busy" ? (
         <p className="mt-2 text-sm text-zinc-300">Fèmen WhatsApp, kamera telefòn nan oswa nenpòt lòt app ki ka ap itilize kamera a, epi eseye ankò.</p>
       ) : kind === "missing" ? (
         <p className="mt-2 text-sm text-zinc-300">Verifye aparèy la gen yon kamera ak yon mikwo ki mache.</p>
