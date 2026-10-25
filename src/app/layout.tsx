@@ -15,6 +15,7 @@ import { getSettings } from "@/lib/settings-server";
 import { PlayerProvider } from "@/components/player/PlayerProvider";
 import { PlayerBar } from "@/components/player/PlayerBar";
 import { ServiceWorkerRegister } from "@/components/offline/ServiceWorkerRegister";
+import { AmbientBackground } from "@/components/AmbientBackground";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -75,7 +76,9 @@ export default async function RootLayout({
         <SettingsProvider settings={settings}>
           <PlayerProvider>
             {/* Anvlòp kontni an: anpeche paj la glise sou kote, SAN touche ba fixed yo anba a */}
-            <div className="up-page">
+            <div className="up-page relative isolate">
+              {/* Fon premium (degradasyon + limyè) ki kouvri tout longè paj la */}
+              <AmbientBackground />
               <Header />
               <main>{children}</main>
               <Footer />

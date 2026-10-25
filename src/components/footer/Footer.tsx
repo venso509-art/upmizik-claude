@@ -31,7 +31,7 @@ export async function Footer() {
 
   return (
     // pb-24: pou ba lektè a (fiks anba ekran an) pa kouvri dènye liy lan; pb-44 sou telefòn pou ba navigasyon an tou
-    <footer className="mt-12 border-t border-zinc-800 bg-zinc-950 pb-44 md:pb-24">
+    <footer className="mt-12 border-t border-white/10 bg-zinc-950/50 pb-44 backdrop-blur-sm md:pb-24">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.6fr]">
         {/* Mak la + rezo sosyal */}
         <div>

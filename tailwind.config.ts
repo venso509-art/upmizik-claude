@@ -183,6 +183,13 @@ const config: Config = {
           "0%": { opacity: "1", transform: "translateY(-10vh) rotate(0deg)" },
           "100%": { opacity: "0", transform: "translateY(105vh) rotate(720deg)" },
         },
+        // Fon paj yo: limyè ki flote dousman
+        // 3 pwen chemen (pa sèlman ale-vini): boul limyè a fè yon ti sèk dous, li grandi epi l retresi
+        "blob-drift": {
+          "0%, 100%": { transform: "translate3d(0, 0, 0) scale(1)" },
+          "33%": { transform: "translate3d(var(--dx, 12%), calc(var(--dy, 10%) * -1), 0) scale(1.15)" },
+          "66%": { transform: "translate3d(calc(var(--dx, 12%) * -0.7), var(--dy, 10%), 0) scale(0.92)" },
+        },
         // Disk vinil lektè a k ap woule
         "vinyl-spin": { from: { transform: "rotate(0deg)" }, to: { transform: "rotate(360deg)" } },
         // Bwat "pa gen entènèt" la souke lè yon klik bloke
@@ -204,6 +211,7 @@ const config: Config = {
         "roar-ring": "roar-ring 1.2s ease-out both",
         "screen-shake": "screen-shake 0.5s ease-in-out 3",
         "confetti-fall": "confetti-fall 3.2s linear both",
+        "blob-drift": "blob-drift 22s ease-in-out infinite",
         vinyl: "vinyl-spin 5s linear infinite",
         shake: "shake 0.4s ease-in-out",
         equalizer: "equalizer 1.2s ease-in-out infinite",
