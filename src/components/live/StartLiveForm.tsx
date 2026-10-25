@@ -1,30 +1,39 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { CameraHelp } from "./CameraHelp";
 
 // Atis Pro a prepare live li: tcheke kamera a, mete yon tit, epi kòmanse
 export function StartLiveForm() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [title, setTitle] = useState("");
-  const [camError, setCamError] = useState<string>();
+  const [camError, setCamError] = useState<unknown>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [granted, setGranted] = useState({ cam: false, mic: false });
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
-  // Apèsi kamera a (navigatè a mande pèmisyon an isit la, anvan live la kòmanse)
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-    navigator.mediaDevices
-      ?.getUserMedia({ video: { facingMode: "user" }, audio: true })
-      .then((s) => {
-        stream = s;
-        if (videoRef.current) videoRef.current.srcObject = s;
-      })
-      .catch(() => setCamError("Navigatè a pa ka louvri kamera a oswa mikwo a. Bay sit la pèmisyon (ikòn 🔒 bò kote adrès la)."));
-    return () => stream?.getTracks().forEach((t) => t.stop());
+  // Apèsi kamera a: telefòn nan mande otorizasyon kamera + mikwo isit la, anvan live la kòmanse
+  const openCamera = useCallback(async () => {
+    setCamError(null);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) throw Object.assign(new Error("no media"), { name: "NotFoundError" });
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: true });
+      streamRef.current = s;
+      setGranted({ cam: s.getVideoTracks().length > 0, mic: s.getAudioTracks().length > 0 });
+      if (videoRef.current) videoRef.current.srcObject = s;
+    } catch (e) {
+      setCamError(e);
+    }
   }, []);
+  useEffect(() => {
+    void openCamera();
+    return () => streamRef.current?.getTracks().forEach((t) => t.stop());
+  }, [openCamera]);
 
   async function start() {
     setBusy(true);
@@ -40,10 +49,22 @@ export function StartLiveForm() {
   return (
     <div className="space-y-5">
       <div className="relative mx-auto aspect-[9/16] w-full max-w-[16rem] overflow-hidden rounded-3xl bg-zinc-900">
-        <video ref={videoRef} autoPlay muted playsInline className="h-full w-full -scale-x-100 object-cover" />
-        {camError && <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-red-300">{camError}</p>}
+        {/* object-contain: ou wè tout sa kamera a wè, san zoom */}
+        <video ref={videoRef} autoPlay muted playsInline className="h-full w-full -scale-x-100 object-contain" />
         <span className="absolute left-3 top-3 rounded-md bg-black/50 px-2 py-0.5 text-xs font-bold text-white">APÈSI</span>
       </div>
+      {/* Otorizasyon app la: kamera + mikwo */}
+      <div className="flex justify-center gap-2 text-xs">
+        {[
+          { ok: granted.cam, label: "📷 Kamera" },
+          { ok: granted.mic, label: "🎤 Mikwo" },
+        ].map((x) => (
+          <span key={x.label} className={`rounded-full px-3 py-1 font-semibold ${x.ok ? "bg-emerald-500/15 text-emerald-300" : "bg-zinc-800 text-zinc-400"}`}>
+            {x.label} {x.ok ? "✓ aktive" : "· poko aktive"}
+          </span>
+        ))}
+      </div>
+      {!!camError && <CameraHelp error={camError} onRetry={() => void openCamera()} />}
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value.slice(0, 100))}

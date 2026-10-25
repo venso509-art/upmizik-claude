@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { shareLink } from "@/lib/share";
 import { openPortraitCamera, type PortraitCamera } from "@/lib/portraitCamera";
+import { CameraHelp } from "./CameraHelp";
 import { FX, playFx, playGiftSound, unlockFx, type FxId } from "@/lib/liveFx";
 import {
   HEARTBEAT_MS,
@@ -26,9 +27,9 @@ type Artist = { id: string; name: string; avatarUrl: string | null; verified: bo
 // x/y: kote dwèt la touche ekran an (tap doub); side: kè ki monte bò bouton like la
 type FloatingHeart = { id: number; x: number; y: number; hue: number; rot: number; side: boolean };
 
-// Kamera a: Full HD vètikal (1080×1920) a 30 imaj pa segonn. Telefòn ki pa ka fè 1080p ap bay pi bon sa yo kapab.
+// Kamera a: Full HD (1920×1080 nan sans sansè a = 1080×1920 lè telefòn nan kanpe) a 30 imaj pa segonn.
 // (4K pa itilize: li twò lou pou entènèt fanatik yo ak pou batri telefòn atis la)
-const CAPTURE = { resolution: { width: 1080, height: 1920, frameRate: 30 } };
+const CAPTURE = { resolution: { width: 1920, height: 1080, frameRate: 30 } };
 type GiftAnim = { key: string; emoji: string; name: string; sender: string; quantity: number; big: boolean };
 // Gwo kado (250+ goud): animasyon plen ekran; lyon an antre epi l gwonde
 type PremiumAnim = { key: string; giftId: string; emoji: string; name: string; sender: string; quantity: number };
@@ -56,6 +57,7 @@ function VideoTile({
   avatarUrl?: string | null;
 }) {
   const micOff = !participant.isMicrophoneEnabled;
+  const selfView = !!big && participant.isLocal;
   const videoRef = useRef<HTMLVideoElement>(null);
   const bgRef = useRef<HTMLVideoElement>(null); // kopi flou dèyè a (gwo ekran sèlman)
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -73,7 +75,7 @@ function VideoTile({
       track.detach(el);
       if (bg) track.detach(bg);
     };
-  }, [participant, version]);
+  }, [participant, version, hasVideo]);
 
   useEffect(() => {
     if (participant.isLocal) return; // pa tande pwòp vwa w
@@ -88,13 +90,16 @@ function VideoTile({
 
   return (
     <div className={`relative h-full w-full overflow-hidden bg-zinc-900 ${big ? "" : "rounded-2xl ring-2 ring-white/20"}`}>
-      {/* Gwo ekran: tout imaj la parèt (pa koupe, pa zoume), ak yon kopi flou dèyè l pou ranpli ekran an */}
+      {/* Atis la wè PWÒP imaj li an antye (san zoom), ak yon kopi flou dèyè l; fanatik yo wè l plen ekran */}
+      {selfView && hasVideo && (
+        <video ref={bgRef} autoPlay playsInline muted className={`absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl`} />
+      )}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted={participant.isLocal}
-        className={`relative h-full w-full object-cover ${mirror ? "-scale-x-100" : ""} ${hasVideo ? "" : "hidden"}`}
+        className={`relative h-full w-full ${selfView ? "object-contain" : "object-cover"} ${mirror ? "-scale-x-100" : ""} ${hasVideo ? "" : "hidden"}`}
       />
       {/* Kamera fèmen: foto pwofil moun nan */}
       {!hasVideo && (
@@ -174,6 +179,7 @@ export function LiveRoom({
   const [connState, setConnState] = useState<"connecting" | "connected" | "error" | "ended">("connecting");
   const [connError, setConnError] = useState<string>();
   const [canPublish, setCanPublish] = useState(false);
+  const [camErr, setCamErr] = useState<unknown>(null); // kamera/mikwo pa louvri (otorizasyon)
   const [needAudioTap, setNeedAudioTap] = useState(false);
   const [camOn, setCamOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
@@ -262,12 +268,7 @@ export function LiveRoom({
 
       await room.connect(data.url, data.token);
       setCanPublish(!!data.canPublish);
-      if (data.canPublish) {
-        await publishCamera(room, facing);
-        await room.localParticipant.setMicrophoneEnabled(true);
-        setCamOn(true);
-        setMicOn(true);
-      }
+      if (data.canPublish) await startMedia(room);
       setNeedAudioTap(!room.canPlaybackAudio);
       setConnState("connected");
       bump();
@@ -297,6 +298,19 @@ export function LiveRoom({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Louvri kamera + mikwo; si telefòn nan refize, nou montre etap pou bay otorizasyon an
+  async function startMedia(room: Room) {
+    try {
+      if (!room.localParticipant.getTrackPublication(Track.Source.Camera)) await publishCamera(room, facing);
+      await room.localParticipant.setMicrophoneEnabled(true);
+      setCamOn(true);
+      setMicOn(true);
+      setCamErr(null);
+    } catch (e) {
+      setCamErr(e);
+    }
+  }
 
   // Envite: lè atis la aksepte m (oswa retire m), rekonekte ak bon dwa yo
   const acceptedNow = !!me && onStage.some((g) => g.user_id === me.id);
@@ -1035,6 +1049,13 @@ export function LiveRoom({
             <UsersIcon className="h-4 w-4" /> {onStage.length}/{capacity}
           </span>
         </form>
+
+        {/* Kamera/mikwo bloke: etap pou bay app la otorizasyon */}
+        {canPublish && !!camErr && !ended && (
+          <div className="absolute inset-x-3 top-[calc(env(safe-area-inset-top)+5rem)] z-50 max-h-[70vh] overflow-y-auto">
+            <CameraHelp compact error={camErr} onRetry={() => roomRef.current && void startMedia(roomRef.current)} />
+          </div>
+        )}
 
         {toast && <p className="absolute inset-x-6 top-1/2 z-40 -translate-y-1/2 rounded-2xl bg-black/85 px-4 py-3 text-center text-sm backdrop-blur">{toast}</p>}
 
