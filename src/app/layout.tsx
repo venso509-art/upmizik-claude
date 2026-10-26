@@ -16,6 +16,7 @@ import { PlayerProvider } from "@/components/player/PlayerProvider";
 import { PlayerBar } from "@/components/player/PlayerBar";
 import { ServiceWorkerRegister } from "@/components/offline/ServiceWorkerRegister";
 import { AmbientBackground } from "@/components/AmbientBackground";
+import { THEME_HEAD_SCRIPT } from "@/components/ThemeToggle";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -67,6 +68,8 @@ export default async function RootLayout({
     <html lang="ht" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: SPLASH_HEAD_SCRIPT }} />
+        {/* Mòd light: aplike anvan paj la parèt (pa gen flash) */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_HEAD_SCRIPT }} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-950 text-zinc-100 antialiased`}

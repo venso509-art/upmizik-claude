@@ -200,7 +200,7 @@ export function StatusViewer({ artist, onClose }: { artist: StatusArtist; onClos
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black sm:bg-black/90" role="dialog" aria-modal="true" aria-label={`Stati ${artist.name}`}>
+      <div className="force-dark fixed inset-0 z-[90] flex items-center justify-center bg-black sm:bg-black/90" role="dialog" aria-modal="true" aria-label={`Stati ${artist.name}`}>
         <div
           className="relative flex h-full w-full max-w-md flex-col overflow-hidden bg-zinc-950 sm:h-[92vh] sm:rounded-3xl"
           style={current?.kind === "text" ? { background: current.bg ?? "#0A5C36" } : undefined}

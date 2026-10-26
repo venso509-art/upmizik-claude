@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import twColors from "tailwindcss/colors";
+import plugin from "tailwindcss/plugin";
 
 // ===== Tema "Karayib Nwit" =====
 // Nou redefini koulè Tailwind yo nan rasin lan, konsa TOUT paj yo chanje ansanm:
@@ -59,6 +61,59 @@ const citron = {
   700: "#8A7300",
 };
 
+// ===== MÒD LIGHT / DARK =====
+// Koulè yo se varyab CSS (--c-<koulè>-<nyans>): mòd sonb (default) = palèt ki anlè yo.
+// Mòd light (klas "light" sou <html>): fon an blan, tèks yo fonse, epi nyans klè yo (100-400)
+// vin fonse pou yo li byen sou blan. "white" vin nwa ble (tèks + vè yo), konsa tout sit la chanje ansanm.
+type Palette = Record<string, string>;
+const rgb = (hex: string) => {
+  const n = parseInt(hex.replace("#", ""), 16);
+  return `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`;
+};
+const { red, emerald, amber, sky, rose } = twColors;
+const PALETTES: Record<string, Palette> = { zinc: navy, fuchsia: caribGreen, violet: seaGreen, citron, red, emerald, amber, sky, rose };
+
+// Mòd light: fon blan → tèks nwa ble (gri yo envèse)
+const lightZinc: Palette = {
+  50: "#0B132B",
+  100: "#172140",
+  200: "#26314F",
+  300: "#3B4766",
+  400: "#56627F",
+  500: "#76819C",
+  600: "#A3ACC1",
+  700: "#CDD3E1",
+  800: "#E3E7F0",
+  900: "#F3F5F9",
+  950: "#FFFFFF",
+};
+// Koulè aksan yo: nyans klè yo (tèks sou fon fonse) vin fonse sou fon blan; 500+ pa chanje (bouton yo)
+const deepen = (p: Palette): Palette => ({ ...p, 50: p[900] ?? p[700], 100: p[800] ?? p[700], 200: p[700], 300: p[700], 400: p[600] });
+const LIGHT: Record<string, Palette> = {
+  zinc: lightZinc,
+  fuchsia: deepen(caribGreen),
+  violet: deepen(seaGreen),
+  citron: { ...citron, 50: "#5C4D00", 100: "#6E5C00", 200: "#7A6600", 300: "#8A7300" },
+  red: deepen(red),
+  emerald: deepen(emerald),
+  amber: deepen(amber),
+  sky: deepen(sky),
+  rose: deepen(rose),
+};
+
+const vars = (pals: Record<string, Palette>) =>
+  Object.fromEntries(Object.entries(pals).flatMap(([name, p]) => Object.entries(p).map(([shade, hex]) => [`--c-${name}-${shade}`, rgb(hex)])));
+const asVars = (name: string, p: Palette) => Object.fromEntries(Object.keys(p).map((shade) => [shade, `rgb(var(--c-${name}-${shade}) / <alpha-value>)`]));
+
+const themePlugin = plugin(({ addBase }) => {
+  addBase({
+    ":root": { ...vars(PALETTES), "--c-white": "255 255 255" },
+    "html.light": { ...vars(LIGHT), "--c-white": rgb("#0B132B") },
+    // Ekran videyo plen ekran yo (live, stati, lektè) rete fonse menm an mòd light
+    ".force-dark": { ...vars(PALETTES), "--c-white": "255 255 255", colorScheme: "dark" },
+  });
+});
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -70,10 +125,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        zinc: navy,
-        fuchsia: caribGreen,
-        violet: seaGreen,
-        citron,
+        zinc: asVars("zinc", navy),
+        fuchsia: asVars("fuchsia", caribGreen),
+        violet: asVars("violet", seaGreen),
+        citron: asVars("citron", citron),
+        red: asVars("red", red),
+        emerald: asVars("emerald", emerald),
+        amber: asVars("amber", amber),
+        sky: asVars("sky", sky),
+        rose: asVars("rose", rose),
+        white: "rgb(var(--c-white) / <alpha-value>)",
       },
       keyframes: {
         // Ba egalizè yo k ap monte desann nan hero a
@@ -183,6 +244,11 @@ const config: Config = {
           "0%": { opacity: "1", transform: "translateY(-10vh) rotate(0deg)" },
           "100%": { opacity: "0", transform: "translateY(105vh) rotate(720deg)" },
         },
+        // Ti zetwal fon an k ap klere
+        twinkle: {
+          "0%, 100%": { opacity: "0.15", transform: "scale(0.7)" },
+          "50%": { opacity: "1", transform: "scale(1.25)" },
+        },
         // Fon paj yo: limyè ki flote dousman
         // 3 pwen chemen (pa sèlman ale-vini): boul limyè a fè yon ti sèk dous, li grandi epi l retresi
         "blob-drift": {
@@ -212,6 +278,7 @@ const config: Config = {
         "screen-shake": "screen-shake 0.5s ease-in-out 3",
         "confetti-fall": "confetti-fall 3.2s linear both",
         "blob-drift": "blob-drift 22s ease-in-out infinite",
+        twinkle: "twinkle 3s ease-in-out infinite",
         vinyl: "vinyl-spin 5s linear infinite",
         shake: "shake 0.4s ease-in-out",
         equalizer: "equalizer 1.2s ease-in-out infinite",
@@ -225,6 +292,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [themePlugin],
 };
 export default config;

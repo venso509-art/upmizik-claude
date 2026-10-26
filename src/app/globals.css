@@ -42,12 +42,52 @@ body {
 
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  background-color: var(--carib-navy);
+  background-color: rgb(var(--c-zinc-950));
   /* Limyè lannwit Karayib la: yon ti lalin jòn anlè adwat, ak lanmè vèt anba agoch */
   background-image:
     radial-gradient(900px 500px at 85% -10%, rgba(255, 215, 0, 0.07), transparent 60%),
     radial-gradient(1000px 700px at -10% 110%, rgba(10, 92, 54, 0.28), transparent 60%);
   background-attachment: fixed;
+}
+
+/* ===== MÒD LIGHT: fon blan, tèks ak grafik an koulè ===== */
+html.light {
+  color-scheme: light;
+}
+html.light body {
+  background-image:
+    radial-gradient(900px 500px at 85% -10%, rgba(255, 215, 0, 0.12), transparent 60%),
+    radial-gradient(1000px 700px at -10% 110%, rgba(10, 92, 54, 0.08), transparent 60%);
+}
+/* Fon paj akèy la: vèsyon sonb oswa vèsyon blan */
+.amb-light {
+  display: none;
+}
+html.light .amb-light {
+  display: block;
+}
+html.light .amb-dark {
+  display: none;
+}
+/* Bouton ak fon an koulè: tèks blan an rete BLAN */
+html.light
+  :is(
+    [class~="bg-red-500"], [class~="bg-red-600"], [class~="bg-red-700"], [class~="bg-red-600/90"],
+    [class~="bg-fuchsia-500"], [class~="bg-fuchsia-600"], [class~="bg-fuchsia-700"], [class~="bg-fuchsia-600/90"],
+    [class~="bg-emerald-600"], [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-rose-500"], [class~="bg-rose-600"],
+    [class~="bg-amber-600"], [class~="bg-violet-600"], [class~="bg-black"], [class*="bg-black/"],
+    [class*="bg-gradient-to-"], [class~="bg-[#1D9BF0]"]
+  ) {
+  --c-white: 255 255 255;
+}
+/* Tèks ki sou yon foto/videyo (apre yon gradyan nwa ki fè l li byen): li rete BLAN */
+html.light [class*="from-black"] ~ * {
+  --c-white: 255 255 255;
+}
+/* Bouton jòn / vèt klè: tèks fonse a rete FONSE */
+html.light
+  :is(.btn-primary, [class~="bg-citron-300"], [class~="bg-citron-400"], [class~="bg-emerald-400"], [class~="bg-emerald-500"], [class~="bg-amber-400"], [class~="bg-amber-500"]) {
+  --c-zinc-950: 11 19 43;
 }
 
 ::selection {

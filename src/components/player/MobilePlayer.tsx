@@ -135,7 +135,7 @@ function NowPlaying({ onClose }: { onClose: () => void }) {
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[80] flex flex-col overflow-hidden bg-zinc-950 text-white sm:hidden" role="dialog" aria-modal="true" aria-label="Kounye a ap jwe">
+      <div className="force-dark fixed inset-0 z-[80] flex flex-col overflow-hidden bg-zinc-950 text-white sm:hidden" role="dialog" aria-modal="true" aria-label="Kounye a ap jwe">
         {/* Fon: poster la flou */}
         {current.coverUrl && (
           // eslint-disable-next-line @next/next/no-img-element

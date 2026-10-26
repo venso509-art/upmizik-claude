@@ -267,7 +267,7 @@ export function StatusEditor({
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[95] flex select-none flex-col bg-black text-white" role="dialog" aria-modal="true" aria-label="Editè stati">
+      <div className="force-dark fixed inset-0 z-[95] flex select-none flex-col bg-black text-white" role="dialog" aria-modal="true" aria-label="Editè stati">
         {/* Ba anlè */}
         <div className="flex items-center justify-between px-3 pb-2 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
           <button type="button" onClick={onCancel} disabled={busy} className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10" aria-label="Anile">

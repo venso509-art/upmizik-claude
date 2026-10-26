@@ -6,6 +6,7 @@ import { MobileMenu, type MenuItem } from "@/components/MobileMenu";
 import { BecomeArtistPrompt } from "@/components/registration/BecomeArtistPrompt";
 import { HeaderSearch } from "@/components/search/HeaderSearch";
 import { NotificationListener } from "@/components/inbox/NotificationListener";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function Bell({ unread }: { unread: number }) {
   return (
@@ -89,6 +90,9 @@ export async function Header() {
         <div className="flex min-w-0 flex-1 justify-end md:justify-center md:px-4 lg:px-6">
           <HeaderSearch />
         </div>
+
+        {/* ☀️ / 🌙 Mòd klè oswa sonb */}
+        <ThemeToggle />
 
         {user ? (
           <>

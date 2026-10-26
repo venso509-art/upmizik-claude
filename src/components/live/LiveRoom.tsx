@@ -706,7 +706,7 @@ export function LiveRoom({
   );
 
   return (
-    <div className="fixed inset-0 z-[70] flex justify-center bg-black text-white">
+    <div className="force-dark fixed inset-0 z-[70] flex justify-center bg-black text-white">
       <div className="relative h-full w-full max-w-md overflow-hidden">
         {/* ===== VIDEYO ATIS LA ===== */}
         <div className="absolute inset-0">
