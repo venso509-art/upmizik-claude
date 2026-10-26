@@ -40,6 +40,26 @@ export function MemberForm({ defaultName, defaultEmail }: { defaultName: string;
       <Field label="Non konplè ou">
         <input name="full_name" required maxLength={80} defaultValue={defaultName} placeholder="Egz: Jean Marc Pierre" className={inputClass} />
       </Field>
+      {/* Sèks */}
+      <fieldset>
+        <legend className="mb-1.5 block text-sm font-medium text-zinc-300">Sèks</legend>
+        <div className="grid grid-cols-2 gap-3">
+          {(
+            [
+              ["fi", "👩", "Fi"],
+              ["gason", "👨", "Gason"],
+            ] as const
+          ).map(([value, icon, label]) => (
+            <label
+              key={value}
+              className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 font-semibold text-zinc-200 transition has-[:checked]:border-[#FFD700] has-[:checked]:bg-[#FFD700]/10 has-[:checked]:text-white"
+            >
+              <input type="radio" name="sex" value={value} required className="sr-only" />
+              <span aria-hidden>{icon}</span> {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Imèl">
           <input name="email" type="email" required defaultValue={defaultEmail} placeholder="ou@egzanp.com" className={inputClass} />

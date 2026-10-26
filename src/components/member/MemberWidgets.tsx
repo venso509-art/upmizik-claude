@@ -1,14 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { changePseudo } from "@/app/manm/actions";
 import type { Referral } from "@/lib/members";
 
 const card = "rounded-3xl bg-zinc-900/70 p-5 ring-1 ring-white/10";
 
 // Kat "Pseudo ou": kopye pseudo a, epi pataje lyen enskripsyon an (WhatsApp, Facebook...)
-export function MemberShareCard({ code, origin }: { code: string; origin: string }) {
+export function MemberShareCard({ code, origin, changesLeft }: { code: string; origin: string; changesLeft: number }) {
+  const router = useRouter();
   const link = `${origin}/enskri?wol=atis&ref=${code}`;
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(code);
+  const [error, setError] = useState<string>();
+  const [pending, startTransition] = useTransition();
+
+  function savePseudo() {
+    setError(undefined);
+    startTransition(async () => {
+      const res = await changePseudo(draft);
+      if (res.error) return setError(res.error);
+      setEditing(false);
+      router.refresh();
+    });
+  }
 
   async function copy(text: string, what: "code" | "link") {
     try {
@@ -34,16 +51,57 @@ export function MemberShareCard({ code, origin }: { code: string; origin: string
   return (
     <section className={card}>
       <h2 className="font-black text-white">Pseudo ou</h2>
-      <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-[#0B132B] px-4 py-3.5 ring-1 ring-white/5">
-        <span className="truncate text-2xl font-black tracking-wider text-[#FFD700]">{code}</span>
+      {editing ? (
+        // Chanje pseudo a (3 fwa maksimòm chak 30 jou)
+        <div className="mt-3 space-y-2 rounded-2xl bg-[#0B132B] p-3 ring-1 ring-[#FFD700]/30">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20))}
+            autoFocus
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-xl font-black tracking-wider text-[#FFD700] outline-none focus:border-[#FFD700]"
+            aria-label="Nouvo pseudo"
+          />
+          <p className="text-xs text-zinc-400">4 a 20 lèt oswa chif, san espas. Ansyen lyen ou yo ap kontinye mache.</p>
+          {error && <p className="text-xs text-red-300">{error}</p>}
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setEditing(false)} className="flex-1 rounded-xl bg-white/[0.06] py-2 text-sm font-semibold text-white">
+              Anile
+            </button>
+            <button
+              type="button"
+              disabled={pending || draft.length < 4 || draft === code}
+              onClick={savePseudo}
+              className="flex-1 rounded-xl bg-[#FFD700] py-2 text-sm font-black text-[#0B132B] disabled:opacity-50"
+            >
+              {pending ? "…" : "Anrejistre"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-[#0B132B] px-4 py-3.5 ring-1 ring-white/5">
+          <span className="truncate text-2xl font-black tracking-wider text-[#FFD700]">{code}</span>
+          <button
+            type="button"
+            onClick={() => void copy(code, "code")}
+            className="shrink-0 rounded-xl bg-white/[0.06] px-4 py-2 text-sm font-bold text-white ring-1 ring-white/15 transition hover:bg-white/10"
+          >
+            {copied === "code" ? "✓ Kopye" : "Kopye"}
+          </button>
+        </div>
+      )}
+      {!editing && (
         <button
           type="button"
-          onClick={() => void copy(code, "code")}
-          className="shrink-0 rounded-xl bg-white/[0.06] px-4 py-2 text-sm font-bold text-white ring-1 ring-white/15 transition hover:bg-white/10"
+          disabled={changesLeft <= 0}
+          onClick={() => {
+            setDraft(code);
+            setEditing(true);
+          }}
+          className="mt-2 text-xs font-semibold text-zinc-400 hover:text-white disabled:opacity-60"
         >
-          {copied === "code" ? "✓ Kopye" : "Kopye"}
+          ✏️ Chanje pseudo · {changesLeft > 0 ? `${changesLeft} chanjman ki rete pou 30 jou` : "ou rive nan limit 3 chanjman an pou 30 jou"}
         </button>
-      </div>
+      )}
       <button type="button" onClick={() => void copy(link, "link")} className="mt-2.5 block w-full truncate text-left text-xs text-zinc-400 hover:text-white">
         {copied === "link" ? "✓ Lyen an kopye" : link.replace(/^https?:\/\//, "")}
       </button>

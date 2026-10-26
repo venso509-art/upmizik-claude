@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/settings-server";
 import { MemberShareCard, ReferralList } from "@/components/member/MemberWidgets";
+import { MemberTutorials } from "@/components/member/MemberTutorials";
 import {
   BONUS_RATE_USD,
   MILESTONES,
@@ -35,10 +36,12 @@ export default async function MemberDashboard() {
     .maybeSingle();
   if (!member || member.status !== "approved" || !member.pseudo_referral) redirect("/manm");
 
-  const [{ data: refRows }, { data: payouts }, settings] = await Promise.all([
+  const since = new Date(Date.now() - 30 * 86400000).toISOString();
+  const [{ data: refRows }, { data: payouts }, settings, { count: pseudoChanges }] = await Promise.all([
     supabase.rpc("member_referrals", { p_member: member.id }),
     supabase.from("member_payouts").select("period, amount_usd, paid_at").eq("member_id", member.id),
     getSettings(),
+    supabase.from("member_pseudo_changes").select("id", { count: "exact", head: true }).eq("member_id", member.id).gt("changed_at", since),
   ]);
   const referrals = (refRows ?? []) as Referral[];
   const paid = new Map(((payouts ?? []) as { period: string; amount_usd: number }[]).map((p) => [p.period.slice(0, 7), Number(p.amount_usd)]));
@@ -115,7 +118,7 @@ export default async function MemberDashboard() {
         </section>
 
         {/* ===== PSEUDO + PATAJ ===== */}
-        <MemberShareCard code={member.pseudo_referral} origin={origin} />
+        <MemberShareCard code={member.pseudo_referral} origin={origin} changesLeft={Math.max(0, 3 - (pseudoChanges ?? 0))} />
 
         {/* ===== KÒB MWA A ===== */}
         <section className={card}>
@@ -151,6 +154,9 @@ export default async function MemberDashboard() {
 
         {/* ===== ATIS OU ENSKRI ===== */}
         <ReferralList referrals={referrals} />
+
+        {/* ===== TUTO POU ATIS YO (voye youn chak jou) ===== */}
+        <MemberTutorials origin={origin} code={member.pseudo_referral} />
 
         {/* ===== MWA ANVAN YO ===== */}
         {prevMonths.length > 0 && (

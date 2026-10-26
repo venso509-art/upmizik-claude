@@ -5,7 +5,7 @@ export const BASE_RATE_USD = 1;
 export const BONUS_RATE_USD = 2.5;
 export const MILESTONES = [10, 25, 50, 75, 100]; // pousantaj objektif la
 
-export type MemberStatus = "pending" | "approved" | "blocked";
+export type MemberStatus = "pending" | "approved" | "rejected" | "blocked";
 export type Referral = {
   artist_id: string;
   name: string;

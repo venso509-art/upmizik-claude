@@ -19,6 +19,11 @@ export type AdminMember = {
   status: MemberStatus;
   adminNote: string | null;
   createdAt: string;
+  sex: "fi" | "gason" | null;
+  accountSince: string | null; // dat kont UpMizik la te kreye
+  referredTotal: number; // tout atis ki enskri ak pseudo a
+  referredPending: number;
+  referredBad: number; // bloke oswa achive (siy fwod)
   months: { key: string; count: number; paid: number | null }[]; // mwa ki gen atis (pi resan an premye)
 };
 
@@ -48,14 +53,25 @@ function MemberCard({ m, htgPerUsd, thisMonth }: { m: AdminMember; htgPerUsd: nu
   const toPay = m.months.find((x) => x.key === period);
   const amount = toPay ? monthEarnings(toPay.count, m.objective).usd : 0;
 
-  function review(action: "approve" | "block") {
-    if (!confirm(action === "approve" ? `Apwouve ${m.fullName}? Sistèm nan ap kreye pseudo li.` : `Bloke ${m.fullName}?`)) return;
+  function review(action: "approve" | "reject" | "block") {
+    if (action === "reject" && !note.trim()) return setMsg({ ok: false, text: "Ekri rezon an anvan w rejte (moun nan ap wè l pou l korije)." });
+    const q = {
+      approve: `Apwouve ${m.fullName}? Sistèm nan ap kreye pseudo li.`,
+      reject: `Rejte demann ${m.fullName}? Li ka korije l epi voye l ankò.`,
+      block: `Bloke ${m.fullName}?`,
+    };
+    if (!confirm(q[action])) return;
     setMsg(undefined);
     startTransition(async () => {
       const res = await reviewMember(m.id, action, note);
-      setMsg(res.error ? { ok: false, text: res.error } : { ok: true, text: action === "approve" ? `✓ Apwouve · pseudo: ${res.code}` : "✓ Bloke" });
+      setMsg(
+        res.error
+          ? { ok: false, text: res.error }
+          : { ok: true, text: action === "approve" ? `✓ Apwouve · pseudo: ${res.code}` : action === "reject" ? "✓ Rejte" : "✓ Bloke" },
+      );
     });
   }
+  const ageDays = m.accountSince ? Math.floor((Date.now() - new Date(m.accountSince).getTime()) / 86400000) : null;
 
   function pay() {
     if (!toPay) return;
@@ -83,11 +99,22 @@ function MemberCard({ m, htgPerUsd, thisMonth }: { m: AdminMember; htgPerUsd: nu
             {m.email} · <a href={`https://wa.me/${m.phone.replace(/\D/g, "")}`} className="text-emerald-300 hover:underline">{m.phone}</a>
             {m.city ? ` · ${m.city}` : ""}
           </p>
-          <p className="text-xs text-zinc-500">Demann {date(m.createdAt)}</p>
+          <p className="text-xs text-zinc-500">
+            Demann {date(m.createdAt)}
+            {m.sex ? ` · ${m.sex === "fi" ? "👩 Fi" : "👨 Gason"}` : ""}
+            {ageDays !== null ? ` · Kont depi ${ageDays === 0 ? "jodi a" : `${ageDays} jou`}` : ""}
+          </p>
         </div>
         {m.pseudo && <span className="shrink-0 rounded-lg bg-[#0B132B] px-2.5 py-1 text-xs font-black tracking-wider text-[#FFD700]">{m.pseudo}</span>}
       </div>
       {m.motivation && <p className="rounded-xl bg-zinc-950/60 p-3 text-xs text-zinc-300">“{m.motivation}”</p>}
+      {/* Enfòmasyon pou deside: atis li fè enskri yo, ak siy fwod */}
+      <div className="flex flex-wrap gap-1.5 text-[11px]">
+        <span className="rounded-full bg-white/5 px-2.5 py-1 text-zinc-300">🎤 {m.referredTotal} atis enskri ak pseudo a</span>
+        {m.referredPending > 0 && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-300">⏳ {m.referredPending} ap tann apwobasyon</span>}
+        {m.referredBad > 0 && <span className="rounded-full bg-red-500/15 px-2.5 py-1 font-bold text-red-300">⚠️ {m.referredBad} bloke/achive: tcheke fwod</span>}
+        {ageDays !== null && ageDays < 3 && m.status === "pending" && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-300">⚠️ Kont fèk kreye</span>}
+      </div>
 
       {m.status === "approved" && (
         <>
@@ -165,14 +192,19 @@ function MemberCard({ m, htgPerUsd, thisMonth }: { m: AdminMember; htgPerUsd: nu
             value={note}
             onChange={(e) => setNote(e.target.value)}
             maxLength={500}
-            placeholder={m.status === "pending" ? "Nòt (opsyonèl)" : "Rezon si w bloke l (opsyonèl)"}
+            placeholder={m.status === "pending" ? "Rezon (obligatwa pou Rejte; moun nan ap wè l)" : "Rezon si w bloke l"}
             className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-white outline-none focus:border-[#FFD700]"
           />
         )}
         <div className="flex flex-wrap gap-2">
           {m.status !== "approved" && (
             <button type="button" disabled={pending} onClick={() => review("approve")} className="rounded-lg bg-emerald-600 px-3 py-1.5 font-semibold text-white hover:bg-emerald-500 disabled:opacity-60">
-              {m.status === "blocked" ? "✅ Debloke" : "✅ Apwouve"}
+              {m.status === "blocked" ? "✅ Debloke" : m.status === "rejected" ? "✅ Apwouve kanmenm" : "✅ Apwouve"}
+            </button>
+          )}
+          {m.status === "pending" && (
+            <button type="button" disabled={pending} onClick={() => review("reject")} className="rounded-lg bg-amber-600 px-3 py-1.5 font-semibold text-white hover:bg-amber-500 disabled:opacity-60">
+              ↩️ Rejte
             </button>
           )}
           {m.status !== "blocked" && (

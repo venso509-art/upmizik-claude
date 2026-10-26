@@ -89,7 +89,16 @@ export default async function MemberPage() {
             <p className="mt-1 text-sm text-zinc-400">{member.admin_note ?? "Kontakte ekip UpMizik la pou plis enfòmasyon."}</p>
           </div>
         ) : (
-          <MemberJoin defaultName={profile?.display_name ?? ""} defaultEmail={user.email ?? ""} />
+          <>
+            {member?.status === "rejected" && (
+              <div className="mb-5 rounded-2xl border border-amber-400/40 bg-amber-500/10 p-4 text-sm">
+                <p className="font-bold text-amber-200">Demann ou an pa t aksepte</p>
+                {member.admin_note && <p className="mt-1 text-zinc-200">Rezon: {member.admin_note}</p>}
+                <p className="mt-1 text-zinc-400">Korije enfòmasyon yo epi voye demann nan ankò.</p>
+              </div>
+            )}
+            <MemberJoin defaultName={profile?.display_name ?? ""} defaultEmail={user.email ?? ""} />
+          </>
         )}
       </section>
     </div>
