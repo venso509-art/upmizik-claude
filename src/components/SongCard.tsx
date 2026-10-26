@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePlayer, type Track } from "@/components/player/PlayerProvider";
 import { SongActions } from "@/components/SongActions";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { BoostBadge } from "@/components/boost/BoostBadge";
 import type { SongExtras } from "@/lib/songs";
 import { formatPlays } from "@/lib/levels";
 
@@ -23,7 +24,11 @@ export function SongCard({
   const isCurrent = current?.id === song.id;
 
   return (
-    <div className={`group rounded-xl p-3 transition ${isCurrent ? "bg-zinc-800" : "bg-zinc-900/60 hover:bg-zinc-800/80"}`}>
+    <div
+      className={`group rounded-xl p-3 transition ${isCurrent ? "bg-zinc-800" : "bg-zinc-900/60 hover:bg-zinc-800/80"} ${
+        song.boosted ? "ring-1 ring-orange-400/50 shadow-[0_0_24px_-6px_rgba(249,115,22,0.45)]" : ""
+      }`}
+    >
       <button
         type="button"
         onClick={() => playTrack(song, queue)}
@@ -37,6 +42,8 @@ export function SongCard({
           ) : (
             <div className="flex h-full items-center justify-center text-5xl">🎵</div>
           )}
+          {/* 🔥 Mizik boosted (atis la peye pou l parèt an premye) */}
+          {song.boosted && <BoostBadge className="absolute right-2 top-2" />}
           {/* Kantite ekout: pou tout moun wè evolisyon chante a */}
           {typeof song.playCount === "number" && (
             <span

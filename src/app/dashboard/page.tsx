@@ -17,6 +17,8 @@ import { StatusComposer } from "@/components/status/StatusComposer";
 import { postImageUrl } from "@/lib/posts";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { donateShareText } from "@/lib/shareMessages";
+import { BoostBox, type BoostHistoryItem } from "@/components/boost/BoostBox";
+import { isBoostActive, type BoostPlan, type BoostStatus, type BoostType } from "@/lib/boost";
 
 export const metadata: Metadata = { title: "Dashboard | UpMizik" };
 
@@ -140,6 +142,49 @@ export default async function DashboardPage() {
   ]);
   const balance = toBalance((balanceRes.data as BalanceRow[] | null)?.[0]);
 
+  // Boost: plan yo, boost aktif yo, ak istwa demann yo (vid si migration boost la poko kouri)
+  const [{ data: boostPlans }, { data: boostSongs }, { data: boostProfile }, { data: boostRows }] = await Promise.all([
+    supabase.from("boost_plans").select("id, label, days, price_htg").eq("active", true).order("sort").returns<BoostPlan[]>(),
+    supabase.from("songs").select("id, is_boosted, boost_expires_at").eq("artist_id", user.id),
+    supabase.from("profiles").select("is_boosted, boost_expires_at").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("boost_purchases")
+      .select("id, boost_type, target_id, amount, duration_days, status, expires_at, created_at, admin_note")
+      .eq("artist_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(8),
+  ]);
+  const boostUntil = new Map(
+    ((boostSongs ?? []) as { id: string; is_boosted: boolean; boost_expires_at: string | null }[])
+      .filter((b) => isBoostActive(b.is_boosted, b.boost_expires_at))
+      .map((b) => [b.id, b.boost_expires_at as string]),
+  );
+  const songTitle = new Map(songs.map((s) => [s.id, s.title]));
+  const boostHistory: BoostHistoryItem[] = (
+    (boostRows ?? []) as {
+      id: string;
+      boost_type: BoostType;
+      target_id: string;
+      amount: number;
+      duration_days: number;
+      status: BoostStatus;
+      expires_at: string | null;
+      created_at: string;
+      admin_note: string | null;
+    }[]
+  ).map((b) => ({
+    id: b.id,
+    type: b.boost_type,
+    targetId: b.target_id,
+    targetLabel: b.boost_type === "profil" ? "Pwofil mwen" : `« ${songTitle.get(b.target_id) ?? "Chante"} »`,
+    amount: b.amount,
+    days: b.duration_days,
+    status: b.status,
+    expiresAt: b.expires_at,
+    createdAt: b.created_at,
+    adminNote: b.admin_note,
+  }));
+
   // Atis Pro: jiska 10 kolaboratè lè l ap modifye yon chante
   const isProArtist = (await supabase.rpc("is_pro", { p_user: user.id })).data === true;
   const managed: ManagedSong[] = songs.map((s) => ({
@@ -256,6 +301,18 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </section>
+
+      {/* ===== BOOST (piblisite peye) ===== */}
+      {(boostPlans ?? []).length > 0 && (
+        <BoostBox
+          songs={songs
+            .filter((s) => !s.archived_at)
+            .map((s) => ({ id: s.id, title: s.title, coverUrl: toTrack(supabase, s).coverUrl, boostedUntil: boostUntil.get(s.id) ?? null }))}
+          plans={boostPlans ?? []}
+          profileBoostedUntil={isBoostActive(boostProfile?.is_boosted, boostProfile?.boost_expires_at) ? (boostProfile?.boost_expires_at as string) : null}
+          history={boostHistory}
+        />
+      )}
 
       {/* ===== STATI 24 È (atis Pro) ===== */}
       <StatusComposer

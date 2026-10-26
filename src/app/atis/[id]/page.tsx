@@ -15,6 +15,8 @@ import { StatusRing } from "@/components/status/StatusRing";
 import { liveStatusIds } from "@/lib/statuses";
 import { liveNowMap } from "@/lib/liveNow";
 import { LiveBadge } from "@/components/live/LiveBadge";
+import { BoostBadge } from "@/components/boost/BoostBadge";
+import { isBoostActive } from "@/lib/boost";
 import { isPro } from "@/lib/pro";
 import { ArtistSocialLinks } from "@/components/artist/ArtistSocialLinks";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
@@ -190,7 +192,12 @@ export default async function ArtistPage({ params }: Props) {
   const statusIds = statusMap[artist.id] ?? [];
   const liveId = liveMap[artist.id];
   // Pwochen live atis la anonse (si dat la poko pase); erè = migration poko kouri
-  const { data: nextLive } = await supabase.from("profiles").select("next_live_at, next_live_title").eq("id", artist.id).maybeSingle();
+  const [{ data: nextLive }, { data: boostRow }] = await Promise.all([
+    supabase.from("profiles").select("next_live_at, next_live_title").eq("id", artist.id).maybeSingle(),
+    // 🔥 Pwofil boosted (erè = migration boost la poko kouri)
+    supabase.from("profiles").select("is_boosted, boost_expires_at").eq("id", artist.id).maybeSingle(),
+  ]);
+  const boosted = isBoostActive(boostRow?.is_boosted, boostRow?.boost_expires_at);
   const nextLiveAt = !liveId && nextLive?.next_live_at && new Date(nextLive.next_live_at) > new Date() ? (nextLive.next_live_at as string) : null;
   const name = artist.display_name;
   const initials = initialsOf(name);
@@ -283,6 +290,7 @@ export default async function ArtistPage({ params }: Props) {
               {/* Badj la bò kote non an, tankou sou gwo rezo sosyal yo */}
               {artist.is_verified && <VerifiedBadge size="lg" className="ml-2 align-middle" />}
               {pro && <ProBadge size="md" className="ml-2 align-middle" />}
+              {boosted && <BoostBadge size="md" className="ml-2 align-middle" />}
             </h1>
             <p className="mt-3 text-sm text-zinc-300 sm:text-base">
               <span className="font-semibold text-white">{totalPlays.toLocaleString("fr-HT")}</span> ekout total

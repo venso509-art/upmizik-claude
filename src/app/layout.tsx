@@ -17,6 +17,7 @@ import { PlayerBar } from "@/components/player/PlayerBar";
 import { ServiceWorkerRegister } from "@/components/offline/ServiceWorkerRegister";
 import { AmbientBackground } from "@/components/AmbientBackground";
 import { THEME_HEAD_SCRIPT } from "@/components/ThemeToggle";
+import { BoostPopup } from "@/components/boost/BoostPopup";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -91,6 +92,8 @@ export default async function RootLayout({
             <ListenerAuthPrompt />
             <OfflineNotification />
             <InstallAppPrompt />
+            {/* 🔥 Vizitè: rekòmandasyon yon mizik/atis boosted apre 1 minit (yon fwa pa sesyon) */}
+            <BoostPopup />
             <ServiceWorkerRegister />
           </PlayerProvider>
         </SettingsProvider>

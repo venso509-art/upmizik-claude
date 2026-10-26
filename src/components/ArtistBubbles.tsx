@@ -6,8 +6,9 @@ import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { StatusViewer } from "@/components/status/StatusViewer";
 import { SegmentedRing, useSeenFlags } from "@/components/status/StatusRing";
 import { LiveBadge } from "@/components/live/LiveBadge";
+import { BoostBadge } from "@/components/boost/BoostBadge";
 
-export type BubbleArtist = { artist_id: string; display_name: string; avatar_url: string | null; plays: number; is_verified?: boolean };
+export type BubbleArtist = { artist_id: string; display_name: string; avatar_url: string | null; plays: number; is_verified?: boolean; boosted?: boolean };
 
 // Ranje atis an sèk won (tankou estati WhatsApp), ki woule de goch a dwat.
 // statuses = id stati vivan chak atis: wonn vèt + klike = wè stati yo; san stati = ale sou pwofil la.
@@ -77,8 +78,12 @@ function Bubble({ artist: a, statusIds, liveId, onOpen }: { artist: BubbleArtist
         </span>
         {/* Tchèk ble a sou kwen sèk la, pou l toujou parèt menm si non an long */}
         <VerifiedCorner show={a.is_verified} size="md" />
-        {/* An live kounye a */}
-        {liveId && <LiveBadge className="absolute -bottom-1.5 left-1/2 -translate-x-1/2" />}
+        {/* An live kounye a; sinon 🔥 Boost */}
+        {liveId ? (
+          <LiveBadge className="absolute -bottom-1.5 left-1/2 -translate-x-1/2" />
+        ) : (
+          a.boosted && <BoostBadge size="xs" className="absolute -bottom-1.5 left-1/2 -translate-x-1/2" />
+        )}
       </span>
       <span className="w-full truncate text-center text-xs text-zinc-300 group-hover:text-white">{a.display_name}</span>
     </>

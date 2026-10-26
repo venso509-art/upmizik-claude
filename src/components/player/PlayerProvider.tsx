@@ -15,6 +15,7 @@ export type Track = {
   audioUrl: string;
   durationSeconds: number | null;
   playCount?: number; // kantite ekout (pou kat yo)
+  boosted?: boolean; // 🔥 atis la peye pou chante a parèt an premye
 };
 
 // Fason lis la jwe: "off" = youn apre lòt epi kanpe; "all" = tout lis la an bouk; "one" = menm chante a an bouk

@@ -50,10 +50,21 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
   const supabase = createClient();
   let songsQuery = supabase.from("songs").select(SONG_SELECT).is("archived_at", null).order("created_at", { ascending: false });
   if (genre) songsQuery = songsQuery.eq("genre", genre);
+  // 🔥 Boost: mizik ak pwofil ki peye pou parèt an premye (boost la poko ekspire)
+  const nowIso = new Date().toISOString();
+  let boostedQuery = supabase
+    .from("songs")
+    .select(SONG_SELECT)
+    .eq("is_boosted", true)
+    .gt("boost_expires_at", nowIso)
+    .is("archived_at", null)
+    .order("boost_expires_at", { ascending: false })
+    .limit(8);
+  if (genre) boostedQuery = boostedQuery.eq("genre", genre);
 
   // Vitès: demann ki pa depann youn de lòt yo pati ANSANM (3 vag olye 6+ youn apre lòt)
   // Vag 1: tout sa ki pa bezwen anyen
-  const [{ data: rows }, { data: { user } }, top3, { data: adRows }, promos, { data: feedRows }, { data: popularRows }] = await Promise.all([
+  const [{ data: rows }, { data: { user } }, top3, { data: adRows }, promos, { data: feedRows }, { data: popularRows }, { data: boostedRows }, { data: boostedArtists }] = await Promise.all([
     songsQuery.limit(genre ? 24 : 8).returns<SongRow[]>(),
     supabase.auth.getUser(),
     getTop3(supabase),
@@ -63,8 +74,21 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
     // Dènye pòs Sosyal yo (si yon migration poko kouri, data = null epi seksyon an vid)
     supabase.rpc("social_feed", { p_limit: 12 }),
     supabase.rpc("popular_artists", { p_limit: 15 }),
+    boostedQuery.returns<SongRow[]>(),
+    supabase
+      .from("profiles")
+      .select("id, display_name, avatar_url, is_verified")
+      .eq("is_boosted", true)
+      .gt("boost_expires_at", nowIso)
+      .eq("role", "artist")
+      .eq("status", "approved")
+      .is("archived_at", null)
+      .limit(10),
   ]);
-  const songs = (rows ?? []).map((s) => toTrack(supabase, s));
+  // Mizik boosted yo an premye, epi rès lis la (san doublon)
+  const boostedSongs = (boostedRows ?? []).map((s) => ({ ...toTrack(supabase, s), boosted: true }));
+  const boostedIds = new Set(boostedSongs.map((s) => s.id));
+  const songs = [...boostedSongs, ...(rows ?? []).filter((s) => !boostedIds.has(s.id)).map((s) => toTrack(supabase, s))];
 
   // Vag 2: sa ki bezwen chante yo, moun nan oswa Top 3 a
   const [extras, myArtists, top10, top3Extras] = await Promise.all([
@@ -88,6 +112,12 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
     bubbles = (popularRows ?? []) as BubbleArtist[];
     bubblesTitle = "🔥 Atis popilè yo";
   }
+  // Pwofil boosted yo an premye nan sèk yo
+  const boostedBubbles: BubbleArtist[] = ((boostedArtists ?? []) as { id: string; display_name: string; avatar_url: string | null; is_verified: boolean }[]).map(
+    (a) => ({ artist_id: a.id, display_name: a.display_name, avatar_url: a.avatar_url, plays: 0, is_verified: a.is_verified, boosted: true }),
+  );
+  const boostedArtistIds = new Set(boostedBubbles.map((b) => b.artist_id));
+  bubbles = [...boostedBubbles, ...bubbles.filter((b) => !boostedArtistIds.has(b.artist_id))];
 
   // Vag 3: badj ✓ ak stati vivan (wonn vèt) atis yo nan sèk yo
   const bubbleIds = bubbles.map((b) => b.artist_id);
@@ -99,7 +129,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
     liveNowMap(supabase),
   ]);
   const verified = new Set((verifiedRows ?? []).map((r) => r.id));
-  bubbles = bubbles.map((b) => ({ ...b, is_verified: verified.has(b.artist_id) }));
+  bubbles = bubbles.map((b) => ({ ...b, is_verified: b.is_verified || verified.has(b.artist_id) }));
 
   return (
     <>
