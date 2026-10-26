@@ -76,6 +76,8 @@ export async function signupArtist(formData: FormData): Promise<ArtistSignupResu
   const displayName = String(formData.get("display_name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim().slice(0, 100);
+  // Pseudo manm afilye ki envite atis la (opsyonèl)
+  const referral = String(formData.get("referral") ?? "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20);
   const pin = String(formData.get("pin") ?? "").trim();
   const pinConfirm = String(formData.get("pin_confirm") ?? "").trim();
   const method = formData.get("method") === "natcash" ? "natcash" : "moncash";
@@ -102,7 +104,7 @@ export async function signupArtist(formData: FormData): Promise<ArtistSignupResu
     options: {
       // Telefòn nan ale nan tablo prive artist_private (pa nan profile piblik la)
       // Zòn nan (vil/depatman/peyi) ale sou pwofil piblik la pou CV atis la
-      data: { display_name: displayName, role: "artist", phone, location: location || null },
+      data: { display_name: displayName, role: "artist", phone, location: location || null, referral: referral || null },
       emailRedirectTo: `${origin}/auth/callback`,
     },
   });

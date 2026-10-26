@@ -11,6 +11,7 @@ import { Field, FormMessage, SubmitButton, inputClass } from "./ui";
 import { formatUSD } from "@/lib/donations";
 import { useSettings } from "@/components/SettingsProvider";
 import { ArtistSignupModal } from "@/components/registration/ArtistSignupModal";
+import { ReferralField } from "./ReferralField";
 
 const roles = [
   { value: "listener", icon: "🎧", label: "Koutè", hint: "Mwen vle koute mizik" },
@@ -19,7 +20,7 @@ const roles = [
 
 const pinClass = `${inputClass} tracking-[0.5em]`;
 
-export function SignupForm({ initialRole = "listener" }: { initialRole?: "listener" | "artist" }) {
+export function SignupForm({ initialRole = "listener", referral = "" }: { initialRole?: "listener" | "artist"; referral?: string }) {
   const [state, formAction] = useFormState(signup, undefined);
   const settings = useSettings();
   const [role, setRole] = useState<"listener" | "artist">(initialRole);
@@ -96,6 +97,7 @@ export function SignupForm({ initialRole = "listener" }: { initialRole?: "listen
             <LocationSelect required />
           </Field>
         )}
+        {isArtist && <ReferralField initial={referral} />}
         <Field label="Imèl">
           <input name="email" type="email" required autoComplete="email" placeholder="ou@egzanp.com" className={inputClass} />
         </Field>

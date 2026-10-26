@@ -6,7 +6,7 @@ import { SignupForm } from "@/components/auth/SignupForm";
 
 export const metadata: Metadata = { title: "Enskri | UpMizik" };
 
-export default async function SignupPage({ searchParams }: { searchParams: { wol?: string } }) {
+export default async function SignupPage({ searchParams }: { searchParams: { wol?: string; ref?: string } }) {
   const wantsArtist = searchParams.wol === "atis";
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -15,7 +15,7 @@ export default async function SignupPage({ searchParams }: { searchParams: { wol
 
   return (
     <AuthCard title={wantsArtist ? "🎤 Kreye kont atis ou" : "Kreye kont ou"} subtitle="Rantre nan kominote UpMizik la." closable>
-      <SignupForm initialRole={wantsArtist ? "artist" : "listener"} />
+      <SignupForm initialRole={wantsArtist || searchParams.ref ? "artist" : "listener"} referral={searchParams.ref ?? ""} />
     </AuthCard>
   );
 }

@@ -39,6 +39,8 @@ export async function Header() {
     ? await supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null)
     : { count: 0 };
 
+  // Manm afilye apwouve: lyen "Espas manm" nan meni an (erè = migration manm yo poko kouri)
+  const { data: member } = user ? await supabase.from("members").select("status").eq("user_id", user.id).maybeSingle() : { data: null };
   const isArtist = profile?.role === "artist";
   const canUpload = isArtist && profile?.status === "approved";
   const displayName = profile?.display_name ?? user?.email ?? null;
@@ -57,6 +59,9 @@ export async function Header() {
     { href: "/kredi", label: "Kredi mwen", icon: "coin" as const, hint: "Pou voye kado" },
     { href: "/telechaje", label: "Mizik offline", icon: "download" as const, hint: "San entènèt" },
     { href: "/sosyal", label: "Sosyal", icon: "chat" as const, hint: "Nouvèl atis yo" },
+    member?.status === "approved"
+      ? { href: "/manm/dashboard", label: "Espas manm", icon: "star" as const, hint: "Pseudo, kòb" }
+      : { href: "/manm", label: "Vin manm afilye", icon: "star" as const, hint: "Touche chak mwa" },
     ...(admin ? [{ href: "/admin", label: "Admin", icon: "shield" as const, hint: "Jesyon sit la", tone: "admin" as const }] : []),
   ];
 

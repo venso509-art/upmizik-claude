@@ -128,6 +128,7 @@ export async function Footer() {
               { href: "/dashboard", label: "Espas atis", icon: <LineIcon name="grid" /> },
               { href: "/upload", label: "Pibliye yon chante", icon: <LineIcon name="upload" /> },
               { href: "/live/nouvo", label: "Fè yon live", icon: <LineIcon name="live" /> },
+              { href: "/manm", label: "Vin manm afilye", icon: <LineIcon name="star" /> },
             ]}
           />
 

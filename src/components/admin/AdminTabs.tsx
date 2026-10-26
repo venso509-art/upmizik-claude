@@ -1,13 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NavTabs } from "@/components/NavTabs";
 
-async function countPending(table: "donations" | "payouts" | "artist_registrations" | "pro_requests" | "password_resets" | "credit_purchases" | "boost_purchases") {
+async function countPending(table: "donations" | "payouts" | "artist_registrations" | "pro_requests" | "password_resets" | "credit_purchases" | "boost_purchases" | "members") {
   const { count } = await createClient().from(table).select("id", { count: "exact", head: true }).eq("status", "pending");
   return count ?? 0;
 }
 
 export async function AdminTabs() {
-  const [registrations, donations, payouts, pro, resets, credits, boosts] = await Promise.all([
+  const [registrations, donations, payouts, pro, resets, credits, boosts, members] = await Promise.all([
     countPending("artist_registrations"),
     countPending("donations"),
     countPending("payouts"),
@@ -15,6 +15,7 @@ export async function AdminTabs() {
     countPending("password_resets"),
     countPending("credit_purchases"),
     countPending("boost_purchases"),
+    countPending("members"),
   ]);
   return (
     <div className="mb-8">
@@ -32,6 +33,7 @@ export async function AdminTabs() {
           { href: "/admin/pro", label: "⭐ Pro", badge: pro },
           { href: "/admin/kredi", label: "🪙 Kredi", badge: credits },
           { href: "/admin/boost", label: "🔥 Demann Boost", badge: boosts },
+          { href: "/admin/manm", label: "🤝 Manm", badge: members },
           { href: "/admin/live", label: "🎥 Jesyon Live" },
           { href: "/admin/pos", label: "🗞️ Jesyon Pòs" },
           { href: "/admin/top3", label: "🏆 Top 3" },
