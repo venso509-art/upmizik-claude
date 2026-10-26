@@ -47,6 +47,11 @@ export function BoostBox({
   const [songId, setSongId] = useState(songs[0]?.id ?? "");
   const [planId, setPlanId] = useState(plans[plans.length - 1]?.id ?? "");
   const [paying, setPaying] = useState(false);
+  // Fèmen pa defo (pa peze espas atis la); li louvri poukont li si lyen an se /dashboard#boost
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (window.location.hash === "#boost") setOpen(true);
+  }, []);
   const plan = plans.find((p) => p.id === planId);
   const song = songs.find((s) => s.id === songId);
   // Sa ki deja gen yon demann k ap tann (pwofil la = "profil")
@@ -54,27 +59,57 @@ export function BoostBox({
 
   const activeSongs = songs.filter((s) => s.boostedUntil);
   const cheapestPerDay = Math.min(...plans.map((p) => p.price_htg / p.days));
+  const fromPrice = Math.min(...plans.map((p) => p.price_htg));
+  const activeCount = activeSongs.length + (profileBoostedUntil ? 1 : 0);
+  const pendingCount = history.filter((h) => h.status === "pending").length;
 
   return (
     <section id="boost" className="mt-6 scroll-mt-24 overflow-hidden rounded-3xl border border-orange-500/30 bg-zinc-900/50">
-      {/* ===== TÈT ===== */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-600 to-rose-700 p-6 sm:p-7">
-        <div className="pointer-events-none absolute -right-10 -top-14 h-48 w-48 rounded-full bg-[#FFE34D]/30 blur-3xl" aria-hidden />
-        <div className="relative flex flex-wrap items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFFFFF]/20 text-3xl ring-1 ring-white/30 motion-safe:animate-heartbeat" aria-hidden>
-            🔥
+      {/* ===== TÈT: yon sèl liy (tankou "Vin Pro"); klike pou dewoule ===== */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="group relative flex w-full items-center gap-4 overflow-hidden bg-gradient-to-r from-amber-500/25 via-orange-600/15 to-transparent p-4 text-left transition hover:from-amber-500/35 sm:p-5"
+      >
+        {!open && (
+          <span className="absolute right-3 top-3 flex h-2.5 w-2.5" aria-hidden>
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-400" />
           </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-2xl font-black tracking-tight text-white">Boost: fè plis moun dekouvri w</h2>
-            <p className="mt-1 text-sm text-white/85">
-              Mizik oswa pwofil ou parèt <strong>an premye</strong> sou paj akèy la, ak badj <BoostBadge size="xs" className="align-middle" />, epi vizitè yo resevwa yon ti
-              rekòmandasyon pou yo koute w.
-            </p>
-          </div>
-        </div>
-      </div>
+        )}
+        <span
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600 text-2xl shadow-lg shadow-orange-600/30 transition group-hover:scale-105"
+          aria-hidden
+        >
+          🔥
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold text-white">Boost: fè plis moun dekouvri w</span>
+          <span className="block text-sm text-zinc-300">
+            {activeCount > 0
+              ? `🔥 ${activeCount} boost aktif${pendingCount ? ` · ${pendingCount} ap tann` : ""}`
+              : pendingCount
+                ? `⏳ ${pendingCount} demann ap tann verifikasyon`
+                : `Mizik oswa pwofil ou an premye · depi ${formatHTG(fromPrice)}`}
+          </span>
+        </span>
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          aria-hidden
+        >
+          ▾
+        </span>
+      </button>
 
-      <div className="space-y-6 p-5 sm:p-6">
+      {/* ===== KONTNI AN: dewoule dousman ===== */}
+      <div className={`grid transition-[grid-template-rows] duration-500 ease-out ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+      <div className="min-h-0 overflow-hidden">
+      <div className="space-y-6 border-t border-orange-500/20 p-5 sm:p-6">
+        <p className="text-sm text-zinc-300">
+          Mizik oswa pwofil ou parèt <strong className="text-white">an premye</strong> sou paj akèy la, ak badj <BoostBadge size="xs" className="align-middle" />, epi
+          vizitè yo resevwa yon ti rekòmandasyon pou yo koute w.
+        </p>
         {/* ===== BOOST KI AKTIF ===== */}
         {(profileBoostedUntil || activeSongs.length > 0) && (
           <div className="flex flex-wrap gap-2">
@@ -206,6 +241,8 @@ export function BoostBox({
             </ul>
           </div>
         )}
+      </div>
+      </div>
       </div>
 
       {paying && plan && (

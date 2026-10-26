@@ -244,6 +244,35 @@ const config: Config = {
           "0%": { opacity: "1", transform: "translateY(-10vh) rotate(0deg)" },
           "100%": { opacity: "0", transform: "translateY(105vh) rotate(720deg)" },
         },
+        // Notifikasyon boost (anlè sit la): kat la desann epi l rebondi
+        "toast-drop": {
+          "0%": { opacity: "0", transform: "translateY(-28px) scale(0.92)" },
+          "60%": { opacity: "1", transform: "translateY(4px) scale(1.02)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        // Ti kado a ki souke pou di "louvri m!"
+        "gift-wiggle": {
+          "0%, 60%, 100%": { transform: "rotate(0deg) scale(1)" },
+          "70%": { transform: "rotate(-12deg) scale(1.1)" },
+          "80%": { transform: "rotate(10deg) scale(1.1)" },
+          "90%": { transform: "rotate(-6deg) scale(1.05)" },
+        },
+        // Anvlòp kado a: rabat la louvri (3D), lèt la (kouvèti mizik la) monte soti ladan l
+        "flap-open": {
+          "0%": { transform: "rotateX(0deg)", zIndex: "30" },
+          "49%": { zIndex: "30" },
+          "50%": { zIndex: "5" },
+          "100%": { transform: "rotateX(180deg)", zIndex: "5" },
+        },
+        "letter-rise": {
+          "0%": { transform: "translateY(0)" },
+          "100%": { transform: "translateY(-62%)" },
+        },
+        "envelope-in": {
+          "0%": { opacity: "0", transform: "scale(0.6) translateY(30px)" },
+          "60%": { opacity: "1", transform: "scale(1.05) translateY(-4px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
         // Meni ☰: panèl la desann dousman
         "menu-drop": {
           "0%": { opacity: "0", transform: "translateY(-10px) scale(0.98)" },
@@ -292,6 +321,11 @@ const config: Config = {
         twinkle: "twinkle 3s ease-in-out infinite",
         "toast-pop": "toast-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
         "menu-drop": "menu-drop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "toast-drop": "toast-drop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "gift-wiggle": "gift-wiggle 1.6s ease-in-out infinite",
+        "flap-open": "flap-open 0.7s ease-in-out 0.35s both",
+        "letter-rise": "letter-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.95s both",
+        "envelope-in": "envelope-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
         vinyl: "vinyl-spin 5s linear infinite",
         shake: "shake 0.4s ease-in-out",
         equalizer: "equalizer 1.2s ease-in-out infinite",

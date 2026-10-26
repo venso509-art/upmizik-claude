@@ -1,42 +1,38 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePlayer } from "@/components/player/PlayerProvider";
+import { LineIcon } from "@/components/LineIcon";
 import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 import type { Track } from "@/components/player/PlayerProvider";
 
-// Pop-up pou VIZITÈ (pa konekte): rekòmandasyon pou mizik ak atis boosted yo.
-// Plizyè boost an menm tan: chak boost gen pwòp pop-up li, youn apre lòt, a 1, 4, 7, 10, 15 minit
+// Notifikasyon boost pou VIZITÈ (pa konekte): anlè sit la, menm stil ak notifikasyon like/kòmantè yo.
+// Plizyè boost an menm tan: chak boost gen pwòp notifikasyon li, youn apre lòt, a 1, 4, 7, 10, 15 minit
 // (apre sa, chak 5 minit). Chak èdtan lòd la melanje o aza, konsa chak atis gen menm chans pou l pase an premye.
+// Plan 24 è pou yon mizik: notifikasyon "kado" 🎁 — moun nan peze l, anvlòp la louvri, epi l ale sou mizik la.
 // Chak boost parèt yon sèl fwa pa sesyon (menm si moun nan chanje paj); pa sou paj live / koneksyon yo.
 const START_KEY = "upmizik-visit-start";
 const SHOWN_KEY = "upmizik-boost-shown";
 const SKIP = ["/live", "/konekte", "/enskri", "/admin", "/auth"];
 const SLOTS_MIN = [1, 4, 7, 10, 15];
 const slotMinutes = (i: number) => (i < SLOTS_MIN.length ? SLOTS_MIN[i] : 15 + 5 * (i - SLOTS_MIN.length + 1));
-const MIN_GAP_MS = 20_000; // omwen 20 segonn ant 2 pop-up
+const MIN_GAP_MS = 20_000; // omwen 20 segonn ant 2 notifikasyon
+const AUTO_HIDE_MS = 14_000; // notifikasyon nòmal la disparèt poukont li (kado a rete)
 
-type Pick = { kind: "song"; track: Track } | { kind: "artist"; id: string; name: string; avatarUrl: string | null };
+export type Pick = { kind: "song"; track: Track; gift: boolean } | { kind: "artist"; id: string; name: string; avatarUrl: string | null };
 const keyOf = (p: Pick) => (p.kind === "song" ? `s:${p.track.id}` : `a:${p.id}`);
 
-// Ti mesaj ki ankouraje moun nan klike (chak pop-up gen yon mesaj diferan)
+// Ti tèks kout (chak notifikasyon gen youn diferan)
 const SONG_LINES = [
-  (t: string, a: string) => `« ${t} » se yon mizik espesyal ${a} fè pou fè w plezi. Bay li yon chans, w ap renmen l! 🎧`,
-  (t: string, a: string) => `Tout moun ap pale de « ${t} » pa ${a}. Koute l kounye a epi di nou sa w panse! 🔥`,
-  (t: string, a: string) => `Yon ti pèl pou zòrèy ou: « ${t} » pa ${a}. Peze ▶, se 3 minit bon vibrasyon! ✨`,
-  (t: string, a: string) => `${a} mete tout kè l nan « ${t} ». Ou pa ka pa tande sa! 💛`,
-  (t: string, a: string) => `Ou bezwen yon bon mizik pou jounen an? « ${t} » pa ${a} se li menm! 🎶`,
-  (t: string, a: string) => `Fanatik ${a} yo pa ka sispann koute « ${t} ». Vin wè poukisa! 😍`,
+  "Yon mizik espesyal pou ou. Peze pou koute! 🎧",
+  "Tout moun ap koute l kounye a 🔥",
+  "3 minit bon vibrasyon. Peze ▶ ✨",
+  "Bay li yon chans, w ap renmen l 💛",
+  "Bon mizik pou jounen an 🎶",
 ];
-const ARTIST_LINES = [
-  (a: string) => `Dekouvri ${a}, yon talan k ap monte sou UpMizik. Mizik li ap fè w vibre! 🎤`,
-  (a: string) => `${a} se non pou w sonje. Vin tande pwochen gwo atis ayisyen an anvan tout moun! 🔥`,
-  (a: string) => `Ou poko konnen ${a}? Se kounye a pou w dekouvri l. Ou p ap regrèt! ✨`,
-  (a: string) => `Sipòte talan lakay: ${a} gen bèl mizik k ap tann ou sou paj li. 🇭🇹`,
-];
+const ARTIST_LINES = ["Yon talan k ap monte. Dekouvri l! 🎤", "Pwochen gwo atis ayisyen an 🔥", "Sipòte talan lakay 🇭🇹", "Mizik li ap fè w vibre ✨"];
 
 // Melanj ki chanje chak èdtan (menm lòd pou tout moun pandan èdtan an, yon lòt lòd èdtan apre a)
 function hourShuffle(items: Pick[]) {
@@ -66,12 +62,15 @@ function readShown(): Set<string> {
 
 export function BoostPopup() {
   const pathname = usePathname();
+  const router = useRouter();
   const { playTrack } = usePlayer();
   const [queue, setQueue] = useState<Pick[] | null>(null);
   const [pick, setPick] = useState<Pick | null>(null);
   const [line, setLine] = useState("");
   const [visible, setVisible] = useState(false);
+  const [opening, setOpening] = useState(false); // anvlòp kado a ap louvri
   const lastClosed = useRef(0);
+  const giftTimer = useRef<ReturnType<typeof setTimeout>>();
   const skip = SKIP.some((p) => pathname.startsWith(p));
 
   // Chaje boost aktif yo (sèlman pou vizitè ki pa konekte)
@@ -89,7 +88,14 @@ export function BoostPopup() {
       if (cancelled || session.session) return;
       const now = new Date().toISOString();
       const [{ data: songs }, { data: artists }] = await Promise.all([
-        supabase.from("songs").select(SONG_SELECT).eq("is_boosted", true).gt("boost_expires_at", now).is("archived_at", null).limit(20).returns<SongRow[]>(),
+        supabase
+          .from("songs")
+          .select(`${SONG_SELECT}, boost_days`)
+          .eq("is_boosted", true)
+          .gt("boost_expires_at", now)
+          .is("archived_at", null)
+          .limit(20)
+          .returns<(SongRow & { boost_days: number | null })[]>(),
         supabase
           .from("profiles")
           .select("id, display_name, avatar_url")
@@ -102,7 +108,7 @@ export function BoostPopup() {
       ]);
       if (cancelled) return;
       const options: Pick[] = [
-        ...(songs ?? []).map((s) => ({ kind: "song" as const, track: toTrack(supabase, s) })),
+        ...(songs ?? []).map((s) => ({ kind: "song" as const, track: toTrack(supabase, s), gift: s.boost_days === 1 })),
         ...((artists ?? []) as { id: string; display_name: string; avatar_url: string | null }[]).map((a) => ({
           kind: "artist" as const,
           id: a.id,
@@ -117,7 +123,7 @@ export function BoostPopup() {
     };
   }, [skip]);
 
-  // Pwochen pop-up la: premye boost ki poko parèt, nan minit pa l (1, 4, 7, 10, 15...)
+  // Pwochen notifikasyon an: premye boost ki poko parèt, nan minit pa l (1, 4, 7, 10, 15...)
   useEffect(() => {
     if (skip || visible || !queue?.length) return;
     const shown = readShown();
@@ -132,11 +138,8 @@ export function BoostPopup() {
       const chosen = queue[i];
       const hour = Math.floor(Date.now() / 3_600_000);
       setPick(chosen);
-      setLine(
-        chosen.kind === "song"
-          ? SONG_LINES[(i + hour) % SONG_LINES.length](chosen.track.title, chosen.track.artistName)
-          : ARTIST_LINES[(i + hour) % ARTIST_LINES.length](chosen.name),
-      );
+      setLine(chosen.kind === "song" ? SONG_LINES[(i + hour) % SONG_LINES.length] : ARTIST_LINES[(i + hour) % ARTIST_LINES.length]);
+      setOpening(false);
       setVisible(true);
       try {
         sessionStorage.setItem(SHOWN_KEY, JSON.stringify([...Array.from(readShown()), keyOf(chosen)]));
@@ -145,84 +148,172 @@ export function BoostPopup() {
     return () => clearTimeout(timer);
   }, [queue, visible, skip]);
 
+  // Notifikasyon nòmal la disparèt poukont li (kado a rete jiskaske moun nan louvri l oswa fèmen l)
+  const isGift = pick?.kind === "song" && pick.gift;
+  useEffect(() => {
+    if (!visible || isGift) return;
+    const t = setTimeout(() => {
+      lastClosed.current = Date.now();
+      setVisible(false);
+    }, AUTO_HIDE_MS);
+    return () => clearTimeout(t);
+  }, [visible, isGift]);
+
   if (!visible || !pick || skip) return null;
+
   const close = () => {
     lastClosed.current = Date.now();
     setVisible(false);
+    setOpening(false);
   };
-  const image = pick.kind === "song" ? pick.track.coverUrl : pick.avatarUrl;
-  const title = pick.kind === "song" ? pick.track.title : pick.name;
-  const subtitle = pick.kind === "song" ? pick.track.artistName : "Atis sou UpMizik";
+
+  // Ale sou mizik la (epi jwe l) oswa sou paj atis la (yon sèl fwa, menm si timer a ak bouton an tou de rive)
+  const go = () => {
+    clearTimeout(giftTimer.current);
+    if (!visible) return;
+    if (pick.kind === "song") {
+      playTrack(pick.track, [pick.track]);
+      router.push(`/chante/${pick.track.id}`);
+    } else router.push(`/atis/${pick.id}`);
+    close();
+  };
+
+  // Anvlòp la louvri, epi apre animasyon an nou mennen moun nan sou mizik la
+  const openGift = () => {
+    setOpening(true);
+    giftTimer.current = setTimeout(go, 2600);
+  };
+
+  return <BoostNotice pick={pick} line={line} opening={opening} onOpenGift={openGift} onGo={go} onClose={close} />;
+}
+
+// Afichaj la (separe pou ka montre l san done, pa egzanp pou tès)
+export function BoostNotice({
+  pick,
+  line,
+  opening,
+  onOpenGift,
+  onGo,
+  onClose,
+}: {
+  pick: Pick;
+  line: string;
+  opening: boolean;
+  onOpenGift: () => void;
+  onGo: () => void;
+  onClose: () => void;
+}) {
+  const isGift = pick.kind === "song" && pick.gift;
+  const title =
+    pick.kind === "song" ? (pick.gift ? "Ou gen yon kado mizik! 🎁" : `« ${pick.track.title} » · ${pick.track.artistName}`) : `Dekouvri ${pick.name}`;
+  const text = pick.kind === "song" && pick.gift ? "Peze anvlòp la pou w louvri l ✨" : line;
 
   return (
-    <div
-      className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-[85] sm:inset-x-auto sm:bottom-6 sm:left-6 sm:w-[23rem]"
-      role="dialog"
-      aria-label="Rekòmandasyon UpMizik"
-    >
-      {/* Bòdi gradyan (jòn → oranj → vèt) */}
-      <div className="rounded-[1.6rem] bg-gradient-to-br from-[#FFD700] via-orange-500 to-[#0A5C36] p-[2px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] motion-safe:animate-toast-pop">
-        <div className="force-dark relative overflow-hidden rounded-[1.5rem] bg-[#0B132B] p-4">
-          <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#FFD700]/20 blur-3xl" aria-hidden />
-          <button
-            type="button"
-            onClick={close}
-            className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm text-white/80 transition hover:bg-white/20"
-            aria-label="Fèmen"
-          >
-            ✕
-          </button>
-
-          <p className="relative inline-flex items-center gap-1.5 rounded-full bg-[#FFD700] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#0B132B]">
-            🔥 Rekòmande pou ou
-          </p>
-
-          <div className="relative mt-3 flex items-center gap-3.5">
-            <span
-              className={`relative h-20 w-20 shrink-0 overflow-hidden bg-zinc-800 shadow-lg ring-2 ring-[#FFD700]/70 ${pick.kind === "artist" ? "rounded-full" : "rounded-2xl"}`}
-            >
-              {image ? (
+    <>
+      {/* ===== KAT NOTIFIKASYON AN (anlè sit la, kat blan + kare jòn) ===== */}
+      {!opening && (
+        <div
+          className="fixed inset-x-3 top-[calc(4.75rem+env(safe-area-inset-top))] z-[85] flex justify-center sm:inset-x-auto sm:right-4 sm:w-[24rem]"
+          role="dialog"
+          aria-label="Rekòmandasyon UpMizik"
+        >
+          <div className="relative w-full rounded-[1.25rem] bg-[#FFFFFF] shadow-[0_18px_45px_-12px_rgba(11,19,43,0.55),0_4px_14px_rgba(11,19,43,0.18)] ring-1 ring-[#0B132B]/5 motion-safe:animate-toast-drop">
+            <button type="button" onClick={isGift ? onOpenGift : onGo} className="flex w-full items-center gap-3.5 py-3.5 pl-3.5 pr-10 text-left">
+              <span
+                className={`relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl text-[#0B132B] shadow-[inset_0_-2px_0_rgba(0,0,0,0.08)] ${
+                  isGift ? "bg-gradient-to-br from-[#FFE34D] to-[#FFB800]" : "bg-[#FFD700]"
+                }`}
+                aria-hidden
+              >
+                {isGift ? (
+                  <span className="text-2xl motion-safe:animate-gift-wiggle">🎁</span>
+                ) : (
+                  <LineIcon name={pick.kind === "song" ? "music" : "mic"} className="h-6 w-6" />
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-bold leading-tight text-[#0B132B]">{title}</span>
+                <span className="mt-1 block truncate text-[13px] text-[#64708A]">{text}</span>
+              </span>
+              {/* Ti foto mizik/atis la adwat */}
+              {!isGift && (pick.kind === "song" ? pick.track.coverUrl : pick.avatarUrl) && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={image} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <span className="flex h-full items-center justify-center text-3xl">{pick.kind === "song" ? "🎵" : "🎤"}</span>
+                <img
+                  src={(pick.kind === "song" ? pick.track.coverUrl : pick.avatarUrl) ?? ""}
+                  alt=""
+                  className={`h-11 w-11 shrink-0 object-cover ${pick.kind === "artist" ? "rounded-full" : "rounded-lg"}`}
+                />
               )}
-            </span>
-            <span className="min-w-0 pr-6">
-              <span className="block truncate text-lg font-black leading-tight text-white">{title}</span>
-              <span className="mt-0.5 block truncate text-sm font-semibold text-[#FFE34D]">{subtitle}</span>
-            </span>
-          </div>
-
-          <p className="relative mt-3 text-[14px] leading-snug text-white/85">{line}</p>
-
-          <div className="relative mt-4 flex gap-2">
-            {pick.kind === "song" ? (
-              <button
-                type="button"
-                onClick={() => {
-                  playTrack(pick.track, [pick.track]);
-                  close();
-                }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#FFD700] px-4 py-3 text-[15px] font-black text-[#0B132B] shadow-lg shadow-[#FFD700]/20 transition hover:brightness-105 active:scale-[0.98]"
-              >
-                ▶ Koute l kounye a
-              </button>
-            ) : (
-              <Link
-                href={`/atis/${pick.id}`}
-                onClick={close}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#FFD700] px-4 py-3 text-[15px] font-black text-[#0B132B] shadow-lg shadow-[#FFD700]/20 transition hover:brightness-105 active:scale-[0.98]"
-              >
-                🎤 Dekouvri l
-              </Link>
-            )}
-            <button type="button" onClick={close} className="rounded-full px-4 py-3 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white">
-              Pita
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-sm text-[#94A0B8] transition hover:bg-[#F1F3F8] hover:text-[#0B132B]"
+              aria-label="Fèmen"
+            >
+              ✕
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+
+      {/* ===== ANVLÒP KADO A K AP LOUVRI (plan 24 è, mizik) ===== */}
+      {opening && pick.kind === "song" && (
+        <div className="fixed inset-0 z-[95] flex flex-col items-center justify-center bg-black/70 px-6 backdrop-blur-sm" onClick={onGo}>
+          <div className="relative h-48 w-72 motion-safe:animate-envelope-in" style={{ perspective: "800px" }}>
+            {/* Do anvlòp la */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-[#E6B800] to-[#C99A00] shadow-2xl" />
+            {/* Lèt la: kouvèti mizik la ki monte soti nan anvlòp la */}
+            <div className="absolute inset-x-4 bottom-3 z-10 flex h-40 flex-col items-center rounded-xl bg-[#FFFFFF] p-2.5 shadow-lg motion-safe:animate-letter-rise">
+              <span className="h-24 w-24 overflow-hidden rounded-lg bg-[#F1F3F8] shadow-md">
+                {pick.track.coverUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={pick.track.coverUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="flex h-full items-center justify-center text-4xl">🎵</span>
+                )}
+              </span>
+              <span className="mt-2 w-full truncate text-center text-sm font-black text-[#0B132B]">{pick.track.title}</span>
+              <span className="w-full truncate text-center text-xs font-semibold text-[#64708A]">{pick.track.artistName}</span>
+            </div>
+            {/* Pòch devan an */}
+            <div
+              className="absolute inset-0 z-20 rounded-2xl bg-gradient-to-b from-[#FFD700] to-[#F2B900]"
+              style={{ clipPath: "polygon(0 38%, 50% 72%, 100% 38%, 100% 100%, 0 100%)" }}
+            />
+            {/* Rabat la (li louvri an 3D) */}
+            <div
+              className="absolute inset-x-0 top-0 z-30 h-[62%] origin-top motion-safe:animate-flap-open"
+              style={{ backfaceVisibility: "visible" }}
+            >
+              <div
+                className="absolute inset-0 bg-gradient-to-b from-[#FFE34D] to-[#FFD000]"
+                style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)", borderRadius: "1rem 1rem 0 0" }}
+              />
+              {/* Ti sele kè a: li vire ak rabat la */}
+              <span className="absolute left-1/2 top-[68%] flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#E11D48] text-sm text-[#FFFFFF] shadow-lg">
+                ❤
+              </span>
+            </div>
+            {/* Ti zetwal ki eklate */}
+            {["-left-6 top-0", "-right-6 top-2", "left-6 -top-10", "right-8 -top-12", "left-1/2 -top-16"].map((pos, i) => (
+              <span
+                key={pos}
+                className={`absolute ${pos} text-2xl opacity-0 motion-safe:animate-heart-float`}
+                style={{ animationDelay: `${1.1 + i * 0.12}s` }}
+                aria-hidden
+              >
+                {["✨", "🎶", "⭐", "💛", "🎵"][i]}
+              </span>
+            ))}
+          </div>
+          <p className="mt-16 text-center text-lg font-black text-white">Yon kado mizik pou ou! 🎧</p>
+          <p className="mt-1 text-center text-sm text-white/70">N ap mennen w sou « {pick.track.title} »…</p>
+          <button type="button" onClick={onGo} className="mt-5 rounded-full bg-[#FFD700] px-6 py-3 font-black text-[#0B132B] shadow-lg">
+            ▶ Koute l kounye a
+          </button>
+        </div>
+      )}
+    </>
   );
 }
