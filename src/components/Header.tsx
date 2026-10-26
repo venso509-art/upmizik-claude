@@ -31,7 +31,7 @@ export async function Header() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: profile } = user
-    ? await supabase.from("profiles").select("display_name, role, status").eq("id", user.id).single()
+    ? await supabase.from("profiles").select("display_name, role, status, avatar_url").eq("id", user.id).single()
     : { data: null };
   const admin = await isAdmin(supabase, user?.id);
   // Kantite mesaj ki poko li (RLS la limite l a pwòp mesaj itilizatè a)
@@ -45,15 +45,19 @@ export async function Header() {
 
   // Lyen yo pou meni ☰ telefòn nan (menm lyen ak header òdinatè a)
   const menuItems: MenuItem[] = [
-    ...(canUpload ? [{ href: "/upload", label: "+ Pibliye yon chante", tone: "primary" as const }] : []),
-    ...(admin ? [{ href: "/admin", label: "🛡️ Admin", tone: "admin" as const }] : []),
-    ...(isArtist ? [{ href: "/dashboard", label: "📊 Dashboard" }] : []),
-    { href: "/live", label: "🔴 Live yo" },
-    { href: "/telechaje", label: "📥 Mizik offline" },
-    { href: "/kredi", label: "🪙 Kredi mwen" },
-    { href: "/mesaj", label: `🔔 Mesaj${unread ? ` (${unread})` : ""}` },
-    isArtist && user ? { href: `/atis/${user.id}`, label: "🎤 Paj atis mwen" } : { href: "/pwofil", label: "🎧 Pwofil mwen" },
-    ...(user && !isArtist ? [{ href: "/vin-atis", label: "🎤 Vin atis (pibliye mizik ou)", tone: "primary" as const }] : []),
+    ...(canUpload ? [{ href: "/upload", label: "Pibliye yon chante", icon: "upload" as const, tone: "primary" as const }] : []),
+    ...(user && !isArtist ? [{ href: "/vin-atis", label: "Vin atis: pibliye mizik ou", icon: "mic" as const, tone: "primary" as const }] : []),
+    ...(isArtist ? [{ href: "/dashboard", label: "Dashboard", icon: "grid" as const, hint: "Statistik, revni" }] : []),
+    { href: "/live", label: "Live yo", icon: "live" as const, hint: "An dirèk kounye a", tone: "live" as const },
+    ...(isArtist ? [{ href: "/live/nouvo", label: "Fè yon live", icon: "mic" as const, hint: "Atis Pro" }] : []),
+    { href: "/mesaj", label: "Mesaj", icon: "bell" as const, hint: "Notifikasyon", badge: unread ? String(unread > 99 ? "99+" : unread) : undefined },
+    isArtist && user
+      ? { href: `/atis/${user.id}`, label: "Paj atis mwen", icon: "user" as const, hint: "Pwofil piblik" }
+      : { href: "/pwofil", label: "Pwofil mwen", icon: "user" as const, hint: "Foto, non" },
+    { href: "/kredi", label: "Kredi mwen", icon: "coin" as const, hint: "Pou voye kado" },
+    { href: "/telechaje", label: "Mizik offline", icon: "download" as const, hint: "San entènèt" },
+    { href: "/sosyal", label: "Sosyal", icon: "chat" as const, hint: "Nouvèl atis yo" },
+    ...(admin ? [{ href: "/admin", label: "Admin", icon: "shield" as const, hint: "Jesyon sit la", tone: "admin" as const }] : []),
   ];
 
   return (
@@ -141,7 +145,7 @@ export async function Header() {
             {/* ===== TELEFÒN: 🔔 + meni ☰ ===== */}
             <div className="flex shrink-0 items-center gap-1 lg:hidden">
               <Bell unread={unread ?? 0} />
-              <MobileMenu items={menuItems} name={displayName} loggedIn />
+              <MobileMenu items={menuItems} name={displayName} loggedIn role={isArtist ? "artist" : "listener"} avatarUrl={profile?.avatar_url ?? null} />
             </div>
           </>
         ) : (

@@ -3,57 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CONTACT_EMAIL } from "@/lib/site";
 import { NewsletterForm } from "./NewsletterForm";
 import { SocialIcons } from "./SocialIcons";
-
-// Ikòn liy (menm stil toupatou), olye emoji
-const icon = (children: React.ReactNode) => (
-  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    {children}
-  </svg>
-);
-const I = {
-  home: icon(
-    <>
-      <path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z" />
-    </>,
-  ),
-  sparkle: icon(<path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />),
-  mic: icon(
-    <>
-      <rect x="9" y="2" width="6" height="12" rx="3" />
-      <path d="M19 10a7 7 0 0 1-14 0M12 17v5" />
-    </>,
-  ),
-  chat: icon(<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />),
-  search: icon(
-    <>
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </>,
-  ),
-  download: icon(<path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />),
-  star: icon(<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z" />),
-  grid: icon(
-    <>
-      <rect x="3" y="3" width="7" height="9" rx="1.5" />
-      <rect x="14" y="3" width="7" height="5" rx="1.5" />
-      <rect x="14" y="12" width="7" height="9" rx="1.5" />
-      <rect x="3" y="16" width="7" height="5" rx="1.5" />
-    </>,
-  ),
-  upload: icon(<path d="M12 21V9m0 0-4 4m4-4 4 4M4 7V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2" />),
-  live: icon(
-    <>
-      <circle cx="12" cy="12" r="2" />
-      <path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14" />
-    </>,
-  ),
-  mail: icon(
-    <>
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="m22 7-10 6L2 7" />
-    </>,
-  ),
-};
+import { LineIcon } from "@/components/LineIcon";
 
 type FooterLink = { href: string; label: string; icon: React.ReactNode; badge?: string };
 
@@ -160,13 +110,13 @@ export async function Footer() {
             title="Dekouvri"
             accent="bg-citron-400"
             links={[
-              { href: "/", label: "Akèy", icon: I.home },
-              { href: "/#nouvo", label: "Nouvo mizik", icon: I.sparkle },
-              { href: "/atis", label: "Atis yo", icon: I.mic },
-              { href: "/live", label: "Live", icon: I.live, badge: "LIVE" },
-              { href: "/sosyal", label: "Sosyal", icon: I.chat },
-              { href: "/chache", label: "Chache", icon: I.search },
-              { href: "/telechaje", label: "Mizik offline", icon: I.download },
+              { href: "/", label: "Akèy", icon: <LineIcon name="home" /> },
+              { href: "/#nouvo", label: "Nouvo mizik", icon: <LineIcon name="sparkle" /> },
+              { href: "/atis", label: "Atis yo", icon: <LineIcon name="mic" /> },
+              { href: "/live", label: "Live", icon: <LineIcon name="live" />, badge: "LIVE" },
+              { href: "/sosyal", label: "Sosyal", icon: <LineIcon name="chat" /> },
+              { href: "/chache", label: "Chache", icon: <LineIcon name="search" /> },
+              { href: "/telechaje", label: "Mizik offline", icon: <LineIcon name="download" /> },
             ]}
           />
 
@@ -174,10 +124,10 @@ export async function Footer() {
             title="Pou atis"
             accent="bg-fuchsia-500"
             links={[
-              { href: "/enskri?wol=atis", label: "Enskri kòm atis", icon: I.star },
-              { href: "/dashboard", label: "Espas atis", icon: I.grid },
-              { href: "/upload", label: "Pibliye yon chante", icon: I.upload },
-              { href: "/live/nouvo", label: "Fè yon live", icon: I.live },
+              { href: "/enskri?wol=atis", label: "Enskri kòm atis", icon: <LineIcon name="star" /> },
+              { href: "/dashboard", label: "Espas atis", icon: <LineIcon name="grid" /> },
+              { href: "/upload", label: "Pibliye yon chante", icon: <LineIcon name="upload" /> },
+              { href: "/live/nouvo", label: "Fè yon live", icon: <LineIcon name="live" /> },
             ]}
           />
 
@@ -189,7 +139,7 @@ export async function Footer() {
             </p>
             <div className="mt-5 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/10">
               <p className="flex items-center gap-2.5 text-[15px] font-semibold text-white">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-citron-400 text-zinc-950">{I.mail}</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-citron-400 text-zinc-950"><LineIcon name="mail" /></span>
                 Pa rate okenn nouvo mizik
               </p>
               <p className="mt-2 text-sm text-zinc-400">Nouvo chante ak nouvèl UpMizik dirèkteman nan imèl ou.</p>
@@ -245,7 +195,7 @@ export async function Footer() {
               href={`mailto:${CONTACT_EMAIL}`}
               className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-zinc-300 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white"
             >
-              {I.mail} {CONTACT_EMAIL}
+              <LineIcon name="mail" /> {CONTACT_EMAIL}
             </a>
           </div>
         </div>

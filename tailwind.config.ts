@@ -244,6 +244,11 @@ const config: Config = {
           "0%": { opacity: "1", transform: "translateY(-10vh) rotate(0deg)" },
           "100%": { opacity: "0", transform: "translateY(105vh) rotate(720deg)" },
         },
+        // Meni ☰: panèl la desann dousman
+        "menu-drop": {
+          "0%": { opacity: "0", transform: "translateY(-10px) scale(0.98)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
         // Notifikasyon: kat la monte epi l "rebondi" yon ti kras
         "toast-pop": {
           "0%": { opacity: "0", transform: "translateY(28px) scale(0.92)" },
@@ -286,6 +291,7 @@ const config: Config = {
         "blob-drift": "blob-drift 22s ease-in-out infinite",
         twinkle: "twinkle 3s ease-in-out infinite",
         "toast-pop": "toast-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "menu-drop": "menu-drop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both",
         vinyl: "vinyl-spin 5s linear infinite",
         shake: "shake 0.4s ease-in-out",
         equalizer: "equalizer 1.2s ease-in-out infinite",
