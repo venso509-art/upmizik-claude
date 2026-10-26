@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { logout } from "@/app/auth/actions";
 import { InstallAppButton } from "@/components/InstallAppPrompt";
 
@@ -12,6 +12,7 @@ export type MenuItem = { href: string; label: string; tone?: "admin" | "primary"
 export function MobileMenu({ items, name, loggedIn }: { items: MenuItem[]; name: string | null; loggedIn: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
 
   // Fèmen meni an lè w chanje paj, oswa ak bouton Escape
   useEffect(() => setOpen(false), [pathname]);
@@ -20,6 +21,28 @@ export function MobileMenu({ items, name, loggedIn }: { items: MenuItem[]; name:
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Meni an louvri: paj la dèyè a BLOKE (pa woule menm si w pase dwèt sou li).
+  // overflow:hidden pa ase sou iPhone, kidonk nou bloke glisman dwèt la tou, sòf andedan meni an.
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const prev = [html.style.overflow, document.body.style.overflow];
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    const block = (e: TouchEvent | WheelEvent) => {
+      const nav = navRef.current;
+      if (nav && nav.contains(e.target as Node) && nav.scrollHeight > nav.clientHeight) return; // meni an li menm ka woule
+      e.preventDefault();
+    };
+    document.addEventListener("touchmove", block, { passive: false });
+    document.addEventListener("wheel", block, { passive: false });
+    return () => {
+      [html.style.overflow, document.body.style.overflow] = prev;
+      document.removeEventListener("touchmove", block);
+      document.removeEventListener("wheel", block);
+    };
   }, [open]);
 
   const tone = (t?: MenuItem["tone"]) =>
@@ -44,8 +67,8 @@ export function MobileMenu({ items, name, loggedIn }: { items: MenuItem[]; name:
       {open && (
         <>
           {/* Klike deyò panèl la pou fèmen l */}
-          <div className="fixed inset-x-0 bottom-0 top-[calc(4rem+env(safe-area-inset-top))] z-40 bg-black/50" onClick={() => setOpen(false)} aria-hidden />
-          <nav className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-5rem)] overflow-y-auto border-b border-zinc-800 bg-zinc-950 px-4 pb-5 pt-3 shadow-2xl">
+          <div className="fixed inset-x-0 bottom-0 top-[calc(4rem+env(safe-area-inset-top))] z-40 touch-none bg-black/50" onClick={() => setOpen(false)} aria-hidden />
+          <nav ref={navRef} className="absolute inset-x-0 top-full z-50 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain border-b border-zinc-800 bg-zinc-950 px-4 pb-5 pt-3 shadow-2xl">
             {name && <p className="px-3 pb-3 text-sm text-zinc-400">{name}</p>}
             <ul className="space-y-1">
               {items.map((item) => (
