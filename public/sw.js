@@ -65,3 +65,51 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(networkFirst(request, request));
   }
 });
+
+// =====================================================================
+// NOTIFIKASYON PUSH: menm lè sit la fèmen, telefòn nan resevwa yon siyal; nou mande sit la
+// dènye notifikasyon moun nan (/api/push/latest, ak sesyon li) epi nou montre l.
+// =====================================================================
+const ICON = "/icons/icon-192.png";
+const CLEAN_TITLE = /^[\p{Extended_Pictographic}️‍\s]+/u;
+
+self.addEventListener("push", (event) => {
+  event.waitUntil(
+    (async () => {
+      let n = {};
+      try {
+        const res = await fetch("/api/push/latest", { credentials: "same-origin", cache: "no-store" });
+        if (res.ok) n = await res.json();
+      } catch {}
+      const title = (n.title && (n.title.replace(CLEAN_TITLE, "") || n.title)) || "UpMizik";
+      await self.registration.showNotification(title, {
+        body: n.body || "Ou gen yon nouvo notifikasyon 🔔",
+        icon: ICON,
+        badge: ICON,
+        tag: n.id || "upmizik",
+        renotify: Boolean(n.id),
+        data: { link: n.link || "/mesaj" },
+      });
+    })(),
+  );
+});
+
+// Peze notifikasyon an: louvri paj li a (oswa mete sit la devan si l deja louvri)
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const link = (event.notification.data && event.notification.data.link) || "/mesaj";
+  const target = new URL(link, self.location.origin).href;
+  event.waitUntil(
+    (async () => {
+      const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const w of wins) {
+        if (new URL(w.url).origin === self.location.origin) {
+          await w.focus();
+          if ("navigate" in w) await w.navigate(target);
+          return;
+        }
+      }
+      await self.clients.openWindow(target);
+    })(),
+  );
+});

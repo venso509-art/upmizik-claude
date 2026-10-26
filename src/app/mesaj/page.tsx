@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Inbox, type InboxItem } from "@/components/inbox/Inbox";
+import { PushToggle } from "@/components/push/PushControls";
 
 export const metadata: Metadata = { title: "Mesaj | UpMizik" };
 
@@ -33,6 +34,10 @@ export default async function InboxPage() {
       <p className="mt-1 text-zinc-400">
         {unread > 0 ? `Ou gen ${unread} nouvo mesaj.` : "Notifikasyon ak mesaj ekip UpMizik la."}
       </p>
+      {/* Notifikasyon push sou aparèy sa a */}
+      <div className="mt-6">
+        <PushToggle />
+      </div>
       <div className="mt-8">
         <Inbox items={items} />
       </div>
