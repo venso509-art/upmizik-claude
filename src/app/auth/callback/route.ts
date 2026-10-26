@@ -7,8 +7,13 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const next = request.nextUrl.searchParams.get("next");
-  // Sèlman yon chemen sou sit la (pa yon lòt sit)
-  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  // Sèlman yon chemen sou sit la (pa yon lòt sit). Navigatè yo li "/\sit.com" tankou "//sit.com",
+  // kidonk nou refize tou "\" ak karaktè kontwòl yo, epi nou verifye adrès final la rete sou UpMizik.
+  let safeNext = "/";
+  if (next && next.startsWith("/") && !next.startsWith("//") && !/[\\\u0000-\u001f]/.test(next)) {
+    const target = new URL(next, request.url);
+    if (target.origin === request.nextUrl.origin) safeNext = target.pathname + target.search + target.hash;
+  }
 
   if (code) {
     const supabase = createClient();
