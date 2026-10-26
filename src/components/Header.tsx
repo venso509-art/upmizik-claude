@@ -120,6 +120,11 @@ export async function Header() {
                   📊 Dashboard
                 </Link>
               )}
+              {member?.status === "approved" && (
+                <Link href="/manm/dashboard" className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800 hover:text-white">
+                  🤝 Espas manm
+                </Link>
+              )}
               {canUpload && (
                 <Link
                   href="/upload"

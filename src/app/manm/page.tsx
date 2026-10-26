@@ -97,7 +97,7 @@ export default async function MemberPage() {
                 <p className="mt-1 text-zinc-400">Korije enfòmasyon yo epi voye demann nan ankò.</p>
               </div>
             )}
-            <MemberJoin defaultName={profile?.display_name ?? ""} defaultEmail={user.email ?? ""} />
+            <MemberJoin defaultNickname={profile?.display_name ?? ""} defaultEmail={user.email ?? ""} />
           </>
         )}
       </section>

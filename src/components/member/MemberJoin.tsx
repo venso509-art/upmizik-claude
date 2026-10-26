@@ -5,7 +5,7 @@ import { MemberForm } from "@/components/member/MemberForm";
 import { BASE_RATE_USD, BONUS_RATE_USD, formatUsd } from "@/lib/members";
 
 // "Mwen vle vin manm": kontra a (ak kòb la) dewoule SÈLMAN la a; moun nan dakò, epi fòm nan parèt.
-export function MemberJoin({ defaultName, defaultEmail }: { defaultName: string; defaultEmail: string }) {
+export function MemberJoin({ defaultNickname, defaultEmail }: { defaultNickname: string; defaultEmail: string }) {
   const [open, setOpen] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
@@ -62,7 +62,7 @@ export function MemberJoin({ defaultName, defaultEmail }: { defaultName: string;
               <div className="mt-6 motion-safe:animate-fade-up">
                 <h2 className="text-xl font-black text-white">Enfòmasyon ou</h2>
                 <p className="mb-5 mt-1 text-sm text-zinc-400">Ekip la ap apwouve demann ou epi ba w pseudo pa w.</p>
-                <MemberForm defaultName={defaultName} defaultEmail={defaultEmail} />
+                <MemberForm defaultNickname={defaultNickname} defaultEmail={defaultEmail} />
               </div>
             )}
           </div>

@@ -185,6 +185,9 @@ export default async function DashboardPage() {
     adminNote: b.admin_note,
   }));
 
+  // Atis ki manm afilye tou: lyen pou Espas manm li
+  const { data: memberRow } = await supabase.from("members").select("status, pseudo_referral").eq("user_id", user.id).maybeSingle();
+
   // Atis Pro: jiska 10 kolaboratè lè l ap modifye yon chante
   const isProArtist = (await supabase.rpc("is_pro", { p_user: user.id })).data === true;
   const managed: ManagedSong[] = songs.map((s) => ({
@@ -301,6 +304,25 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </section>
+
+      {/* ===== ESPAS MANM (atis ki manm afilye tou) ===== */}
+      {memberRow?.status === "approved" && (
+        <Link
+          href="/manm/dashboard"
+          className="mt-6 flex items-center gap-4 rounded-2xl border border-[#FFD700]/30 bg-gradient-to-r from-[#FFD700]/15 to-transparent p-4 transition hover:border-[#FFD700]/60"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFD700] text-2xl" aria-hidden>
+            🤝
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold text-white">Espas manm afilye ou</span>
+            <span className="block text-sm text-zinc-300">Pseudo {memberRow.pseudo_referral} · objektif, atis ou fè enskri, kòb ou</span>
+          </span>
+          <span className="text-zinc-400" aria-hidden>
+            →
+          </span>
+        </Link>
+      )}
 
       {/* ===== BOOST (piblisite peye) ===== */}
       {(boostPlans ?? []).length > 0 && (

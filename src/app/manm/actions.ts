@@ -11,18 +11,21 @@ export async function requestMembership(formData: FormData): Promise<MemberResul
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Ou dwe konekte." };
   const fullName = String(formData.get("full_name") ?? "").trim().replace(/\s+/g, " ");
+  const nickname = String(formData.get("nickname") ?? "").trim().replace(/\s+/g, " ");
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const phone = String(formData.get("phone") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim().slice(0, 60);
   const motivation = String(formData.get("motivation") ?? "").trim().slice(0, 500);
   const sex = String(formData.get("sex") ?? "");
   if (sex !== "fi" && sex !== "gason") return { error: "Chwazi si w se fi oswa gason." };
-  if (fullName.length < 2 || fullName.length > 80) return { error: "Mete non konplè ou." };
+  if (fullName.length < 2 || fullName.length > 80) return { error: "Mete vrè non ak siyati ou." };
+  if (nickname.length < 2 || nickname.length > 40) return { error: "Mete non jwèt ou oswa non atis ou." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Mete yon imèl valid." };
   if (phone.replace(/\D/g, "").length < 8 || phone.length > 20) return { error: "Mete yon nimewo telefòn/WhatsApp valid." };
 
   const { error } = await supabase.rpc("request_membership", {
     p_full_name: fullName,
+    p_nickname: nickname,
     p_email: email,
     p_phone: phone,
     p_city: city,

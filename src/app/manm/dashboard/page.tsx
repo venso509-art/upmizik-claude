@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -31,7 +32,7 @@ export default async function MemberDashboard() {
   if (!user) redirect("/konekte");
   const { data: member } = await supabase
     .from("members")
-    .select("id, full_name, pseudo_referral, objective_total, current_progress, total_earned, contract_months, status, approved_at")
+    .select("id, full_name, nickname, pseudo_referral, objective_total, current_progress, total_earned, contract_months, status, approved_at")
     .eq("user_id", user.id)
     .maybeSingle();
   if (!member || member.status !== "approved" || !member.pseudo_referral) redirect("/manm");
@@ -56,7 +57,10 @@ export default async function MemberDashboard() {
   const htg = earn.usd * settings.htgPerUsd;
   const nextPay = new Date(now.getFullYear(), now.getMonth() + 1, 5);
   const origin = headers().get("origin") ?? `https://${headers().get("host") ?? "upmizik.com"}`;
-  const firstName = member.full_name.split(/\s+/)[0];
+  const firstName = member.nickname || member.full_name.split(/\s+/)[0];
+  // Yon atis ka manm tou: li gen 2 espas (Dashboard atis + Espas manm)
+  const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  const isArtist = me?.role === "artist";
   const initials = member.full_name
     .split(/\s+/)
     .slice(0, 2)
@@ -79,7 +83,7 @@ export default async function MemberDashboard() {
           <p className="text-xs font-semibold text-zinc-400">Espas manm</p>
           <h1 className="mt-1 text-2xl font-black text-white">Bonjou, {firstName}</h1>
           <div className="mt-2 flex flex-wrap gap-2">
-            <span className="rounded-full bg-white/[0.07] px-3 py-1 text-xs font-bold text-white ring-1 ring-white/10">Manm afilye</span>
+            <span className="rounded-full bg-white/[0.07] px-3 py-1 text-xs font-bold text-white ring-1 ring-white/10">Manm afilye{isArtist ? " · Atis" : ""}</span>
             <span className="rounded-full bg-white/[0.07] px-3 py-1 text-xs font-bold text-white ring-1 ring-white/10">
               Kontra: mwa {contractMonth(member.approved_at, member.contract_months, now)} sou {member.contract_months}
             </span>
@@ -87,6 +91,21 @@ export default async function MemberDashboard() {
         </div>
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-black text-white ring-2 ring-[#FFD700]">{initials}</span>
       </div>
+
+      {isArtist && (
+        <Link
+          href="/dashboard"
+          className="mt-4 flex items-center gap-3 rounded-2xl bg-white/[0.04] p-3 text-sm font-semibold text-white ring-1 ring-white/10 transition hover:bg-white/[0.07]"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-fuchsia-600/30" aria-hidden>
+            🎤
+          </span>
+          Ale nan Dashboard atis ou (mizik, revni, stati…)
+          <span className="ml-auto" aria-hidden>
+            →
+          </span>
+        </Link>
+      )}
 
       <div className="mt-5 space-y-4">
         {/* ===== OBJEKTIF MWA A ===== */}

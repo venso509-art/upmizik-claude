@@ -20,6 +20,8 @@ export type AdminMember = {
   adminNote: string | null;
   createdAt: string;
   sex: "fi" | "gason" | null;
+  nickname: string | null; // non jwèt / non atis
+  isArtist: boolean; // atis ki vin manm tou
   accountSince: string | null; // dat kont UpMizik la te kreye
   referredTotal: number; // tout atis ki enskri ak pseudo a
   referredPending: number;
@@ -94,7 +96,11 @@ function MemberCard({ m, htgPerUsd, thisMonth }: { m: AdminMember; htgPerUsd: nu
             .join("")}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-bold text-white">{m.fullName}</p>
+          <p className="truncate font-bold text-white">
+            {m.nickname ?? m.fullName}
+            {m.isArtist && <span className="ml-1.5 rounded bg-fuchsia-600/30 px-1.5 py-0.5 text-[10px] font-bold text-fuchsia-200">🎤 Atis</span>}
+          </p>
+          {m.nickname && <p className="truncate text-xs text-zinc-300">Vrè non: {m.fullName}</p>}
           <p className="truncate text-xs text-zinc-400">
             {m.email} · <a href={`https://wa.me/${m.phone.replace(/\D/g, "")}`} className="text-emerald-300 hover:underline">{m.phone}</a>
             {m.city ? ` · ${m.city}` : ""}

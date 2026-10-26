@@ -6,7 +6,7 @@ import { requestMembership } from "@/app/manm/actions";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
 
 // Fòm "Vin manm afilye": demann nan ale bay admin nan pou l apwouve l
-export function MemberForm({ defaultName, defaultEmail }: { defaultName: string; defaultEmail: string }) {
+export function MemberForm({ defaultNickname, defaultEmail }: { defaultNickname: string; defaultEmail: string }) {
   const router = useRouter();
   const [error, setError] = useState<string>();
   const [done, setDone] = useState(false);
@@ -37,8 +37,11 @@ export function MemberForm({ defaultName, defaultEmail }: { defaultName: string;
         });
       }}
     >
-      <Field label="Non konplè ou">
-        <input name="full_name" required maxLength={80} defaultValue={defaultName} placeholder="Egz: Jean Marc Pierre" className={inputClass} />
+      <Field label="Vrè non ak siyati ou (pou kontra a ak peman yo)">
+        <input name="full_name" required maxLength={80} placeholder="Egz: Jean Marc Pierre" className={inputClass} />
+      </Field>
+      <Field label="Non jwèt ou oswa non atis ou">
+        <input name="nickname" required maxLength={40} defaultValue={defaultNickname} placeholder="Egz: Ti Jo, Venso Music" className={inputClass} />
       </Field>
       {/* Sèks */}
       <fieldset>

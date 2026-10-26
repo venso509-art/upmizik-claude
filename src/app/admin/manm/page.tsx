@@ -35,7 +35,8 @@ type Row = {
   admin_note: string | null;
   created_at: string;
   sex: "fi" | "gason" | null;
-  account: { created_at: string } | { created_at: string }[] | null;
+  nickname: string | null;
+  account: { created_at: string; role: string } | { created_at: string; role: string }[] | null;
 };
 
 // Manm afilye yo: apwouve (pseudo otomatik), bloke, wè pwogrè yo, epi anrejistre peman chak mwa
@@ -50,7 +51,7 @@ export default async function AdminMembersPage({ searchParams }: { searchParams:
     supabase
       .from("members")
       .select(
-        "id, user_id, full_name, email, phone, city, motivation, pseudo_referral, objective_total, current_progress, total_earned, status, admin_note, created_at, sex, account:profiles!members_user_id_fkey(created_at)",
+        "id, user_id, full_name, nickname, email, phone, city, motivation, pseudo_referral, objective_total, current_progress, total_earned, status, admin_note, created_at, sex, account:profiles!members_user_id_fkey(created_at, role)",
       )
       .eq("status", status)
       .order("created_at", { ascending: false })
@@ -103,6 +104,8 @@ export default async function AdminMembersPage({ searchParams }: { searchParams:
     adminNote: r.admin_note,
     createdAt: r.created_at,
     sex: r.sex,
+    nickname: r.nickname,
+    isArtist: (Array.isArray(r.account) ? r.account[0] : r.account)?.role === "artist",
     accountSince: (Array.isArray(r.account) ? r.account[0] : r.account)?.created_at ?? null,
     referredTotal: flags.get(r.id)?.total ?? 0,
     referredPending: flags.get(r.id)?.pending ?? 0,
