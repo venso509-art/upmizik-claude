@@ -62,7 +62,10 @@ export async function Header() {
 
   return (
     // pt safe-area: sou iPhone (app enstale), header a desann anba zòn kamera/lè a olye l kache anba l
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-zinc-950/55 pt-[env(safe-area-inset-top)] shadow-[0_8px_30px_rgba(0,0,0,0.25)] backdrop-blur-xl backdrop-saturate-150">
+    // Opak nèt (pa transparan, pa gen blur): paj la pa parèt dèyè l lè w ap woule, epi l rete estab
+    // (blur la te oblije rekalkile tout sa ki dèyè l chak fwa paj la bouje, sa te fè l tranble sou telefòn).
+    // translateZ(0): navigatè a mete header a sou pwòp kouch li, konsa li pa souke pandan scroll la.
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-zinc-950 pt-[env(safe-area-inset-top)] shadow-[0_6px_24px_rgba(0,0,0,0.35)] [transform:translateZ(0)]">
       {/* Nouvo mesaj an dirèk: son + ti kat (pou tout moun ki konekte) */}
       {user && <NotificationListener userId={user.id} />}
       {/* Koutè yo: ti kat "Ou se atis? Vin atis" */}
