@@ -46,6 +46,12 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M6 12h.01M18 12h.01" />
     </>,
   ),
+  follow: svg(
+    <>
+      <circle cx="9" cy="7" r="4" />
+      <path d="M2 21v-1a7 7 0 0 1 14 0v1M19 8v6M22 11h-6" />
+    </>,
+  ),
   account: svg(
     <>
       <circle cx="12" cy="8" r="4" />
@@ -65,6 +71,10 @@ const BELL = svg(
     <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
   </>,
 );
+// Tit yo san emoji devan (kare jòn nan deja montre ikòn nan), tankou modèl afich UpMizik la
+const LEADING_EMOJI = new RegExp("^[\\p{Extended_Pictographic}\\uFE0F\\u200D\\s]+", "u");
+const cleanTitle = (t: string) => t.replace(LEADING_EMOJI, "") || t;
+
 // Don ak like: ti kè a bat (tankou yon kè ki kontan)
 const LOVE = new Set(["donation", "like"]);
 
@@ -121,7 +131,7 @@ export function NotificationCard({ n, onClose }: { n: Incoming; onClose: () => v
           <span className={`flex ${LOVE.has(n.type) ? "motion-safe:animate-heartbeat" : ""}`}>{ICONS[n.type] ?? BELL}</span>
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-bold leading-tight text-[#0B132B]">{n.title}</span>
+          <span className="block truncate text-[15px] font-bold leading-tight text-[#0B132B]">{cleanTitle(n.title)}</span>
           <span className="mt-1 block truncate text-[13px] text-[#64708A]">
             {n.body ? `${n.body} · ` : ""}kounye a
           </span>

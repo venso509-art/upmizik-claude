@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 import { PlayAllButton, TrackList } from "@/components/TrackList";
 import { DonateButton } from "@/components/donate/DonateButton";
+import { FollowButton } from "@/components/FollowButton";
 import { SafeImage } from "@/components/SafeImage";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
@@ -192,10 +193,15 @@ export default async function ArtistPage({ params }: Props) {
   const statusIds = statusMap[artist.id] ?? [];
   const liveId = liveMap[artist.id];
   // Pwochen live atis la anonse (si dat la poko pase); erè = migration poko kouri
-  const [{ data: nextLive }, { data: boostRow }] = await Promise.all([
+  const [{ data: nextLive }, { data: boostRow }, { data: followerCount }, { data: myFollow }] = await Promise.all([
     supabase.from("profiles").select("next_live_at, next_live_title").eq("id", artist.id).maybeSingle(),
     // 🔥 Pwofil boosted (erè = migration boost la poko kouri)
     supabase.from("profiles").select("is_boosted, boost_expires_at").eq("id", artist.id).maybeSingle(),
+    // Abònman (atis Pro): kantite abone + èske moun ki konekte a abone deja
+    supabase.rpc("follower_count", { p_artist: artist.id }),
+    user && user.id !== artist.id
+      ? supabase.from("artist_follows").select("artist_id").eq("follower_id", user.id).eq("artist_id", artist.id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
   const boosted = isBoostActive(boostRow?.is_boosted, boostRow?.boost_expires_at);
   const nextLiveAt = !liveId && nextLive?.next_live_at && new Date(nextLive.next_live_at) > new Date() ? (nextLive.next_live_at as string) : null;
@@ -321,6 +327,16 @@ export default async function ArtistPage({ params }: Props) {
         {/* ===== 2. AKSYON ===== */}
         <div className="flex flex-wrap items-center justify-center gap-3 py-4 sm:justify-start">
           {tracks.length > 0 && <PlayAllButton tracks={popular.length ? [...popular, ...tracks.filter((t) => !popular.includes(t))] : tracks} label="▶ Jwe tout" />}
+          {/* Abone: atis Pro sèlman (abone yo resevwa tout sa l pibliye) */}
+          {pro && (
+            <FollowButton
+              artistId={artist.id}
+              artistName={name}
+              userId={user?.id ?? null}
+              initialFollowing={!!myFollow}
+              initialCount={Number(followerCount ?? 0)}
+            />
+          )}
           <DonateButton
             artistId={artist.id}
             artistName={name}

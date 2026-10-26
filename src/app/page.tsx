@@ -91,13 +91,22 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
   const songs = [...boostedSongs, ...(rows ?? []).filter((s) => !boostedIds.has(s.id)).map((s) => toTrack(supabase, s))];
 
   // Vag 2: sa ki bezwen chante yo, moun nan oswa Top 3 a
-  const [extras, myArtists, top10, top3Extras] = await Promise.all([
+  const [extras, myArtists, top10, top3Extras, { data: myFollows }] = await Promise.all([
     getSongExtras(supabase, songs.map((s) => s.id), user?.id ?? null),
     user ? supabase.rpc("my_top_artists", { p_limit: 15 }) : Promise.resolve({ data: [] }),
     // Top 10 otomatik la (san mizik ki deja nan Top 3 a)
     getTop10(supabase, top3.entries.map((e) => e.track.id)),
     // Likes, kòmantè ak featuring pou bouton Top 3 yo
     getSongExtras(supabase, top3.entries.map((e) => e.track.id), user?.id ?? null),
+    // Atis moun nan abone ladan yo (yo parèt an premye nan sèk yo)
+    user
+      ? supabase
+          .from("artist_follows")
+          .select("artist_id, artist:profiles!artist_follows_artist_id_fkey(display_name, avatar_url, is_verified)")
+          .eq("follower_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(15)
+      : Promise.resolve({ data: [] }),
   ]);
   const now = Date.now();
   const ads: PublicAd[] = (adRows ?? [])
@@ -111,6 +120,16 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
   if (bubbles.length === 0) {
     bubbles = (popularRows ?? []) as BubbleArtist[];
     bubblesTitle = "🔥 Atis popilè yo";
+  }
+  // Atis moun nan swiv yo anvan rès yo
+  type FollowRow = { artist_id: string; artist: { display_name: string; avatar_url: string | null; is_verified: boolean } | { display_name: string; avatar_url: string | null; is_verified: boolean }[] | null };
+  const followed: BubbleArtist[] = ((myFollows ?? []) as FollowRow[]).flatMap((f) => {
+    const a = Array.isArray(f.artist) ? f.artist[0] : f.artist;
+    return a ? [{ artist_id: f.artist_id, display_name: a.display_name, avatar_url: a.avatar_url, plays: 0, is_verified: a.is_verified }] : [];
+  });
+  if (followed.length) {
+    const followedIds = new Set(followed.map((f) => f.artist_id));
+    bubbles = [...followed, ...bubbles.filter((b) => !followedIds.has(b.artist_id))];
   }
   // Pwofil boosted yo an premye nan sèk yo
   const boostedBubbles: BubbleArtist[] = ((boostedArtists ?? []) as { id: string; display_name: string; avatar_url: string | null; is_verified: boolean }[]).map(
