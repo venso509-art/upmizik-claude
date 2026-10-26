@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { missingSupabaseEnv, supabaseEnv } from "./env";
+import { siteOrigin } from "@/lib/siteOrigin";
 
 // Rafrechi sesyon Supabase la anvan chak paj, epi mete nouvo cookies yo nan repons lan.
 export async function updateSession(request: NextRequest) {
@@ -38,9 +39,8 @@ export async function updateSession(request: NextRequest) {
       const { data: profile } = await supabase.from("profiles").select("status").eq("id", user.id).maybeSingle();
       if (profile?.status === "blocked") {
         await supabase.auth.signOut();
-        const loginUrl = request.nextUrl.clone();
-        loginUrl.pathname = "/konekte";
-        loginUrl.search = "?bloke=1";
+        // Vrè adrès sit la (pa "localhost:3000" Coolify a)
+        const loginUrl = new URL("/konekte?bloke=1", siteOrigin(request));
         const redirect = NextResponse.redirect(loginUrl);
         // Pote cookies ki efase sesyon an yo sou redireksyon an
         response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
