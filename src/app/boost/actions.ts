@@ -56,3 +56,39 @@ export async function reviewBoost(id: string, approve: boolean, note: string): P
   revalidatePath("/atis/[id]", "page");
   return {};
 }
+
+export type PlanInput = { id?: string; label: string; days: number; price_htg: number; active: boolean };
+
+// Admin: kreye oswa modifye yon plan boost (non, kantite jou, pri). RLS la: admin sèlman.
+export async function saveBoostPlan(plan: PlanInput): Promise<BoostResult> {
+  const supabase = createClient();
+  const label = plan.label.trim().slice(0, 40);
+  const days = Math.round(Number(plan.days));
+  const price = Math.round(Number(plan.price_htg));
+  if (!label) return { error: "Ekri non plan an (egz: 1 mwa)." };
+  if (!(days >= 1 && days <= 365)) return { error: "Kantite jou a dwe ant 1 ak 365." };
+  if (!(price >= 1)) return { error: "Pri a dwe plis pase 0 goud." };
+
+  if (plan.id) {
+    const { error } = await supabase.from("boost_plans").update({ label, days, price_htg: price, active: plan.active }).eq("id", plan.id);
+    if (error) return { error: error.message };
+  } else {
+    const slug = `${label.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "plan"}-${Date.now().toString(36)}`;
+    const { count } = await supabase.from("boost_plans").select("id", { count: "exact", head: true });
+    const { error } = await supabase.from("boost_plans").insert({ id: slug, label, days, price_htg: price, active: plan.active, sort: (count ?? 0) + 1 });
+    if (error) return { error: error.message };
+  }
+  revalidatePath("/admin/boost");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+// Admin: efase yon plan (demann ki te itilize l yo kenbe montan ak jou yo)
+export async function deleteBoostPlan(id: string): Promise<BoostResult> {
+  const supabase = createClient();
+  const { error } = await supabase.from("boost_plans").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/boost");
+  revalidatePath("/dashboard");
+  return {};
+}

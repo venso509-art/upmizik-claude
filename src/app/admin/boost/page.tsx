@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { BoostReview, type AdminBoostRequest } from "@/components/admin/BoostReview";
+import { BoostPlansEditor, type EditablePlan } from "@/components/admin/BoostPlansEditor";
 import type { BoostStatus, BoostType } from "@/lib/boost";
 
 export const metadata: Metadata = { title: "Admin: Demann Boost | UpMizik" };
@@ -41,7 +42,8 @@ export default async function AdminBoostPage({ searchParams }: { searchParams: {
   if (!(await isAdmin(supabase, user.id))) redirect("/");
 
   const status = TABS.find((t) => t.status === searchParams.status)?.status ?? "pending";
-  const [{ data, error }, ...counts] = await Promise.all([
+  const [{ data: planRows }, { data, error }, ...counts] = await Promise.all([
+    supabase.from("boost_plans").select("id, label, days, price_htg, active").order("sort").returns<EditablePlan[]>(),
     supabase
       .from("boost_purchases")
       .select(
@@ -122,9 +124,12 @@ export default async function AdminBoostPage({ searchParams }: { searchParams: {
           Paj la pa ka chaje demann boost yo. Kouri migration 20261214000000_boost_system.sql nan Supabase.
         </p>
       ) : (
-        <div className="mt-6">
-          <BoostReview requests={requests} />
-        </div>
+        <>
+          <div className="mt-6">
+            <BoostReview requests={requests} />
+          </div>
+          <BoostPlansEditor plans={planRows ?? []} />
+        </>
       )}
     </div>
   );
