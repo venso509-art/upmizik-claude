@@ -1,16 +1,13 @@
-// Ti badj 🔥 Boost: mizik oswa pwofil ki peye pou parèt an premye
+// Ti flanm 🔥 sou mizik/pwofil boosted yo. Pa gen mo "Boost" (vizitè yo pa bezwen konnen se piblisite):
+// yon ti wonn dore ak yon flanm ki bat dousman.
 export function BoostBadge({ size = "sm", className = "" }: { size?: "xs" | "sm" | "md"; className?: string }) {
-  const s =
-    size === "md" ? "gap-1 px-2.5 py-1 text-xs" : size === "xs" ? "gap-0.5 px-1.5 py-[1px] text-[9px]" : "gap-1 px-2 py-0.5 text-[10px]";
+  const s = size === "md" ? "h-8 w-8 text-base" : size === "xs" ? "h-5 w-5 text-[11px]" : "h-6 w-6 text-[13px]";
   return (
     <span
-      className={`inline-flex items-center rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 font-black uppercase tracking-wide text-[#FFFFFF] shadow-[0_0_12px_rgba(249,115,22,0.55)] ring-1 ring-white/30 ${s} ${className}`}
-      title="Atis sa a boost mizik li"
+      className={`inline-flex items-center justify-center rounded-full bg-gradient-to-br from-amber-300 via-orange-500 to-rose-500 shadow-[0_0_12px_rgba(249,115,22,0.6)] ring-2 ring-white/40 ${s} ${className}`}
+      aria-hidden
     >
-      <span className="motion-safe:animate-heartbeat" aria-hidden>
-        🔥
-      </span>
-      Boost
+      <span className="leading-none motion-safe:animate-heartbeat">🔥</span>
     </span>
   );
 }

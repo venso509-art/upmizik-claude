@@ -72,6 +72,8 @@ export async function updateSong(
     splits: Split[];
     featuring?: FeaturingInput[];
     release?: { kind: "single" | "ep" | "mixtape" | "album"; releaseId: string | null; newTitle: string; trackNumber: number | null };
+    // Nouvo fichye (deja monte nan folder atis la): afich ak/oswa odyo
+    media?: { coverPath?: string | null; audioPath?: string | null; durationSeconds?: number | null };
   },
 ): Promise<SongActionResult> {
   const cleanTitle = input.title.trim();
@@ -91,11 +93,26 @@ export async function updateSong(
     return { error: `Ou ka ajoute maksimòm ${MAX_SPLITS} kolaboratè. Atis Pro yo ka mete jiska ${PRO_MAX_SPLITS}.` };
   }
 
+  // Nouvo afich / nouvo odyo: fichye yo dwe nan pwòp folder atis la
+  const media = input.media ?? {};
+  const own = (path?: string | null) => !!path && path.startsWith(`${user.id}/`) && !path.includes("..");
+  if ((media.coverPath && !own(media.coverPath)) || (media.audioPath && !own(media.audioPath))) return { error: "Fichye a pa valid." };
+
   const { error } = await supabase
     .from("songs")
-    .update({ title: cleanTitle, genre, youtube_url: youtubeUrl })
+    .update({
+      title: cleanTitle,
+      genre,
+      youtube_url: youtubeUrl,
+      ...(media.coverPath ? { cover_path: media.coverPath } : {}),
+      ...(media.audioPath ? { audio_path: media.audioPath, duration_seconds: media.durationSeconds ?? null } : {}),
+    })
     .eq("id", songId);
   if (error) return { error: friendlyDbError("Modifikasyon an echwe", error) };
+
+  // Efase ansyen fichye yo (yo pa sèvi ankò)
+  if (media.coverPath && song.cover_path && song.cover_path !== media.coverPath) await supabase.storage.from("covers").remove([song.cover_path]);
+  if (media.audioPath && song.audio_path !== media.audioPath) await supabase.storage.from("audio").remove([song.audio_path]);
 
   if (input.featuring) {
     const totalShares =
