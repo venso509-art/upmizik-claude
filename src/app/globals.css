@@ -69,6 +69,10 @@ html.light .amb-light {
 html.light .amb-dark {
   display: none;
 }
+/* Vag yo anlè paj Atis/Sosyal: pi transparan an mòd light pou tèks fonse yo rete lizib */
+html.light .amb-waves {
+  opacity: 0.28;
+}
 /* Bouton ak fon an koulè: tèks blan an rete BLAN */
 html.light
   :is(

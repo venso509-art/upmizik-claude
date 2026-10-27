@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { GradientWaves } from "@/components/GradientWaves";
 
 // Fon "premium" ki kouvri TOUT longè paj la (header → footer), tankou yon sèl gwo degradasyon fluid.
 //  - Mòd sonb: Nwa Ble (#0B132B) anlè → Vèt Fonse (#0A5C36) anba, ak gwo limyè ki klere (jòn, ble, vèt),
@@ -8,8 +9,10 @@ import { usePathname } from "next/navigation";
 //  - Mòd light: fon blan, ak limyè pastèl trè dous.
 // Blob yo se radial-gradient (pa filter blur): li lejè pou telefòn ki pa gen anpil memwa.
 
-// Paj ki gen fon an (n ap ajoute lòt yo apre)
-const PAGES = new Set(["/"]);
+// Paj ki gen fon an (limyè + zetwal sou tout longè paj la)
+const PAGES = new Set(["/", "/atis", "/sosyal"]);
+// Paj ki gen vag GradientWaves yo anlè (Akèy deja genyen yo nan Hero a)
+const WAVES_PAGES = new Set(["/atis", "/sosyal"]);
 
 type Blob = { top: string; left: string; size: string; color: string; dur: number; delay: number; dx: string; dy: string };
 
@@ -137,6 +140,18 @@ export function AmbientBackground() {
           />
         ))}
       </div>
+
+      {/* ===== VAG YO ANLÈ PAJ LA (Atis, Sosyal): fonn dousman nan rès fon an ===== */}
+      {WAVES_PAGES.has(pathname) && (
+        <GradientWaves
+          waveColor={["#0A5C36", "#0B132B", "#1E3A8A", "#FFD700"]}
+          amplitude={0.3}
+          swell={0.6}
+          lightAngle={45}
+          speed={0.5}
+          className="amb-waves absolute inset-x-0 top-0 h-[30rem] opacity-80 [mask-image:linear-gradient(to_bottom,black_45%,transparent)] sm:h-[34rem]"
+        />
+      )}
 
       {/* ===== MÒD LIGHT: blan, ak limyè pastèl ===== */}
       <div className="amb-light absolute inset-0">
