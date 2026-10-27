@@ -74,6 +74,10 @@ export function MobileMenu({
 
   const primary = items.filter((i) => i.tone === "primary");
   const grid = items.filter((i) => i.tone !== "primary");
+  // Stagger: chak eleman antre youn apre lòt (45 ms ant yo), tankou yon lis k ap dewoule
+  const step = (i: number) => ({ animationDelay: `${50 + i * 45}ms` });
+  const ITEM = "motion-safe:animate-menu-item";
+  const firstGrid = (name ? 1 : 0) + primary.length + 1;
 
   return (
     <>
@@ -114,7 +118,7 @@ export function MobileMenu({
             >
               {/* ===== Kat pwofil ===== */}
               {name && (
-                <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-fuchsia-700/80 to-fuchsia-900/60 p-3 ring-1 ring-white/10">
+                <div style={step(0)} className={`${ITEM} flex items-center gap-3 rounded-2xl bg-gradient-to-r from-fuchsia-700/80 to-fuchsia-900/60 p-3 ring-1 ring-white/10`}>
                   <span className="relative h-12 w-12 shrink-0">
                     {avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -148,12 +152,13 @@ export function MobileMenu({
               {/* ===== Gwo bouton aksyon (jòn) ===== */}
               {primary.length > 0 && (
                 <div className="mt-3 space-y-2">
-                  {primary.map((item) => (
+                  {primary.map((item, i) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={close}
-                      className="btn-primary flex items-center gap-3 rounded-2xl px-3 py-3 text-[15px] font-bold transition active:scale-[0.98]"
+                      style={step((name ? 1 : 0) + i)}
+                      className={`${ITEM} btn-primary flex items-center gap-3 rounded-2xl px-3 py-3 text-[15px] font-bold transition active:scale-[0.98]`}
                     >
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0B132B] text-[#FFD700]">
                         <LineIcon name={item.icon} />
@@ -168,7 +173,7 @@ export function MobileMenu({
               )}
 
               {/* ===== Griy bouton yo ===== */}
-              <p className="mb-2.5 mt-5 flex items-center gap-2 px-1 text-[11px] font-black uppercase tracking-[0.22em] text-white">
+              <p style={step(firstGrid - 1)} className={`${ITEM} mb-2.5 mt-5 flex items-center gap-2 px-1 text-[11px] font-black uppercase tracking-[0.22em] text-white`}>
                 <span
                   className="h-3.5 w-1 rounded-full bg-citron-400"
                   aria-hidden
@@ -176,7 +181,7 @@ export function MobileMenu({
                 Meni
               </p>
               <ul className="grid grid-cols-2 gap-2">
-                {grid.map((item) => {
+                {grid.map((item, gi) => {
                   const active = pathname === item.href;
                   const tile =
                     item.tone === "admin"
@@ -187,7 +192,7 @@ export function MobileMenu({
                           ? "bg-citron-400 text-zinc-950 ring-citron-300"
                           : "bg-white/[0.06] text-zinc-300 ring-white/10";
                   return (
-                    <li key={item.href}>
+                    <li key={item.href} style={step(firstGrid + gi)} className={ITEM}>
                       <Link
                         href={item.href}
                         onClick={close}
@@ -230,7 +235,7 @@ export function MobileMenu({
               </ul>
 
               {/* ===== Enstale app la + dekonekte ===== */}
-              <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
+              <div style={step(firstGrid + grid.length)} className={`${ITEM} mt-4 space-y-2 border-t border-white/10 pt-4`}>
                 <InstallAppButton />
                 {loggedIn && (
                   <form action={logout}>
