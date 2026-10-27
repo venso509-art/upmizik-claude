@@ -73,6 +73,41 @@ html.light .amb-dark {
 html.light .amb-waves {
   opacity: 0.28;
 }
+/* ===== Animasyon dous lè w peze yon bouton ===== */
+@media (prefers-reduced-motion: no-preference) {
+  /* Paj w ap kite a fonn dousman pandan pwochen an ap chaje (PageTransition.tsx).
+     Opasite sèlman: yon "transform" ta kase eleman "fixed" nan paj la. */
+  main > div {
+    transition: opacity 0.3s ease;
+  }
+  html.page-leaving main > div {
+    opacity: 0.35;
+  }
+  /* Fenèt pop-up yo (kado, boost, Pro, enskripsyon...): fon nwa a fonn, kat la glise monte */
+  .fixed.inset-0.justify-center:is(.items-end, .items-center):is([class*="bg-black/"]) {
+    animation: up-overlay-in 0.28s ease-out backwards;
+  }
+  .fixed.inset-0.justify-center:is(.items-end, .items-center):is([class*="bg-black/"]) > :first-child:not(.absolute) {
+    animation: up-sheet-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+}
+@keyframes up-overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+/* NB: fen an se "transform: none" (fill "backwards"): kat la pa kenbe okenn transform apre animasyon an */
+@keyframes up-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(48px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Griy zig-zag atis yo (ZigZagGrid): 2yèm, 4yèm... kat pi ba (vag), pi piti sou telefòn */
 .zz-grid-item:nth-child(even) {
   margin-top: 1.75rem;

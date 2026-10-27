@@ -291,7 +291,8 @@ const config: Config = {
         // Chanjman paj: paj la parèt dousman epi l glise monte yon ti kras
         // NB: fen an se "transform: none" (+ fill "backwards"): yon transform ki rete ta kase eleman "fixed" nan paj yo (live, modal...)
         "page-in": {
-          "0%": { opacity: "0", transform: "translateY(14px)" },
+          "0%": { opacity: "0", transform: "translateY(22px)" },
+          "40%": { opacity: "0.6" },
           "100%": { opacity: "1", transform: "none" },
         },
         // Meni ☰: panèl la desann dousman
@@ -342,7 +343,7 @@ const config: Config = {
         twinkle: "twinkle 3s ease-in-out infinite",
         "toast-pop": "toast-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
         "menu-drop": "menu-drop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both",
-        "page-in": "page-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards",
+        "page-in": "page-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "menu-item": "menu-item 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "orbit-draw": "orbit-draw 1.1s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "orbit-pop": "orbit-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards",

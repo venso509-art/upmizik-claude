@@ -5,7 +5,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 
 // ===== Tranzisyon ant paj yo (CSS sèlman, san Framer Motion: pi lejè pou telefòn yo) =====
 
-// 1. Paj la parèt dousman epi l glise monte yon ti kras (~0,4 s) chak fwa w chanje paj.
+// 1. Paj la parèt dousman epi l glise monte yon ti kras (~0,65 s) chak fwa w chanje paj.
 //    "key" = chemen paj la: React rekreye anvlòp la, kidonk animasyon an rejwe.
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -30,6 +30,8 @@ function TopLoaderInner() {
     timers.current.forEach(clearTimeout);
     timers.current = [];
   };
+  // Paj w ap kite a fonn dousman pandan pwochen an ap chaje (globals.css: html.page-leaving)
+  const leaving = (on: boolean) => document.documentElement.classList.toggle("page-leaving", on);
 
   // Klik sou yon lyen entèn (pa yon nouvo onglè, pa menm paj la, pa yon telechajman)
   useEffect(() => {
@@ -43,6 +45,7 @@ function TopLoaderInner() {
       clear();
       startRoute.current = `${location.pathname}?${new URLSearchParams(location.search).toString()}`;
       setProgress(8);
+      leaving(true);
       // Li avanse vit an premye, epi pi dousman (pa janm rive 100 % anvan paj la parèt)
       [
         [80, 30],
@@ -51,6 +54,8 @@ function TopLoaderInner() {
         [1500, 85],
         [3000, 92],
       ].forEach(([ms, p]) => timers.current.push(setTimeout(() => setProgress((cur) => (cur === null ? null : Math.max(cur, p))), ms)));
+      // Si paj la pran tan: li reparèt nòmal (ba a kontinye montre l ap chaje)
+      timers.current.push(setTimeout(() => leaving(false), 2500));
       // Sekirite: si navigasyon an pa janm fèt (erè), kache ba a apre 10 s
       timers.current.push(setTimeout(() => setProgress(null), 10000));
     };
@@ -58,6 +63,7 @@ function TopLoaderInner() {
     return () => {
       document.removeEventListener("click", onClick, true);
       clear();
+      leaving(false);
     };
   }, []);
 
@@ -66,6 +72,7 @@ function TopLoaderInner() {
     if (route === startRoute.current) return;
     startRoute.current = route;
     clear();
+    leaving(false);
     setProgress((cur) => (cur === null ? null : 100));
     timers.current.push(setTimeout(() => setProgress(null), 350));
   }, [route]);
