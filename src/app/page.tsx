@@ -15,6 +15,7 @@ import { liveNowMap } from "@/lib/liveNow";
 import { Reveal } from "@/components/Reveal";
 import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 import { SocialStrip } from "@/components/social/SocialStrip";
+import { GradientWaves } from "@/components/GradientWaves";
 import { withImageUrls, type FeedPost } from "@/lib/posts";
 
 // SEO paj akèy la (ak aperçu lè yon moun pataje lyen an)
@@ -153,18 +154,33 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-fuchsia-600/20 blur-3xl" />
+      {/* force-dark: tèks la rete blan sou vag yo, menm an mòd light */}
+      <section className="force-dark relative isolate overflow-hidden">
+        {/* Vag degradasyon "Karayib Nwit" (WebGL); anba a fonn nan rès paj la */}
+        <GradientWaves
+          waveColor={["#0A5C36", "#0B132B", "#1E3A8A", "#FFD700"]}
+          amplitude={0.3}
+          swell={0.6}
+          lightAngle={45}
+          speed={0.5}
+          className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_70%,transparent)]"
+        />
+        {/* Kouch fonse agoch pou tèks la toujou li byen */}
+        {/* Limyè fonse DÈYÈ tèks la sèlman (vag yo rete klere rès kote yo) */}
+        <div
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_75%_65%_at_25%_50%,rgba(11,19,43,0.78),rgba(11,19,43,0.35)_55%,transparent_80%)]"
+          aria-hidden
+        />
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 md:grid-cols-2 md:py-28">
           <div>
-            <span className="inline-block motion-safe:animate-fade-up rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-medium text-fuchsia-300">
+            <span className="inline-block motion-safe:animate-fade-up rounded-full border border-emerald-300/40 bg-[#0B132B]/60 px-3 py-1 text-xs font-semibold text-emerald-200 backdrop-blur-sm">
               Platfòm mizik 100% ayisyen
             </span>
-            <h1 style={{ animationDelay: "100ms" }} className="mt-6 motion-safe:animate-fade-up text-balance text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-6xl">
+            <h1 style={{ animationDelay: "100ms" }} className="mt-6 motion-safe:animate-fade-up text-balance text-4xl font-extrabold leading-tight tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] sm:text-6xl">
               Chak Ekout Pouse Yon{" "}
               <span className="bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent">Atis Ayisyen</span>
             </h1>
-            <p style={{ animationDelay: "200ms" }} className="mt-6 max-w-lg motion-safe:animate-fade-up text-lg text-zinc-400">
+            <p style={{ animationDelay: "200ms" }} className="mt-6 max-w-lg motion-safe:animate-fade-up text-lg text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]">
               Platfòm difizyon kote fanatik sipòte atis dirèk pa MonCash ak NatCash. Atis la resevwa 85% chak don, dirèkteman sou kont li.
             </p>
             <div style={{ animationDelay: "300ms" }} className="mt-8 flex flex-wrap gap-3 motion-safe:animate-fade-up">
@@ -176,7 +192,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
               </a>
               <Link
                 href="/enskri?wol=atis"
-                className="rounded-full border border-zinc-700 px-6 py-3 font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-white"
+                className="rounded-full border border-white/30 bg-black/25 px-6 py-3 font-semibold text-white backdrop-blur-sm transition hover:border-white/60 hover:bg-black/35"
               >
                 🎤 Mwen se atis
               </Link>
