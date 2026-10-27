@@ -273,6 +273,12 @@ const config: Config = {
           "60%": { opacity: "1", transform: "scale(1.05) translateY(-4px)" },
           "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
         },
+        // Chanjman paj: paj la parèt dousman epi l glise monte yon ti kras
+        // NB: fen an se "transform: none" (+ fill "backwards"): yon transform ki rete ta kase eleman "fixed" nan paj yo (live, modal...)
+        "page-in": {
+          "0%": { opacity: "0", transform: "translateY(14px)" },
+          "100%": { opacity: "1", transform: "none" },
+        },
         // Meni ☰: panèl la desann dousman
         "menu-drop": {
           "0%": { opacity: "0", transform: "translateY(-10px) scale(0.98)" },
@@ -321,6 +327,7 @@ const config: Config = {
         twinkle: "twinkle 3s ease-in-out infinite",
         "toast-pop": "toast-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
         "menu-drop": "menu-drop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "page-in": "page-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "toast-drop": "toast-drop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
         "gift-wiggle": "gift-wiggle 1.6s ease-in-out infinite",
         "flap-open": "flap-open 0.7s ease-in-out 0.35s both",

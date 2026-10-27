@@ -19,6 +19,7 @@ import { AmbientBackground } from "@/components/AmbientBackground";
 import { THEME_HEAD_SCRIPT } from "@/components/ThemeToggle";
 import { BoostPopup } from "@/components/boost/BoostPopup";
 import { PushPrompt } from "@/components/push/PushControls";
+import { PageTransition, TopLoader } from "@/components/PageTransition";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -85,9 +86,14 @@ export default async function RootLayout({
               {/* Fon premium (degradasyon + limyè) ki kouvri tout longè paj la */}
               <AmbientBackground />
               <Header />
-              <main>{children}</main>
+              <main>
+                {/* Paj la parèt dousman (fade + ti glisman) chak fwa w chanje paj */}
+                <PageTransition>{children}</PageTransition>
+              </main>
               <Footer />
             </div>
+            {/* Ti ba jòn anlè a pandan pwochen paj la ap chaje */}
+            <TopLoader />
             <PlayerBar />
             <BottomNav />
             <ListenerAuthPrompt />
