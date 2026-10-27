@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 import { PlayAllButton, TrackList } from "@/components/TrackList";
 import { DonateButton } from "@/components/donate/DonateButton";
-import { FollowButton } from "@/components/FollowButton";
 import { SafeImage } from "@/components/SafeImage";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
@@ -20,7 +19,7 @@ import { BoostBadge } from "@/components/boost/BoostBadge";
 import { isBoostActive } from "@/lib/boost";
 import { isPro } from "@/lib/pro";
 import { ArtistSocialLinks } from "@/components/artist/ArtistSocialLinks";
-import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
+import { ArtistProfileHero } from "@/components/artist/ArtistProfileHero";
 import { computeTrophies, type TrophyStats } from "@/lib/trophies";
 import { formatPlays } from "@/lib/levels";
 import { RELEASE_LABELS, type ReleaseKind } from "@/lib/releases";
@@ -269,23 +268,37 @@ export default async function ArtistPage({ params }: Props) {
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-zinc-950/10" />
         </div>
 
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 pb-8 pt-28 text-center sm:flex-row sm:items-end sm:pt-40 sm:text-left">
-          <div className="relative shrink-0">
-            {/* Wonn vèt + klike = stati atis la (si l gen stati vivan) */}
-            <StatusRing artist={{ id: artist.id, name, avatarUrl: artist.avatar_url, verified: artist.is_verified }} statusIds={statusIds}>
-              <div className="h-36 w-36 overflow-hidden rounded-full shadow-2xl shadow-black/60 ring-4 ring-zinc-950 sm:h-44 sm:w-44">
-                <SafeImage src={artist.avatar_url} alt={name} className="h-full w-full object-cover" fallback={avatarFallback} />
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 pb-8 pt-20 text-center sm:flex-row sm:gap-14 sm:pt-28 sm:text-left lg:gap-20">
+          {/* Gwo foto wonn + liy jòn koube ak ikòn aksyon yo (Koute, Abone, Kado, Pataje, Live) */}
+          <ArtistProfileHero
+            photo={
+              <div className="relative">
+                {/* Wonn vèt + klike = stati atis la (si l gen stati vivan) */}
+                <StatusRing artist={{ id: artist.id, name, avatarUrl: artist.avatar_url, verified: artist.is_verified }} statusIds={statusIds}>
+                  <div className="h-48 w-48 overflow-hidden rounded-full shadow-[0_0_0_5px_rgba(255,215,0,0.28),0_28px_60px_-12px_rgba(0,0,0,0.75)] ring-4 ring-zinc-950 sm:h-56 sm:w-56 lg:h-64 lg:w-64">
+                    <SafeImage src={artist.avatar_url} alt={name} className="h-full w-full object-cover" fallback={avatarFallback} />
+                  </div>
+                </StatusRing>
+                <VerifiedCorner show={artist.is_verified} size="xl" position="bottom-2.5 right-2.5 sm:bottom-4 sm:right-4" />
+                {/* An live kounye a: wonn wouj k ap bat + badj LIVE */}
+                {liveId && (
+                  <Link href={`/live/${liveId}`} className="absolute inset-0 rounded-full ring-4 ring-red-600 motion-safe:animate-pulse" aria-label="Gade live la">
+                    <LiveBadge size="md" className="absolute -bottom-2 left-1/2 -translate-x-1/2" />
+                  </Link>
+                )}
               </div>
-            </StatusRing>
-            <VerifiedCorner show={artist.is_verified} size="xl" position="bottom-1.5 right-1.5 sm:bottom-2.5 sm:right-2.5" />
-            {/* An live kounye a: wonn wouj k ap bat + badj LIVE */}
-            {liveId && (
-              <Link href={`/live/${liveId}`} className="absolute inset-0 rounded-full ring-4 ring-red-600 motion-safe:animate-pulse" aria-label="Gade live la">
-                <LiveBadge size="md" className="absolute -bottom-2 left-1/2 -translate-x-1/2" />
-              </Link>
-            )}
-          </div>
-          <div className="min-w-0">
+            }
+            artistId={artist.id}
+            artistName={name}
+            tracks={popular.length ? [...popular, ...tracks.filter((t) => !popular.includes(t))] : tracks}
+            pro={pro}
+            userId={user?.id ?? null}
+            initialFollowing={!!myFollow}
+            initialCount={Number(followerCount ?? 0)}
+            liveId={liveId}
+            share={{ path: `/atis/${artist.id}`, title: `${name} sou UpMizik`, text: artistShareText(name, isOwner) }}
+          />
+          <div className="min-w-0 pt-4 sm:pt-0">
             {artist.is_verified && (
               <p className="inline-flex items-center gap-1 rounded-full bg-[#1D9BF0]/15 px-3 py-1 text-xs font-semibold text-sky-200 ring-1 ring-[#1D9BF0]/40">
                 <VerifiedBadge className="!ml-0" /> Kont verifye
@@ -324,39 +337,10 @@ export default async function ArtistPage({ params }: Props) {
       </section>
 
       <div className="mx-auto max-w-6xl px-4">
-        {/* ===== 2. AKSYON ===== */}
+        {/* ===== 2. RESO SOSYAL (Koute, Abone, Kado, Pataje yo sou liy jòn nan anlè a) ===== */}
         <div className="flex flex-wrap items-center justify-center gap-3 py-4 sm:justify-start">
-          {tracks.length > 0 && <PlayAllButton tracks={popular.length ? [...popular, ...tracks.filter((t) => !popular.includes(t))] : tracks} label="▶ Jwe tout" />}
-          {/* Abone: atis Pro sèlman (abone yo resevwa tout sa l pibliye) */}
-          {pro && (
-            <FollowButton
-              artistId={artist.id}
-              artistName={name}
-              userId={user?.id ?? null}
-              initialFollowing={!!myFollow}
-              initialCount={Number(followerCount ?? 0)}
-            />
-          )}
-          <DonateButton
-            artistId={artist.id}
-            artistName={name}
-            label="Sipòte"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-citron-400 px-5 py-2.5 font-semibold text-citron-300 transition hover:bg-citron-400 hover:text-zinc-950"
-          />
           <ArtistSocialLinks
             links={{ youtube: artist.youtube_url, instagram: artist.instagram_url, tiktok: artist.tiktok_url, whatsapp: artist.whatsapp_url }}
-          />
-          {/* Pataje lyen pwofil la (WhatsApp, Instagram... sou telefòn; kopye sou òdinatè) */}
-          <ShareLinkButton
-            path={`/atis/${artist.id}`}
-            label={isOwner ? "🔗 Pataje pwofil mwen" : "🔗 Pataje"}
-            title={`${name} sou UpMizik`}
-            text={artistShareText(name, isOwner)}
-            className={
-              isOwner
-                ? "btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm"
-                : "inline-flex h-11 items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/70 px-4 text-sm font-medium text-zinc-200 transition hover:border-citron-400 hover:text-white"
-            }
           />
           {isOwner && !hasSocial && (
             <Link href="/pwofil#lyen" className="rounded-full border border-dashed border-zinc-600 px-4 py-2 text-sm text-zinc-400 hover:text-white">

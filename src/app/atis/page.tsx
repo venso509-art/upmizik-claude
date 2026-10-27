@@ -5,19 +5,9 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
 import { ProBadge } from "@/components/pro/ProBadge";
 import { SearchInput } from "@/components/search/SearchInput";
-import { ScrollRow } from "@/components/ScrollRow";
+import { ZigZagGrid } from "@/components/ZigZagGrid";
 
 export const metadata: Metadata = { title: "Atis | UpMizik", description: "Tout atis UpMizik yo." };
-
-// San rechèch: yon sèl ranje orizontal pou moun nan glise. Ak rechèch: rezilta yo an griy.
-function ArtistList({ searching, count, children }: { searching: boolean; count: number; children: React.ReactNode }) {
-  if (searching) return <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">{children}</ul>;
-  return (
-    <ScrollRow label="Atis UpMizik yo" caption={`${count} atis`}>
-      {children}
-    </ScrollRow>
-  );
-}
 
 type ArtistRow = { id: string; display_name: string; avatar_url: string | null; is_verified: boolean; location: string | null; pro?: boolean };
 
@@ -80,9 +70,11 @@ export default async function ArtistsPage({ searchParams }: { searchParams: { q?
           </div>
         ) : (
           <div className="mt-8">
-          <ArtistList searching={!!q} count={artists.length}>
+          <p className="mb-4 text-sm text-zinc-400">{artists.length} atis</p>
+          {/* Zig-zag: kat yo fè yon vag, epi yo parèt youn apre lòt lè w ap desann paj la */}
+          <ZigZagGrid label="Atis UpMizik yo">
             {artists.map((a) => (
-              <li key={a.id} className={q ? "" : "w-40 shrink-0 snap-start sm:w-44"}>
+              <li key={a.id} className="zz-grid-item">
                 <Link
                   href={`/atis/${a.id}`}
                   className="group flex flex-col items-center rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 text-center transition hover:-translate-y-0.5 hover:border-fuchsia-500/40 hover:bg-zinc-900"
@@ -111,7 +103,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: { q?
                 </Link>
               </li>
             ))}
-          </ArtistList>
+          </ZigZagGrid>
           </div>
         )}
       </div>

@@ -278,6 +278,16 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(-10px)" },
           "100%": { opacity: "1", transform: "none" },
         },
+        // Pwofil atis: liy jòn nan trase poukont li, epi ikòn yo parèt youn apre lòt
+        "orbit-draw": {
+          "0%": { strokeDashoffset: "1" },
+          "100%": { strokeDashoffset: "0" },
+        },
+        "orbit-pop": {
+          "0%": { opacity: "0", transform: "scale(0.3)" },
+          "70%": { opacity: "1", transform: "scale(1.12)" },
+          "100%": { opacity: "1", transform: "none" },
+        },
         // Chanjman paj: paj la parèt dousman epi l glise monte yon ti kras
         // NB: fen an se "transform: none" (+ fill "backwards"): yon transform ki rete ta kase eleman "fixed" nan paj yo (live, modal...)
         "page-in": {
@@ -334,6 +344,8 @@ const config: Config = {
         "menu-drop": "menu-drop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both",
         "page-in": "page-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "menu-item": "menu-item 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards",
+        "orbit-draw": "orbit-draw 1.1s cubic-bezier(0.22, 1, 0.36, 1) backwards",
+        "orbit-pop": "orbit-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "toast-drop": "toast-drop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
         "gift-wiggle": "gift-wiggle 1.6s ease-in-out infinite",
         "flap-open": "flap-open 0.7s ease-in-out 0.35s both",

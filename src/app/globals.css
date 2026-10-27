@@ -73,6 +73,33 @@ html.light .amb-dark {
 html.light .amb-waves {
   opacity: 0.28;
 }
+/* Griy zig-zag atis yo (ZigZagGrid): 2yèm, 4yèm... kat pi ba (vag), pi piti sou telefòn */
+.zz-grid-item:nth-child(even) {
+  margin-top: 1.75rem;
+}
+@media (min-width: 640px) {
+  .zz-grid-item:nth-child(even) {
+    margin-top: 3.125rem;
+  }
+}
+/* Kat la glise monte epi l parèt lè l antre nan ekran an (~0,6 s) */
+.zz-ready > .zz-grid-item {
+  opacity: 0;
+  transform: translateY(36px);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.zz-ready > .zz-grid-item.zz-in {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .zz-ready > .zz-grid-item {
+    transform: none;
+    transition: opacity 0.3s ease-out;
+  }
+}
 /* Bouton ak fon an koulè: tèks blan an rete BLAN */
 html.light
   :is(
