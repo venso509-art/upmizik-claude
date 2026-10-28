@@ -1,13 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { sendTutorial } from "@/app/manm/actions";
 import { TUTORIALS, tutorialOfTheDay, tutorialText, type Tutorial } from "@/lib/tutorials";
 
-// Tuto pou atis yo: manm nan li yo, epi l voye youn chak jou bay atis li fè enskri yo (WhatsApp...)
-export function MemberTutorials({ origin, code }: { origin: string; code: string }) {
+type Artist = { id: string; name: string; avatarUrl: string | null };
+
+// Tuto pou atis yo: manm nan li yo, epi l voye youn chak jou bay atis li fè enskri yo
+// (dirèk nan bwat mesaj atis la sou sit la, oswa sou WhatsApp)
+export function MemberTutorials({ origin, code, artists }: { origin: string; code: string; artists: Artist[] }) {
   const today = tutorialOfTheDay();
   const [open, setOpen] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [to, setTo] = useState<string | null>(artists.length === 1 ? artists[0].id : null);
+  const [sent, setSent] = useState<Record<string, { ok: boolean; text: string }>>({});
+  const [sending, startSending] = useTransition();
+  const target = artists.find((a) => a.id === to);
+
+  function sendInSite(t: Tutorial) {
+    if (!to) return;
+    startSending(async () => {
+      const res = await sendTutorial(to, t.id);
+      setSent((prev) => ({ ...prev, [t.id]: res.error ? { ok: false, text: res.error } : { ok: true, text: `✓ Voye bay ${res.artist ?? target?.name}` } }));
+    });
+  }
+
+  // Bouton "Voye nan mesaj li" + rezilta a
+  const siteButton = (t: Tutorial) => (
+    <>
+      <button
+        type="button"
+        onClick={() => sendInSite(t)}
+        disabled={!to || sending}
+        className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#FFD700] px-3 py-2.5 text-sm font-black text-[#0B132B] transition hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        📬 {target ? `Voye bay ${target.name} sou UpMizik` : "Chwazi yon atis anlè a"}
+      </button>
+      {sent[t.id] && <p className={`mt-1.5 text-xs font-semibold ${sent[t.id].ok ? "text-emerald-300" : "text-red-300"}`}>{sent[t.id].text}</p>}
+    </>
+  );
 
   async function share(t: Tutorial) {
     const text = tutorialText(t, origin, code);
@@ -31,7 +62,44 @@ export function MemberTutorials({ origin, code }: { origin: string; code: string
   return (
     <section className="rounded-3xl bg-zinc-900/70 p-5 ring-1 ring-white/10">
       <h2 className="font-black text-white">📘 Tuto pou atis ou yo</h2>
-      <p className="mt-1 text-sm text-zinc-400">Voye youn chak jou bay atis ki enskri ak pseudo ou: yo ap aprann sèvi ak UpMizik, epi yo ap rete aktif.</p>
+      <p className="mt-1 text-sm text-zinc-400">Chwazi yon atis ou fè enskri, epi voye ba li yon tuto chak jou dirèk nan mesaj li sou UpMizik (oswa sou WhatsApp): li ap aprann sèvi ak sit la, epi l ap rete aktif.</p>
+
+      {/* Chwazi atis la: tuto a ap rive nan bwat mesaj li sou sit la */}
+      <div className="mt-4">
+        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-zinc-400">📬 Voye bay ki atis?</p>
+        {artists.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-500">Poko gen atis ki enskri ak pseudo ou. Lè yo enskri, w ap ka voye tuto yo ba yo dirèk sou UpMizik.</p>
+        ) : (
+          <ul className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+            {artists.map((a) => {
+              const active = a.id === to;
+              return (
+                <li key={a.id} className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setTo(active ? null : a.id)}
+                    aria-pressed={active}
+                    className={`flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-semibold transition ${
+                      active ? "bg-[#FFD700] text-[#0B132B] shadow-lg shadow-[#FFD700]/20" : "bg-white/[0.05] text-zinc-200 ring-1 ring-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-700 text-xs font-black text-white">
+                      {a.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={a.avatarUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        a.name.charAt(0).toUpperCase()
+                      )}
+                    </span>
+                    <span className="max-w-[9rem] truncate">{a.name}</span>
+                    {active && <span aria-hidden>✓</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
       {/* Tuto jodi a */}
       <div className="mt-4 rounded-2xl bg-gradient-to-br from-[#FFD700]/20 to-transparent p-4 ring-1 ring-[#FFD700]/40">
@@ -39,7 +107,8 @@ export function MemberTutorials({ origin, code }: { origin: string; code: string
         <p className="mt-1.5 font-bold text-white">
           {today.icon} {today.question}
         </p>
-        <div className="mt-3 flex gap-2">
+        {artists.length > 0 && <div className="mt-3">{siteButton(today)}</div>}
+        <div className="mt-2 flex gap-2">
           <a
             href={whatsapp(today)}
             target="_blank"
@@ -83,7 +152,8 @@ export function MemberTutorials({ origin, code }: { origin: string; code: string
                       </li>
                     ))}
                   </ol>
-                  <div className="mt-3 flex gap-2">
+                  {artists.length > 0 && <div className="mt-3">{siteButton(t)}</div>}
+                  <div className="mt-2 flex gap-2">
                     <a
                       href={whatsapp(t)}
                       target="_blank"

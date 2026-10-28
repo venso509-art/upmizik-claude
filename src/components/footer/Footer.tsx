@@ -4,6 +4,7 @@ import { CONTACT_EMAIL } from "@/lib/site";
 import { NewsletterForm } from "./NewsletterForm";
 import { SocialIcons } from "./SocialIcons";
 import { LineIcon } from "@/components/LineIcon";
+import { ARTIST_PROMOS, VISITOR_PROMOS, promoForNow } from "@/lib/footerPromos";
 
 type FooterLink = { href: string; label: string; icon: React.ReactNode; badge?: string };
 
@@ -46,6 +47,8 @@ export async function Footer() {
     : { data: null };
   const year = new Date().getFullYear();
   const isArtist = profile?.role === "artist";
+  // Kat envitasyon an: yon lòt mesaj chak 2 èdtan
+  const promo = promoForNow(isArtist ? ARTIST_PROMOS : VISITOR_PROMOS);
 
   return (
     // pb-24: pou ba lektè a (fiks anba ekran an) pa kouvri dènye liy lan; pb-44 sou telefòn pou ba navigasyon an tou
@@ -61,28 +64,19 @@ export async function Footer() {
           <div className="relative flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#FFE34D] ring-1 ring-white/15">
-                🎤 {isArtist ? "Espas atis" : "Atis, sa a se pou ou"}
+                {promo.badge}
               </p>
               <h2 className="mt-3 text-balance text-2xl font-black leading-tight tracking-tight text-white sm:text-3xl">
-                {isArtist ? (
-                  <>
-                    Fanatik ou yo ap tann <span className="text-[#FFE34D]">pwochen chante w</span>.
-                  </>
-                ) : (
-                  <>
-                    Yo renmen mizik ou. Kounye a yo ka <span className="text-[#FFE34D]">sipòte w</span>.
-                  </>
-                )}
+                {promo.title} <span className="text-[#FFE34D]">{promo.hl}</span>
+                {promo.after}
               </h2>
-              <p className="mt-2 max-w-lg text-sm text-white/75">
-                {isArtist ? "Pibliye yon chante, fè yon live, oswa poste yon stati pou rete pre fanatik ou yo." : "Kreye paj atis ou gratis. Resevwa sipò sou MonCash ak NatCash."}
-              </p>
+              <p className="mt-2 max-w-lg text-sm text-white/75">{promo.body}</p>
             </div>
             <Link
-              href={isArtist ? "/upload" : "/enskri?wol=atis"}
+              href={promo.href}
               className="btn-primary inline-flex shrink-0 items-center gap-2 rounded-full px-6 py-3.5 text-base font-black shadow-xl shadow-citron-500/20 transition hover:scale-[1.03]"
             >
-              {isArtist ? "Pibliye yon chante" : "Enskri gratis"} <span aria-hidden>→</span>
+              {promo.cta} <span aria-hidden>→</span>
             </Link>
           </div>
         </div>

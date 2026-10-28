@@ -39,6 +39,7 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
   comment: svg(<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />),
   admin_message: svg(<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />),
+  tutorial: svg(<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14zM20 17v4H6.5A2.5 2.5 0 0 1 4 18.5" />),
   payout: svg(
     <>
       <rect x="2" y="6" width="20" height="12" rx="2" />

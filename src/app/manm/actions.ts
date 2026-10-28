@@ -70,3 +70,10 @@ export async function payMember(memberId: string, period: string, method: "monca
   revalidatePath("/admin/manm");
   return { ok: true };
 }
+
+// Manm nan voye yon tuto bay youn nan atis li fè enskri yo (li rive nan bwat mesaj atis la)
+export async function sendTutorial(artistId: string, tutorialId: string): Promise<MemberResult & { artist?: string }> {
+  const { data, error } = await createClient().rpc("member_send_tutorial", { p_artist: artistId, p_tutorial: tutorialId });
+  if (error) return { error: error.message.includes("member_send_tutorial") ? "Fonksyon an poko pare. Eseye ankò pita." : error.message };
+  return { ok: true, artist: (data as string | null) ?? undefined };
+}

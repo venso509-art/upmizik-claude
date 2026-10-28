@@ -175,7 +175,11 @@ export default async function MemberDashboard() {
         <ReferralList referrals={referrals} />
 
         {/* ===== TUTO POU ATIS YO (voye youn chak jou) ===== */}
-        <MemberTutorials origin={origin} code={member.pseudo_referral} />
+        <MemberTutorials
+          origin={origin}
+          code={member.pseudo_referral}
+          artists={referrals.map((r) => ({ id: r.artist_id, name: r.name, avatarUrl: r.avatar_url }))}
+        />
 
         {/* ===== MWA ANVAN YO ===== */}
         {prevMonths.length > 0 && (
