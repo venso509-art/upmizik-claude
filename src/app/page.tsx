@@ -17,6 +17,7 @@ import { SONG_SELECT, getSongExtras, toTrack, type SongRow } from "@/lib/songs";
 import { SocialStrip } from "@/components/social/SocialStrip";
 import { GradientWaves } from "@/components/GradientWaves";
 import { withImageUrls, type FeedPost } from "@/lib/posts";
+import { sloganForNow } from "@/lib/heroSlogans";
 
 // SEO paj akèy la (ak aperçu lè yon moun pataje lyen an)
 const HOME_DESCRIPTION =
@@ -45,6 +46,8 @@ const bars = [
 ];
 
 export default async function Home({ searchParams }: { searchParams: { jan?: string } }) {
+  // Gwo fraz anlè a: yon lòt chak 6 èdtan
+  const slogan = sloganForNow();
   // ?jan=Konpa → montre sèlman chante jan sa a (jiska 24); san jan → 8 dènye chante yo
   // Jan nan lis la OSWA yon jan atis yo ekri yo menm (egz: ?jan=Dancehall)
   const genre = normalizeGenre(searchParams.jan) ?? null;
@@ -177,8 +180,8 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
               Platfòm mizik 100% ayisyen
             </span>
             <h1 style={{ animationDelay: "100ms" }} className="mt-6 motion-safe:animate-fade-up text-balance text-4xl font-extrabold leading-tight tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] sm:text-6xl">
-              Chak Ekout Pouse Yon{" "}
-              <span className="bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent">Atis Ayisyen</span>
+              {slogan.text}{" "}
+              <span className="bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent">{slogan.hl}</span>
             </h1>
             <p style={{ animationDelay: "200ms" }} className="mt-6 max-w-lg motion-safe:animate-fade-up text-lg text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]">
               Platfòm difizyon kote fanatik sipòte atis dirèk pa MonCash ak NatCash. Atis la resevwa 85% chak don, dirèkteman sou kont li.
