@@ -71,8 +71,8 @@ export default async function AdminSecurityPage({ searchParams }: { searchParams
   const filter = FILTERS.find((f) => f.key === searchParams.koneksyon)?.key ?? "tout";
   const since24h = new Date(Date.now() - 86400 * 1000).toISOString();
 
-  const { data: admins } = await supabase.from("profiles").select("id").eq("is_admin", true);
-  const adminIds = (admins ?? []).map((a) => a.id);
+  const { data: admins } = await supabase.rpc("admin_ids");
+  const adminIds = ((admins ?? []) as string[]).map(String);
 
   let loginQuery = supabase
     .from("login_events")
