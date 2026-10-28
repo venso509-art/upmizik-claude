@@ -31,10 +31,10 @@ export async function setPasswordResetStatus(id: string, status: "sent" | "cance
 }
 
 // Siprime yon kont nèt: baz done a verifye SIPRIME + mo sekrè a, epi l refize si kont lan gen lajan anrejistre
-export async function deleteAccount(userId: string, confirm: string, word: string): Promise<{ error?: string; name?: string }> {
+export async function deleteAccount(userId: string, confirm: string, word: string, fakeProofs = false): Promise<{ error?: string; name?: string }> {
   if (confirm.trim().toUpperCase() !== "SIPRIME") return { error: "Ekri SIPRIME pou konfime." };
   if (!word.trim()) return { error: "Ekri mo sekrè a." };
-  const { data, error } = await createClient().rpc("admin_delete_account", { p_user: userId, p_confirm: confirm, p_word: word });
+  const { data, error } = await createClient().rpc("admin_delete_account", { p_user: userId, p_confirm: confirm, p_word: word, p_fake_proofs: fakeProofs });
   if (error) return { error: error.message.includes("admin_delete_account") ? "Fonksyon an poko pare (migration)." : error.message };
   revalidatePath("/admin");
   revalidatePath("/", "layout");

@@ -11,6 +11,7 @@ export function DeleteAccountButton({ userId, name }: { userId: string; name: st
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState("");
   const [word, setWord] = useState("");
+  const [fakeProofs, setFakeProofs] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
   const ready = confirm.trim().toUpperCase() === "SIPRIME" && word.trim().length > 0;
@@ -20,6 +21,7 @@ export function DeleteAccountButton({ userId, name }: { userId: string; name: st
     setOpen(false);
     setConfirm("");
     setWord("");
+    setFakeProofs(false);
     setError(undefined);
   }
 
@@ -28,7 +30,7 @@ export function DeleteAccountButton({ userId, name }: { userId: string; name: st
     if (!ready) return;
     setError(undefined);
     startTransition(async () => {
-      const res = await deleteAccount(userId, confirm, word);
+      const res = await deleteAccount(userId, confirm, word, fakeProofs);
       if (res.error) {
         setError(res.error);
         setWord("");
@@ -72,7 +74,7 @@ export function DeleteAccountButton({ userId, name }: { userId: string; name: st
               <ul className="mt-3 space-y-1.5 text-sm text-zinc-300">
                 <li>❌ Kont lan efase nèt: pwofil, chante, pòs, stati, kòmantè…</li>
                 <li>⚠️ Sa pa ka anile. Moun nan ap oblije kreye yon nouvo kont.</li>
-                <li>💰 Si kont lan gen lajan anrejistre (don, peman…), sit la ap refize: bloke l pito.</li>
+                <li>💰 Si kont lan gen don, revni oswa retrè, sit la ap refize: bloke l pito.</li>
               </ul>
 
               <label className="mt-5 block text-sm font-semibold text-zinc-300">
@@ -82,6 +84,21 @@ export function DeleteAccountButton({ userId, name }: { userId: string; name: st
               <label className="mt-4 block text-sm font-semibold text-zinc-300">
                 Mo sekrè a
                 <input type="password" value={word} onChange={(e) => setWord(e.target.value)} autoComplete="off" placeholder="••••••••" className={input} />
+              </label>
+
+              {/* Enskripsyon/Pro/boost/kredi ki te apwouve ak yon fo prèv: lajan an pa t janm rive */}
+              <label
+                className={`mt-4 flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition ${
+                  fakeProofs ? "border-amber-400/60 bg-amber-400/10 text-amber-100" : "border-zinc-800 text-zinc-300 hover:border-zinc-600"
+                }`}
+              >
+                <input type="checkbox" checked={fakeProofs} onChange={(e) => setFakeProofs(e.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-400" />
+                <span>
+                  <span className="font-semibold text-white">Prèv peman yo te fo</span>
+                  <span className="block text-xs text-zinc-400">
+                    Enskripsyon, Pro, boost oswa kredi te apwouve men lajan an pa t janm rive. Peman sa yo ap efase ak kont lan (yo rete nan jounal sekirite a).
+                  </span>
+                </span>
               </label>
 
               {error && <p className="mt-3 rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
