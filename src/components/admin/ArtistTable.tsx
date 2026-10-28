@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { setUserStatus, type AccountStatus } from "@/app/admin/actions";
 import { FormMessage } from "@/components/auth/ui";
 import { VerifyToggle } from "@/components/admin/VerifyToggle";
+import { DeleteAccountButton } from "@/components/admin/DeleteAccountButton";
 
 export type AdminArtist = {
   id: string;
@@ -71,6 +72,8 @@ function Actions({ artist, currentUserId }: { artist: AdminArtist; currentUserId
         )}
         {artist.status === "approved" && block}
         {artist.status === "blocked" && approve("✅ Debloke")}
+        {/* Siprime nèt (pa pou pwòp kont ou ni pou yon admin) */}
+        {!isSelf && !artist.isAdmin && <DeleteAccountButton userId={artist.id} name={artist.displayName} />}
       </div>
       {error && <FormMessage error={error} />}
     </div>
