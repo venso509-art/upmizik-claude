@@ -41,6 +41,7 @@ export const KINDS: Record<RevenueKind, { label: string; icon: string; color: st
 export const KIND_ORDER: RevenueKind[] = ["don", "enskripsyon", "pro", "boost", "kredi"];
 
 export const PERIODS = [
+  { key: "aktyel", label: "Depi dènye reset" },
   { key: "mwa", label: "Mwa sa a" },
   { key: "mwa-pase", label: "Mwa pase" },
   { key: "30", label: "30 jou" },
@@ -59,10 +60,12 @@ function haitiToday() {
 }
 
 export function parsePeriod(v?: string): { key: PeriodKey; from: string; to: string } {
-  const key = (PERIODS.find((p) => p.key === v)?.key ?? "mwa") as PeriodKey;
+  const key = (PERIODS.find((p) => p.key === v)?.key ?? "aktyel") as PeriodKey;
   const today = haitiToday();
   const y = today.getUTCFullYear();
   const m = today.getUTCMonth();
+  // "Depi dènye reset": paj la itilize dat egzak dènye reset la (from/to isit la se sèlman pou non fichye a)
+  if (key === "aktyel") return { key, from: iso(today), to: iso(today) };
   if (key === "mwa") return { key, from: iso(new Date(Date.UTC(y, m, 1))), to: iso(today) };
   if (key === "mwa-pase") return { key, from: iso(new Date(Date.UTC(y, m - 1, 1))), to: iso(new Date(Date.UTC(y, m, 0))) };
   if (key === "tout") return { key, from: "2024-01-01", to: iso(today) };
@@ -99,3 +102,28 @@ export function summarize(rows: RevenueRow[], x: RevenueExtras) {
   const shared = sharedParts.reduce((s, p) => s + p.value, 0);
   return { total, site, shared, siteParts, sharedParts, byKind, credits: k.kredi.total };
 }
+
+// Rapò achive (reset): sa ki anrejistre nan revenue_reports
+export type ArchivedReport = {
+  id: string;
+  number: number;
+  title: string;
+  period_from: string;
+  period_to: string;
+  created_at: string;
+  data: { rows: RevenueRow[]; extras: RevenueExtras | null };
+};
+
+export const EMPTY_EXTRAS: RevenueExtras = {
+  live_gifts_htg: 0,
+  live_artist_htg: 0,
+  live_platform_htg: 0,
+  fee_htg: 0,
+  artist_paid_htg: 0,
+  member_paid_htg: 0,
+  member_paid_usd: 0,
+  credits_unspent_htg: 0,
+};
+
+const STAMP = new Intl.DateTimeFormat("fr-HT", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Port-au-Prince" });
+export const fullDate = (iso: string) => STAMP.format(new Date(iso));

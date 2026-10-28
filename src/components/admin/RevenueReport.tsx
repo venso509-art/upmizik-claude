@@ -112,14 +112,18 @@ export function RevenueReport({
   rows,
   extras,
   period,
-  from,
-  to,
+  rangeLabel,
+  fileTag,
+  frozen,
+  actions,
 }: {
   rows: RevenueRow[];
   extras: RevenueExtras;
-  period: PeriodKey;
-  from: string;
-  to: string;
+  period?: PeriodKey;
+  rangeLabel: string; // egz: "1 oktòb 2026 08:00 → jodi a"
+  fileTag: string; // pou non fichye Excel la
+  frozen?: { number: number; title: string; savedAt: string }; // rapò achive: li sèlman, pa ka chanje
+  actions?: React.ReactNode; // egz: bouton Reset la
 }) {
   const [kind, setKind] = useState<RevenueKind | "tout">("tout");
   const [q, setQ] = useState("");
@@ -143,7 +147,7 @@ export function RevenueReport({
     const blob = new Blob([toCsv(visible)], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `upmizik-revni-${from}-${to}.csv`;
+    a.download = `upmizik-revni-${fileTag}.csv`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
@@ -151,30 +155,43 @@ export function RevenueReport({
   return (
     <section aria-labelledby="revni-title">
       {/* ===== Tit + peryòd ===== */}
+      {frozen && (
+        // Rapò achive: tankou yon paj ki te enprime, li pa ka chanje
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-dashed border-zinc-600 bg-zinc-900/60 px-4 py-3 text-sm">
+          <span className="rotate-[-4deg] rounded-md border-2 border-red-400/70 px-2 py-0.5 text-xs font-black uppercase tracking-widest text-red-300">
+            🔒 Achive
+          </span>
+          <span className="text-zinc-300">
+            Rapò #{frozen.number} · anrejistre {frozen.savedAt}. Chif yo jele: yo pa ka modifye ni efase.
+          </span>
+        </div>
+      )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 id="revni-title" className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            💰 Lajan ki antre
+            {frozen ? `📄 ${frozen.title}` : "💰 Lajan ki antre"}
           </h2>
-          <p className="mt-1 text-sm text-zinc-400">
-            {new Date(`${from}T12:00:00Z`).toLocaleDateString("fr-HT", { day: "numeric", month: "long", year: "numeric" })} →{" "}
-            {new Date(`${to}T12:00:00Z`).toLocaleDateString("fr-HT", { day: "numeric", month: "long", year: "numeric" })}
-          </p>
+          <p className="mt-1 text-sm text-zinc-400">{rangeLabel}</p>
         </div>
-        <nav className="flex flex-wrap gap-1.5 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-1.5" aria-label="Peryòd">
-          {PERIODS.map((p) => (
-            <Link
-              key={p.key}
-              href={`/admin/rapo?peryod=${p.key}`}
-              scroll={false}
-              className={`rounded-xl px-3 py-1.5 text-sm font-semibold transition ${
-                p.key === period ? "bg-citron-400 text-zinc-950 shadow-lg shadow-citron-400/20" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
-              }`}
-            >
-              {p.label}
-            </Link>
-          ))}
-        </nav>
+        {!frozen && (
+          <div className="flex flex-wrap items-center gap-2">
+            <nav className="flex flex-wrap gap-1.5 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-1.5" aria-label="Peryòd">
+              {PERIODS.map((p) => (
+                <Link
+                  key={p.key}
+                  href={`/admin/rapo?peryod=${p.key}`}
+                  scroll={false}
+                  className={`rounded-xl px-3 py-1.5 text-sm font-semibold transition ${
+                    p.key === period ? "bg-citron-400 text-zinc-950 shadow-lg shadow-citron-400/20" : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  }`}
+                >
+                  {p.label}
+                </Link>
+              ))}
+            </nav>
+            {actions}
+          </div>
+        )}
       </div>
 
       {/* ===== Gwo total la ===== */}

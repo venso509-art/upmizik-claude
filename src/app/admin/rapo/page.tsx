@@ -8,7 +8,9 @@ import { DailyChart } from "@/components/stats/DailyChart";
 import { RangeFilter } from "@/components/stats/RangeFilter";
 import { RankList } from "@/components/stats/RankList";
 import { RevenueReport } from "@/components/admin/RevenueReport";
-import { parsePeriod, type RevenueExtras, type RevenueRow } from "@/lib/revenue";
+import { EMPTY_EXTRAS, fullDate, parsePeriod, type RevenueExtras, type RevenueRow } from "@/lib/revenue";
+import { ResetReportButton } from "@/components/admin/ResetReportButton";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Admin: Rapò | UpMizik" };
 
@@ -42,13 +44,32 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
 
   const days = parseRange(searchParams.jou);
   const period = parsePeriod(searchParams.peryod);
+  // Dènye reset la: "Depi dènye reset" kòmanse la (pa gen reset = depi kòmansman)
+  const { data: lastReport } = await supabase
+    .from("revenue_reports")
+    .select("period_to")
+    .order("period_to", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const since = (lastReport?.period_to as string | undefined) ?? "2024-01-01T05:00:00Z";
+  const now = new Date().toISOString();
+  const aktyel = period.key === "aktyel";
+  const rangeLabel = aktyel
+    ? `${lastReport ? `Depi dènye reset la (${fullDate(since)})` : "Depi kòmansman"} → kounye a`
+    : `${new Date(`${period.from}T12:00:00Z`).toLocaleDateString("fr-HT", { day: "numeric", month: "long", year: "numeric" })} → ${new Date(
+        `${period.to}T12:00:00Z`,
+      ).toLocaleDateString("fr-HT", { day: "numeric", month: "long", year: "numeric" })}`;
 
   const [songsRes, artistsRes, ledgerRes, extrasRes, dailyRes, topSongsRes, topArtistsRes] = await Promise.all([
     supabase.from("songs").select("play_count"),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "artist").eq("status", "approved"),
     // Tout lajan ki antre nan peryòd la (erè = migration rapò revni an poko kouri)
-    supabase.rpc("admin_revenue_ledger", { p_from: period.from, p_to: period.to }),
-    supabase.rpc("admin_revenue_extras", { p_from: period.from, p_to: period.to }),
+    aktyel
+      ? supabase.rpc("admin_revenue_ledger_at", { p_t0: since, p_t1: now })
+      : supabase.rpc("admin_revenue_ledger", { p_from: period.from, p_to: period.to }),
+    aktyel
+      ? supabase.rpc("admin_revenue_extras_at", { p_t0: since, p_t1: now })
+      : supabase.rpc("admin_revenue_extras", { p_from: period.from, p_to: period.to }),
     supabase.rpc("play_stats_daily", { p_days: days }),
     supabase.rpc("top_songs_period", { p_days: days, p_limit: 10 }),
     supabase.rpc("top_artists_period", { p_days: days, p_limit: 10 }),
@@ -58,10 +79,7 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
   const songs = songsRes.data ?? [];
   const totalPlays = songs.reduce((s, r) => s + Number(r.play_count), 0);
   const ledger = (ledgerRes.data ?? []) as RevenueRow[];
-  const extras = ((extrasRes.data ?? []) as RevenueExtras[])[0] ?? {
-    live_gifts_htg: 0, live_artist_htg: 0, live_platform_htg: 0, fee_htg: 0,
-    artist_paid_htg: 0, member_paid_htg: 0, member_paid_usd: 0, credits_unspent_htg: 0,
-  };
+  const extras = ((extrasRes.data ?? []) as RevenueExtras[])[0] ?? EMPTY_EXTRAS;
 
   // ===== Peryòd la =====
   const daily = summarizeDaily(dailyRes.data);
@@ -73,16 +91,28 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
       <AdminTabs />
 
       <h1 className="text-3xl font-extrabold tracking-tight text-white">📈 Rapò & Estatistik</h1>
-      <p className="mt-1 text-zinc-400">Tout lajan ki antre sou UpMizik, ak pèfòmans mizik yo.</p>
+      <p className="mt-1 text-zinc-400">
+        Tout lajan ki antre sou UpMizik, ak pèfòmans mizik yo.{" "}
+        <Link href="/admin/achiv/rapo" className="font-semibold text-citron-300 hover:text-citron-200">
+          📄 Wè rapò achive yo →
+        </Link>
+      </p>
 
       {/* ===== LAJAN: tout sa ki antre, sit la / pou pataje ===== */}
       <div className="mt-8">
         {ledgerRes.error ? (
           <p className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 text-sm text-amber-100">
-            ⚠️ Rapò lajan an poko pare: kouri migration <span className="font-mono">20261224000000_revenue_report.sql</span> nan Supabase.
+            ⚠️ Rapò lajan an poko pare: kouri migration <span className="font-mono">20261226000000_live_statements_report_archive.sql</span> nan Supabase.
           </p>
         ) : (
-          <RevenueReport rows={ledger} extras={extras} period={period.key} from={period.from} to={period.to} />
+          <RevenueReport
+            rows={ledger}
+            extras={extras}
+            period={period.key}
+            rangeLabel={rangeLabel}
+            fileTag={aktyel ? `depi-reset-${now.slice(0, 10)}` : `${period.from}-${period.to}`}
+            actions={<ResetReportButton since={lastReport ? fullDate(since) : "kòmansman"} />}
+          />
         )}
       </div>
 

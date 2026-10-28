@@ -24,6 +24,8 @@ type MonthSummary = {
   collaborators_htg: number;
   fee_htg: number;
   paid_htg: number;
+  live_gross_htg: number;
+  live_htg: number;
 };
 
 export default async function AdminMonthlyReportsPage() {
@@ -43,6 +45,8 @@ export default async function AdminMonthlyReportsPage() {
     collaborators_htg: Number(m.collaborators_htg),
     fee_htg: Number(m.fee_htg),
     paid_htg: Number(m.paid_htg),
+    live_gross_htg: Number(m.live_gross_htg ?? 0),
+    live_htg: Number(m.live_htg ?? 0),
   }));
 
   return (
@@ -90,14 +94,20 @@ export default async function AdminMonthlyReportsPage() {
                     </Link>
                   </div>
                 </div>
-                <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
                   <div>
                     <dt className="text-xs text-zinc-500">💝 Don ({m.donations_count})</dt>
                     <dd className="font-semibold tabular-nums text-white">{formatHTG(m.gross_htg)}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-zinc-500">🏢 UpMizik (15% + frè)</dt>
-                    <dd className="font-semibold tabular-nums text-citron-300">{formatHTG(m.platform_htg + m.fee_htg)}</dd>
+                    <dt className="text-xs text-zinc-500">🔴 Kado live</dt>
+                    <dd className="font-semibold tabular-nums text-white">{formatHTG(m.live_gross_htg)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-zinc-500">🏢 UpMizik (15% + live + frè)</dt>
+                    <dd className="font-semibold tabular-nums text-citron-300">
+                      {formatHTG(m.platform_htg + m.fee_htg + Math.max(0, m.live_gross_htg - m.live_htg))}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-xs text-zinc-500">🎤 Pou atis yo ({m.artists})</dt>

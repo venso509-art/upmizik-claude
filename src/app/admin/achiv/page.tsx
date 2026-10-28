@@ -136,6 +136,23 @@ export default async function AdminArchivePage({ searchParams }: { searchParams:
         Achive yon eleman pou l pa ankonbre lis prensipal yo. Li pa efase: ou ka retabli l nenpòt ki lè.
       </p>
 
+      {/* Rapò revni ki anrejistre chak fwa admin nan fè yon reset */}
+      <Link
+        href="/admin/achiv/rapo"
+        className="group mt-6 flex items-center gap-4 rounded-2xl border border-citron-400/40 bg-gradient-to-r from-citron-400/10 to-transparent p-5 transition hover:border-citron-300"
+      >
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-citron-400 text-2xl" aria-hidden>
+          📄
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold text-white">Rapò revni achive yo</span>
+          <span className="block text-sm text-zinc-400">Tout rapò ki te anrejistre chak fwa ou fè ♻️ Reset, youn apre lòt (pa ka modifye).</span>
+        </span>
+        <span className="text-citron-300 transition group-hover:translate-x-1" aria-hidden>
+          →
+        </span>
+      </Link>
+
       <nav className="mt-6 flex flex-wrap gap-2">
         {TABS.map((t) => (
           <Link

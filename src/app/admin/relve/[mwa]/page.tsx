@@ -25,6 +25,8 @@ type Row = {
   fee_htg: number;
   net_htg: number;
   paid_htg: number;
+  live_gross_htg: number;
+  live_htg: number;
 };
 
 export default async function AdminMonthReportPage({ params }: { params: { mwa: string } }) {
@@ -49,7 +51,11 @@ export default async function AdminMonthReportPage({ params }: { params: { mwa: 
     fee_htg: sum("fee_htg"),
     net_htg: sum("net_htg"),
     paid_htg: sum("paid_htg"),
+    live_gross_htg: sum("live_gross_htg"),
+    live_htg: sum("live_htg"),
   };
+  // Pa UpMizik sou kado live yo
+  const livePlatform = Math.max(0, totals.live_gross_htg - totals.live_htg);
   const gap = balanceGap(totals);
   const label = monthLabel(month);
 
@@ -71,16 +77,23 @@ export default async function AdminMonthReportPage({ params }: { params: { mwa: 
       </div>
 
       {/* Total mwa a */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5">
           <p className="text-sm text-zinc-400">💝 Total don</p>
           <p className="mt-2 text-2xl font-extrabold text-white">{formatHTG(totals.gross_htg)}</p>
         </div>
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-5">
+          <p className="text-sm text-zinc-400">🔴 Kado live</p>
+          <p className="mt-2 text-2xl font-extrabold text-white">{formatHTG(totals.live_gross_htg)}</p>
+          <p className="mt-1 text-[11px] text-zinc-500">
+            Atis yo: {formatHTG(totals.live_htg)} · UpMizik: {formatHTG(livePlatform)}
+          </p>
+        </div>
         <div className="rounded-2xl border border-citron-400/30 bg-citron-400/5 p-5">
           <p className="text-sm text-zinc-400">🏢 UpMizik</p>
-          <p className="mt-2 text-2xl font-extrabold text-citron-300">{formatHTG(totals.platform_htg + totals.fee_htg)}</p>
+          <p className="mt-2 text-2xl font-extrabold text-citron-300">{formatHTG(totals.platform_htg + totals.fee_htg + livePlatform)}</p>
           <p className="mt-1 text-[11px] text-zinc-500">
-            15%: {formatHTG(totals.platform_htg)} · Frè: {formatHTG(totals.fee_htg)}
+            15%: {formatHTG(totals.platform_htg)} · Live: {formatHTG(livePlatform)} · Frè: {formatHTG(totals.fee_htg)}
           </p>
         </div>
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5">
@@ -119,6 +132,7 @@ export default async function AdminMonthReportPage({ params }: { params: { mwa: 
                 <th className="px-3 py-3 text-right">UpMizik 15%</th>
                 <th className="px-3 py-3 text-right">Featuring/Kolab.</th>
                 <th className="px-3 py-3 text-right">Pa li</th>
+                <th className="px-3 py-3 text-right">🔴 Live</th>
                 <th className="px-3 py-3 text-right">Frè</th>
                 <th className="px-3 py-3 text-right">Pou li</th>
                 <th className="px-3 py-3 text-right">Peye</th>
@@ -140,6 +154,10 @@ export default async function AdminMonthReportPage({ params }: { params: { mwa: 
                     {formatHTG(r.own_htg + r.featuring_in_htg)}
                     {r.featuring_in_htg > 0 && <span className="block text-[10px] text-zinc-500">dont featuring {formatHTG(r.featuring_in_htg)}</span>}
                   </td>
+                  <td className="px-3 py-3 text-right tabular-nums text-zinc-300">
+                    {r.live_htg > 0 ? formatHTG(r.live_htg) : "—"}
+                    {r.live_gross_htg > 0 && <span className="block text-[10px] text-zinc-500">sou {formatHTG(r.live_gross_htg)} kado</span>}
+                  </td>
                   <td className="px-3 py-3 text-right tabular-nums text-zinc-400">−{formatHTG(r.fee_htg)}</td>
                   <td className="px-3 py-3 text-right font-bold tabular-nums text-citron-300">{formatHTG(r.net_htg)}</td>
                   <td className="px-3 py-3 text-right tabular-nums text-zinc-300">{formatHTG(r.paid_htg)}</td>
@@ -150,7 +168,8 @@ export default async function AdminMonthReportPage({ params }: { params: { mwa: 
         </div>
       )}
       <p className="mt-3 text-xs text-zinc-500">
-        &quot;Pou li&quot; = sa atis la touche pou mwa sa a apre 15% ak frè $0.99 la. Lajan an vin disponib pou retrè apre mwa a fini; ou peye l nan 💸 Retrè
+        &quot;Pou li&quot; = sa atis la touche pou mwa sa a (don + kado live) apre 15% ak frè $0.99 la. Mwa ki te fèmen anvan kado live yo te
+        antre nan relve yo pa gen kolòn live la. Lajan an vin disponib pou retrè apre mwa a fini; ou peye l nan 💸 Retrè
         lè atis la mande l.
       </p>
     </div>

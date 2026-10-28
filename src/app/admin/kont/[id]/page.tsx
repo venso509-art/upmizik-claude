@@ -48,6 +48,8 @@ function emptyMonth(month: string, artistId: string): MonthRow {
     fee_htg: 0,
     net_htg: 0,
     paid_htg: 0,
+    live_gross_htg: 0,
+    live_htg: 0,
     closed: month < currentMonthIso(),
   };
 }

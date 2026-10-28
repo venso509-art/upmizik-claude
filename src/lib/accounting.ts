@@ -41,6 +41,8 @@ export type MonthRow = {
   net_htg: number;
   paid_htg: number;
   closed: boolean;
+  live_gross_htg: number; // valè kado live yo
+  live_htg: number; // pa atis la sou kado live yo (deja nan net_htg)
 };
 
 // Supabase voye "numeric" kòm tèks: konvèti tout chif yo
@@ -61,6 +63,8 @@ export const MONEY_KEYS = [
   "fee_htg",
   "net_htg",
   "paid_htg",
+  "live_gross_htg",
+  "live_htg",
 ] as const;
 
 // Verifikasyon: tout goud yon don dwe ale yon kote (sit la + atis la + featuring + kolaboratè).
