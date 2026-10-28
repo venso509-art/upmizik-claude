@@ -15,7 +15,7 @@ const iconButton =
   "flex h-10 w-10 items-center justify-center rounded-full text-zinc-300 transition hover:text-white disabled:opacity-30 disabled:hover:text-zinc-300";
 
 export function PlayerBar() {
-  const { current, isPlaying, isLoading, error, currentTime, duration, volume, hasNext, toggle, next, prev, seek, setVolume, repeatMode, cycleRepeat, shuffle, toggleShuffle } =
+  const { current, isPlaying, isLoading, error, currentTime, duration, volume, hasNext, toggle, next, prev, seek, setVolume, repeatMode, cycleRepeat, shuffle, toggleShuffle, close } =
     usePlayer();
 
   if (!current) return null;
@@ -114,6 +114,18 @@ export function PlayerBar() {
             className="h-1 w-24 cursor-pointer accent-fuchsia-500"
             aria-label="Nivo volim"
           />
+          {/* ✕: kanpe mizik la epi kache ba a */}
+          <button
+            type="button"
+            onClick={close}
+            className="ml-2 flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 ring-1 ring-zinc-700 transition hover:rotate-90 hover:bg-red-500/15 hover:text-red-300 hover:ring-red-400/50"
+            aria-label="Fèmen lektè a"
+            title="Fèmen lektè a"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" className="h-4 w-4" aria-hidden>
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

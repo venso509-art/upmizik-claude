@@ -84,7 +84,7 @@ function PlayButton({ size }: { size: "md" | "lg" }) {
 
 // Ba lektè sou TELEFÒN: CD k ap woule, non chante a, ⏪10 ▶ 10⏩, ak yon ba pou glise. Tape l = gwo ekran.
 export function MobilePlayerBar() {
-  const { current, isPlaying, isLoading, error, currentTime, duration, seek } = usePlayer();
+  const { current, isPlaying, isLoading, error, currentTime, duration, seek, close } = usePlayer();
   const [open, setOpen] = useState(false);
   if (!current) return null;
   const skip = (d: number) => seek(Math.min(Math.max(0, currentTime + d), duration || currentTime + d));
@@ -93,7 +93,7 @@ export function MobilePlayerBar() {
     <>
       <div className="px-3 pb-2 pt-1">
         <SeekBar />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button type="button" onClick={() => setOpen(true)} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label="Louvri lektè a">
             <VinylDisc coverUrl={current.coverUrl} spinning={isPlaying} className="h-12 w-12" />
             <span className="min-w-0">
@@ -107,6 +107,17 @@ export function MobilePlayerBar() {
           <PlayButton size="md" />
           <button type="button" onClick={() => skip(10)} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-200 active:scale-90" aria-label="Avanse 10 segonn">
             <Skip10Icon direction="forward" className="h-6 w-6" />
+          </button>
+          {/* ✕: kanpe mizik la epi kache ba a */}
+          <button
+            type="button"
+            onClick={close}
+            className="-mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-zinc-400 ring-1 ring-white/10 active:scale-90"
+            aria-label="Fèmen lektè a"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" className="h-4 w-4" aria-hidden>
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
           </button>
         </div>
       </div>

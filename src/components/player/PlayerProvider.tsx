@@ -42,6 +42,7 @@ type PlayerState = {
   cycleRepeat: () => void; // off → all → one → off
   shuffle: boolean;
   toggleShuffle: () => void;
+  close: () => void; // kanpe mizik la epi kache ba lektè a
 };
 
 const PlayerContext = createContext<PlayerState | null>(null);
@@ -197,6 +198,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     else audio.pause();
   }, [current]);
 
+  // ✕: kanpe mizik la nèt epi kache ba lektè a (pwochen chante moun nan peze a ap reouvri l)
+  const close = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    }
+    playRef.current = newSession(null);
+    setCurrent(null);
+    setQueue([]);
+    setIsPlaying(false);
+    setIsLoading(false);
+    setError(null);
+    setCurrentTime(0);
+    setDuration(0);
+    if ("mediaSession" in navigator) navigator.mediaSession.metadata = null;
+  }, []);
+
   const next = useCallback(() => {
     if (nextTrack) load(nextTrack);
   }, [nextTrack, load]);
@@ -302,6 +322,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         cycleRepeat,
         shuffle,
         toggleShuffle,
+        close,
       }}
     >
       {children}
