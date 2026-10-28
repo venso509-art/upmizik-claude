@@ -36,6 +36,9 @@ type Row = {
   created_at: string;
   sex: "fi" | "gason" | null;
   nickname: string | null;
+  id_selfie_path: string | null;
+  id_doc_path: string | null;
+  id_doc_type: "paspo" | "kat_idantite" | null;
   account: { created_at: string; role: string } | { created_at: string; role: string }[] | null;
 };
 
@@ -51,7 +54,7 @@ export default async function AdminMembersPage({ searchParams }: { searchParams:
     supabase
       .from("members")
       .select(
-        "id, user_id, full_name, nickname, email, phone, city, motivation, pseudo_referral, objective_total, current_progress, total_earned, status, admin_note, created_at, sex, account:profiles!members_user_id_fkey(created_at, role)",
+        "id, user_id, full_name, nickname, email, phone, city, motivation, pseudo_referral, objective_total, current_progress, total_earned, status, admin_note, created_at, sex, id_selfie_path, id_doc_path, id_doc_type, account:profiles!members_user_id_fkey(created_at, role)",
       )
       .eq("status", status)
       .order("created_at", { ascending: false })
@@ -85,6 +88,11 @@ export default async function AdminMembersPage({ searchParams }: { searchParams:
     m.set(k, (m.get(k) ?? 0) + 1);
     monthCounts.set(r.referred_by_member_id, m);
   }
+  // Foto idantite yo: lyen prive ki ekspire apre 1 è (bucket "member-ids")
+  const idPaths = rows.flatMap((r) => [r.id_selfie_path, r.id_doc_path]).filter((p): p is string => !!p);
+  const { data: signed } = idPaths.length ? await supabase.storage.from("member-ids").createSignedUrls(idPaths, 3600) : { data: [] };
+  const signedMap = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
+
   const paidMap = new Map<string, number>();
   for (const p of (pays ?? []) as { member_id: string; period: string; amount_usd: number }[]) paidMap.set(`${p.member_id}:${p.period.slice(0, 7)}`, Number(p.amount_usd));
 
@@ -105,6 +113,9 @@ export default async function AdminMembersPage({ searchParams }: { searchParams:
     createdAt: r.created_at,
     sex: r.sex,
     nickname: r.nickname,
+    idSelfieUrl: (r.id_selfie_path && signedMap.get(r.id_selfie_path)) || null,
+    idDocUrl: (r.id_doc_path && signedMap.get(r.id_doc_path)) || null,
+    idDocType: r.id_doc_type,
     isArtist: (Array.isArray(r.account) ? r.account[0] : r.account)?.role === "artist",
     accountSince: (Array.isArray(r.account) ? r.account[0] : r.account)?.created_at ?? null,
     referredTotal: flags.get(r.id)?.total ?? 0,

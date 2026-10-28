@@ -27,6 +27,9 @@ export type AdminMember = {
   referredPending: number;
   referredBad: number; // bloke oswa achive (siy fwod)
   months: { key: string; count: number; paid: number | null }[]; // mwa ki gen atis (pi resan an premye)
+  idSelfieUrl: string | null; // foto figi (lyen prive ki ekspire apre 1 è)
+  idDocUrl: string | null; // foto pyès idantite a
+  idDocType: "paspo" | "kat_idantite" | null;
 };
 
 const date = (iso: string) => new Date(iso).toLocaleDateString("fr-HT", { day: "numeric", month: "short", year: "numeric" });
@@ -114,6 +117,33 @@ function MemberCard({ m, htgPerUsd, thisMonth }: { m: AdminMember; htgPerUsd: nu
         {m.pseudo && <span className="shrink-0 rounded-lg bg-[#0B132B] px-2.5 py-1 text-xs font-black tracking-wider text-[#FFD700]">{m.pseudo}</span>}
       </div>
       {m.motivation && <p className="rounded-xl bg-zinc-950/60 p-3 text-xs text-zinc-300">“{m.motivation}”</p>}
+      {/* Verifikasyon idantite: konpare figi a ak foto ki sou pyès la */}
+      {m.idSelfieUrl || m.idDocUrl ? (
+        <div className="grid grid-cols-2 gap-2">
+          {(
+            [
+              [m.idSelfieUrl, "🤳 Figi (selfie)"],
+              [m.idDocUrl, m.idDocType === "paspo" ? "🛂 Paspò" : "🪪 Kat idantite"],
+            ] as const
+          ).map(([url, label]) =>
+            url ? (
+              <a key={label} href={url} target="_blank" rel="noopener noreferrer" className="group relative block overflow-hidden rounded-xl ring-1 ring-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={label} className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105" />
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 pb-1.5 pt-4 text-[11px] font-bold text-white">
+                  {label} · 🔍
+                </span>
+              </a>
+            ) : (
+              <span key={label} className="flex aspect-[4/3] items-center justify-center rounded-xl bg-red-500/10 text-xs text-red-300">
+                {label}: manke
+              </span>
+            ),
+          )}
+        </div>
+      ) : (
+        <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs text-amber-200">⚠️ San foto idantite (demann ki te fèt anvan verifikasyon an te obligatwa).</p>
+      )}
       {/* Enfòmasyon pou deside: atis li fè enskri yo, ak siy fwod */}
       <div className="flex flex-wrap gap-1.5 text-[11px]">
         <span className="rounded-full bg-white/5 px-2.5 py-1 text-zinc-300">🎤 {m.referredTotal} atis enskri ak pseudo a</span>

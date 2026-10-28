@@ -23,6 +23,32 @@ export async function requestMembership(formData: FormData): Promise<MemberResul
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Mete yon imèl valid." };
   if (phone.replace(/\D/g, "").length < 8 || phone.length > 20) return { error: "Mete yon nimewo telefòn/WhatsApp valid." };
 
+  // Verifikasyon idantite: foto figi (selfie) + foto pyès (paspò oswa kat idantite nasyonal)
+  const idType = String(formData.get("id_type") ?? "");
+  if (idType !== "paspo" && idType !== "kat_idantite") return { error: "Chwazi kalite pyès la: paspò oswa kat idantite nasyonal." };
+  const selfie = formData.get("selfie");
+  const idDoc = formData.get("id_doc");
+  for (const [file, label] of [
+    [selfie, "foto figi ou"],
+    [idDoc, "foto pyès idantite ou"],
+  ] as const) {
+    if (!(file instanceof File) || file.size === 0) return { error: `Ajoute ${label}.` };
+    if (!ID_TYPES[file.type]) return { error: `${label[0].toUpperCase()}${label.slice(1)} dwe yon foto (JPG, PNG oswa WebP).` };
+    if (file.size > 3 * 1024 * 1024) return { error: `${label[0].toUpperCase()}${label.slice(1)} twò lou. Eseye ankò.` };
+  }
+  const s = selfie as File;
+  const d = idDoc as File;
+  const selfiePath = `${user.id}/selfie-${crypto.randomUUID()}.${ID_TYPES[s.type]}`;
+  const idPath = `${user.id}/${idType}-${crypto.randomUUID()}.${ID_TYPES[d.type]}`;
+  const bucket = supabase.storage.from("member-ids");
+  const up1 = await bucket.upload(selfiePath, s, { contentType: s.type, upsert: false });
+  if (up1.error) return { error: `Foto figi ou a pa monte: ${up1.error.message}` };
+  const up2 = await bucket.upload(idPath, d, { contentType: d.type, upsert: false });
+  if (up2.error) {
+    await bucket.remove([selfiePath]);
+    return { error: `Foto pyès la pa monte: ${up2.error.message}` };
+  }
+
   const { error } = await supabase.rpc("request_membership", {
     p_full_name: fullName,
     p_nickname: nickname,
@@ -31,11 +57,19 @@ export async function requestMembership(formData: FormData): Promise<MemberResul
     p_city: city,
     p_motivation: motivation,
     p_sex: sex,
+    p_selfie_path: selfiePath,
+    p_id_path: idPath,
+    p_id_type: idType,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    await bucket.remove([selfiePath, idPath]);
+    return { error: error.message };
+  }
   revalidatePath("/manm");
   return { ok: true };
 }
+
+const ID_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 // Manm nan chanje pseudo li (3 fwa maksimòm chak 30 jou; baz done a verifye l)
 export async function changePseudo(code: string): Promise<MemberResult> {

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { requestMembership } from "@/app/manm/actions";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
+import { IdentityUpload, type IdentityFiles } from "@/components/member/IdentityUpload";
 
 // Fòm "Vin manm afilye": demann nan ale bay admin nan pou l apwouve l
 export function MemberForm({ defaultNickname, defaultEmail }: { defaultNickname: string; defaultEmail: string }) {
@@ -11,6 +12,8 @@ export function MemberForm({ defaultNickname, defaultEmail }: { defaultNickname:
   const [error, setError] = useState<string>();
   const [done, setDone] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [identity, setIdentity] = useState<IdentityFiles>({ selfie: null, idDoc: null, idType: null });
+  const identityReady = !!identity.selfie && !!identity.idDoc && !!identity.idType;
 
   if (done) {
     return (
@@ -29,6 +32,10 @@ export function MemberForm({ defaultNickname, defaultEmail }: { defaultNickname:
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
         setError(undefined);
+        if (!identityReady) return setError("Ajoute foto figi ou ak foto pyès idantite ou anvan w voye demann nan.");
+        fd.set("selfie", identity.selfie!);
+        fd.set("id_doc", identity.idDoc!);
+        fd.set("id_type", identity.idType!);
         startTransition(async () => {
           const res = await requestMembership(fd);
           if (res.error) return setError(res.error);
@@ -83,13 +90,15 @@ export function MemberForm({ defaultNickname, defaultEmail }: { defaultNickname:
           className={`${inputClass} resize-y`}
         />
       </Field>
+      {/* Verifikasyon idantite: selfie + paspò oswa kat idantite nasyonal */}
+      <IdentityUpload value={identity} onChange={setIdentity} />
       <FormMessage error={error} />
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || !identityReady}
         className="w-full rounded-full bg-[#FFD700] px-6 py-3.5 text-base font-black text-[#0B132B] shadow-lg shadow-[#FFD700]/20 transition hover:brightness-105 disabled:opacity-60"
       >
-        {pending ? "Ap voye…" : "🤝 Voye demann mwen"}
+        {pending ? "Ap voye foto yo ak demann nan…" : identityReady ? "🤝 Voye demann mwen" : "📷 Ajoute 2 foto yo pou w kontinye"}
       </button>
     </form>
   );
