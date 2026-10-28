@@ -279,6 +279,11 @@ const config: Config = {
           "100%": { opacity: "1", transform: "none" },
         },
         // Pwofil atis: liy jòn nan trase poukont li, epi ikòn yo parèt youn apre lòt
+        // Rapò admin: ba yo grandi soti agoch
+        "bar-grow": {
+          "0%": { transform: "scaleX(0)" },
+          "100%": { transform: "none" },
+        },
         "orbit-draw": {
           "0%": { strokeDashoffset: "1" },
           "100%": { strokeDashoffset: "0" },
@@ -345,6 +350,7 @@ const config: Config = {
         "menu-drop": "menu-drop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both",
         "page-in": "page-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "menu-item": "menu-item 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards",
+        "bar-grow": "bar-grow 1s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "orbit-draw": "orbit-draw 1.1s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "orbit-pop": "orbit-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards",
         "toast-drop": "toast-drop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",

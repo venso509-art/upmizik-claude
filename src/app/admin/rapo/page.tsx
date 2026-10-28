@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
-import { formatHTG, formatUSD } from "@/lib/donations";
 import { parseRange, summarizeDaily, type TopArtistRow, type TopSongRow } from "@/lib/stats";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { DailyChart } from "@/components/stats/DailyChart";
 import { RangeFilter } from "@/components/stats/RangeFilter";
 import { RankList } from "@/components/stats/RankList";
+import { RevenueReport } from "@/components/admin/RevenueReport";
+import { parsePeriod, type RevenueExtras, type RevenueRow } from "@/lib/revenue";
 
 export const metadata: Metadata = { title: "Admin: Rapò | UpMizik" };
 
@@ -33,19 +34,21 @@ function Panel({ title, subtitle, children }: { title: string; subtitle?: string
   );
 }
 
-export default async function AdminReportsPage({ searchParams }: { searchParams: { jou?: string } }) {
+export default async function AdminReportsPage({ searchParams }: { searchParams: { jou?: string; peryod?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
   if (!(await isAdmin(supabase, user.id))) redirect("/");
 
   const days = parseRange(searchParams.jou);
+  const period = parsePeriod(searchParams.peryod);
 
-  const [songsRes, artistsRes, donationsRes, feesRes, dailyRes, topSongsRes, topArtistsRes] = await Promise.all([
+  const [songsRes, artistsRes, ledgerRes, extrasRes, dailyRes, topSongsRes, topArtistsRes] = await Promise.all([
     supabase.from("songs").select("play_count"),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "artist").eq("status", "approved"),
-    supabase.from("donations").select("amount_usd, amount_htg, platform_share_htg").eq("status", "verified"),
-    supabase.from("artist_registrations").select("amount_htg").eq("status", "verified"),
+    // Tout lajan ki antre nan peryòd la (erè = migration rapò revni an poko kouri)
+    supabase.rpc("admin_revenue_ledger", { p_from: period.from, p_to: period.to }),
+    supabase.rpc("admin_revenue_extras", { p_from: period.from, p_to: period.to }),
     supabase.rpc("play_stats_daily", { p_days: days }),
     supabase.rpc("top_songs_period", { p_days: days, p_limit: 10 }),
     supabase.rpc("top_artists_period", { p_days: days, p_limit: 10 }),
@@ -54,11 +57,11 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
   // ===== Total pou tout tan =====
   const songs = songsRes.data ?? [];
   const totalPlays = songs.reduce((s, r) => s + Number(r.play_count), 0);
-  const donations = donationsRes.data ?? [];
-  const donationsUsd = donations.reduce((s, d) => s + Number(d.amount_usd), 0);
-  const donationsHtg = donations.reduce((s, d) => s + Number(d.amount_htg), 0);
-  const revenue =
-    donations.reduce((s, d) => s + Number(d.platform_share_htg), 0) + (feesRes.data ?? []).reduce((s, f) => s + Number(f.amount_htg), 0);
+  const ledger = (ledgerRes.data ?? []) as RevenueRow[];
+  const extras = ((extrasRes.data ?? []) as RevenueExtras[])[0] ?? {
+    live_gifts_htg: 0, live_artist_htg: 0, live_platform_htg: 0, fee_htg: 0,
+    artist_paid_htg: 0, member_paid_htg: 0, member_paid_usd: 0, credits_unspent_htg: 0,
+  };
 
   // ===== Peryòd la =====
   const daily = summarizeDaily(dailyRes.data);
@@ -70,17 +73,25 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
       <AdminTabs />
 
       <h1 className="text-3xl font-extrabold tracking-tight text-white">📈 Rapò & Estatistik</h1>
-      <p className="mt-1 text-zinc-400">Pèfòmans platfòm UpMizik la.</p>
+      <p className="mt-1 text-zinc-400">Tout lajan ki antre sou UpMizik, ak pèfòmans mizik yo.</p>
 
-      {/* ===== TOUT TAN ===== */}
-      <section className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-5">
+      {/* ===== LAJAN: tout sa ki antre, sit la / pou pataje ===== */}
+      <div className="mt-8">
+        {ledgerRes.error ? (
+          <p className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 text-sm text-amber-100">
+            ⚠️ Rapò lajan an poko pare: kouri migration <span className="font-mono">20261224000000_revenue_report.sql</span> nan Supabase.
+          </p>
+        ) : (
+          <RevenueReport rows={ledger} extras={extras} period={period.key} from={period.from} to={period.to} />
+        )}
+      </div>
+
+      {/* ===== MIZIK ===== */}
+      <h2 className="mt-14 text-2xl font-extrabold tracking-tight text-white">🎧 Mizik & ekout</h2>
+      <section className="mt-5 grid grid-cols-3 gap-4">
         <Metric icon="🎵" label="Total mizik" value={songs.length.toLocaleString("fr-HT")} />
         <Metric icon="🎤" label="Atis aktif" value={(artistsRes.count ?? 0).toLocaleString("fr-HT")} />
         <Metric icon="🎧" label="Total ekout" value={totalPlays.toLocaleString("fr-HT")} />
-        <Metric icon="💝" label="Total donasyon" value={formatUSD(donationsUsd)} hint={`${formatHTG(donationsHtg)} · ${donations.length} don`} />
-        <div className="col-span-2 lg:col-span-1">
-          <Metric icon="💰" label="Revni platfòm" value={formatHTG(revenue)} hint="15% don + frè enskripsyon" />
-        </div>
       </section>
 
       {/* ===== PERYÒD ===== */}
