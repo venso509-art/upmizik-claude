@@ -15,10 +15,10 @@ const PERKS = [
 ];
 
 // Yon koutè ki konekte vin atis (san li pa kreye yon nouvo kont)
-export default async function BecomeArtistPage() {
+export default async function BecomeArtistPage({ searchParams }: { searchParams: { ref?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/enskri?wol=atis");
+  if (!user) redirect(searchParams.ref ? `/enskri?wol=atis&ref=${encodeURIComponent(searchParams.ref)}` : "/enskri?wol=atis");
 
   const { data: profile } = await supabase.from("profiles").select("display_name, role, location").eq("id", user.id).single();
   if (profile?.role === "artist") redirect("/dashboard");
@@ -61,7 +61,7 @@ export default async function BecomeArtistPage() {
           ❌ Dènye prèv ou a te rejte{last.admin_note ? `: ${last.admin_note}` : "."} Ou ka voye yon nouvo demann.
         </p>
       )}
-      <BecomeArtistForm name={profile?.display_name ?? ""} location={profile?.location ?? null} />
+      <BecomeArtistForm name={profile?.display_name ?? ""} location={profile?.location ?? null} referral={searchParams.ref ?? ""} />
     </AuthCard>
   );
 }

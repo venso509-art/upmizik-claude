@@ -6,11 +6,12 @@ import { ArtistSignupModal } from "@/components/registration/ArtistSignupModal";
 import { Field, FormMessage, SubmitButton, inputClass } from "@/components/auth/ui";
 import { formatUSD } from "@/lib/donations";
 import { useSettings } from "@/components/SettingsProvider";
+import { ReferralField } from "@/components/auth/ReferralField";
 
 const pinClass = `${inputClass} tracking-[0.5em]`;
 
 // Koutè → atis: rès kondisyon yo (non atis, telefòn, zòn, PIN), epi pop-up règ + peman an (menm jan ak enskripsyon atis la)
-export function BecomeArtistForm({ name, location }: { name: string; location: string | null }) {
+export function BecomeArtistForm({ name, location, referral = "" }: { name: string; location: string | null; referral?: string }) {
   const settings = useSettings();
   const [info, setInfo] = useState<FormData | null>(null);
   const [error, setError] = useState<string>();
@@ -56,6 +57,8 @@ export function BecomeArtistForm({ name, location }: { name: string; location: s
             />
           </div>
         </div>
+        {/* Pseudo manm afilye ki envite l la (lyen ?ref= la ranpli l otomatikman) */}
+        <ReferralField initial={referral} />
         <p className="text-xs text-zinc-500">
           Etap apre a: règ atis yo, epi frè enskripsyon an ({formatUSD(settings.registrationFeeUsd)}) sou MonCash oswa NatCash.
         </p>

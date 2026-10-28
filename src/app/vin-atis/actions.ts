@@ -21,6 +21,7 @@ export async function becomeArtist(formData: FormData): Promise<ArtistSignupResu
   const method = formData.get("method") === "natcash" ? "natcash" : "moncash";
   const transactionRef = String(formData.get("transaction_ref") ?? "").trim();
   const proof = formData.get("proof");
+  const referral = String(formData.get("referral") ?? "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20);
 
   if (displayName.length < 2) return { error: "Mete non atis ou." };
   if (phone.replace(/\D/g, "").length < 8) return { error: "Mete yon nimewo telefòn/WhatsApp valid." };
@@ -45,6 +46,7 @@ export async function becomeArtist(formData: FormData): Promise<ArtistSignupResu
     p_method: method,
     p_transaction_ref: transactionRef,
     p_proof_path: proofPath,
+    p_referral: referral || null,
   });
   if (error) {
     await supabase.storage.from("donation-proofs").remove([proofPath]);
