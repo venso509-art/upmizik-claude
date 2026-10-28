@@ -88,7 +88,19 @@ export default async function AdminPage() {
       createdAt: u.created_at,
       songCount: Number(u.song_count),
     }));
-  const listeners = users.filter((u) => u.role === "listener").length;
+  // Fanatik yo (kont pou koute mizik): admin nan ka bloke oswa siprime yo tou
+  const listenerRows: AdminArtist[] = users
+    .filter((u) => u.role === "listener")
+    .map((u) => ({
+      id: u.id,
+      displayName: u.display_name,
+      email: u.email,
+      status: u.status,
+      isAdmin: u.is_admin,
+      createdAt: u.created_at,
+      songCount: 0,
+    }));
+  const listeners = listenerRows.length;
   const pendingArtists = artists.filter((a) => a.status === "pending").length;
 
   return (
@@ -117,6 +129,11 @@ export default async function AdminPage() {
       <div className="mt-8 space-y-8">
         <Panel title="🎤 Atis yo">
           <ArtistTable artists={artists} currentUserId={user.id} />
+        </Panel>
+
+        <Panel title={`🎧 Fanatik yo (${listeners})`}>
+          <p className="-mt-3 mb-4 text-sm text-zinc-400">Moun ki enskri pou koute mizik. Bloke yon kont pou l pa ka konekte ankò, oswa siprime l nèt.</p>
+          <ArtistTable artists={listenerRows} currentUserId={user.id} kind="listener" />
         </Panel>
 
         <Panel

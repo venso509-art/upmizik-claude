@@ -31,13 +31,14 @@ const FILTERS: { key: AccountStatus | "all"; label: string }[] = [
   { key: "all", label: "Tout" },
 ];
 
-function Actions({ artist, currentUserId }: { artist: AdminArtist; currentUserId: string }) {
+function Actions({ artist, currentUserId, kind }: { artist: AdminArtist; currentUserId: string; kind: "artist" | "listener" }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
   const isSelf = artist.id === currentUserId;
 
   function change(status: AccountStatus) {
-    if (status === "blocked" && !confirm(`Bloke ${artist.displayName}? Li p ap ka pibliye mizik ankò.`)) return;
+    const what = kind === "artist" ? "Li p ap ka pibliye mizik ankò." : "Li p ap ka konekte ankò.";
+    if (status === "blocked" && !confirm(`Bloke ${artist.displayName}? ${what}`)) return;
     startTransition(async () => setError((await setUserStatus(artist.id, status)).error));
   }
 
@@ -80,15 +81,30 @@ function Actions({ artist, currentUserId }: { artist: AdminArtist; currentUserId
   );
 }
 
-export function ArtistTable({ artists, currentUserId }: { artists: AdminArtist[]; currentUserId: string }) {
+// Lis kont yo (atis oswa fanatik): filtè estati + rechèch, ak aksyon apwouve / bloke / siprime
+export function ArtistTable({
+  artists,
+  currentUserId,
+  kind = "artist",
+}: {
+  artists: AdminArtist[];
+  currentUserId: string;
+  kind?: "artist" | "listener";
+}) {
   const pendingCount = artists.filter((a) => a.status === "pending").length;
   const [filter, setFilter] = useState<AccountStatus | "all">(pendingCount > 0 ? "pending" : "all");
-  const shown = filter === "all" ? artists : artists.filter((a) => a.status === filter);
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const shown = (filter === "all" ? artists : artists.filter((a) => a.status === filter)).filter(
+    (a) => !needle || a.displayName.toLowerCase().includes(needle) || a.email.toLowerCase().includes(needle),
+  );
+  // Fanatik yo pa gen estati "ap tann": yo apwouve otomatikman
+  const filters = kind === "listener" ? FILTERS.filter((f) => f.key !== "pending") : FILTERS;
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((f) => {
+      <div className="flex flex-wrap items-center gap-2">
+        {filters.map((f) => {
           const count = f.key === "all" ? artists.length : artists.filter((a) => a.status === f.key).length;
           return (
             <button
@@ -102,19 +118,25 @@ export function ArtistTable({ artists, currentUserId }: { artists: AdminArtist[]
             </button>
           );
         })}
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="🔍 Chache non oswa imèl…"
+          className="ml-auto h-9 w-full rounded-full border border-zinc-700 bg-zinc-950/60 px-4 text-sm text-white placeholder:text-zinc-500 focus:border-citron-400 focus:outline-none sm:w-64"
+        />
       </div>
 
       {shown.length === 0 ? (
         <p className="mt-6 rounded-xl border border-dashed border-zinc-800 py-10 text-center text-sm text-zinc-500">
-          Pa gen atis nan kategori sa a.
+          {kind === "artist" ? "Pa gen atis nan kategori sa a." : "Pa gen fanatik nan kategori sa a."}
         </p>
       ) : (
         <div className="mt-5 overflow-hidden rounded-xl border border-zinc-800">
           <table className="w-full text-left text-sm">
             <thead className="hidden bg-zinc-900 text-xs uppercase tracking-wider text-zinc-500 md:table-header-group">
               <tr>
-                <th className="px-4 py-3 font-medium">Atis</th>
-                <th className="px-4 py-3 font-medium">Chante</th>
+                <th className="px-4 py-3 font-medium">{kind === "artist" ? "Atis" : "Fanatik"}</th>
+                {kind === "artist" && <th className="px-4 py-3 font-medium">Chante</th>}
                 <th className="px-4 py-3 font-medium">Enskri</th>
                 <th className="px-4 py-3 font-medium">Estati</th>
                 <th className="px-4 py-3 text-right font-medium">Aksyon</th>
@@ -124,21 +146,27 @@ export function ArtistTable({ artists, currentUserId }: { artists: AdminArtist[]
               {shown.map((a) => (
                 <tr key={a.id} className="grid grid-cols-2 gap-2 p-4 md:table-row md:p-0">
                   <td className="col-span-2 md:px-4 md:py-3">
-                    <Link href={`/atis/${a.id}`} className="font-semibold text-white hover:underline">
-                      {a.displayName}
-                    </Link>
+                    {kind === "artist" ? (
+                      <Link href={`/atis/${a.id}`} className="font-semibold text-white hover:underline">
+                        {a.displayName}
+                      </Link>
+                    ) : (
+                      <span className="font-semibold text-white">{a.displayName}</span>
+                    )}
                     {a.isAdmin && <span className="ml-2 text-xs text-amber-300">🛡️ admin</span>}
-                    {a.status === "approved" && (
+                    {kind === "artist" && a.status === "approved" && (
                       <span className="ml-2 inline-block align-middle">
                         <VerifyToggle artistId={a.id} name={a.displayName} verified={!!a.verified} />
                       </span>
                     )}
                     <p className="truncate text-xs text-zinc-500">{a.email}</p>
                   </td>
-                  <td className="text-zinc-300 md:px-4 md:py-3">
-                    <span className="md:hidden text-zinc-500">Chante: </span>
-                    {a.songCount}
-                  </td>
+                  {kind === "artist" && (
+                    <td className="text-zinc-300 md:px-4 md:py-3">
+                      <span className="md:hidden text-zinc-500">Chante: </span>
+                      {a.songCount}
+                    </td>
+                  )}
                   <td className="text-zinc-400 md:px-4 md:py-3">
                     {new Date(a.createdAt).toLocaleDateString("fr-HT", { day: "numeric", month: "short", year: "numeric" })}
                   </td>
@@ -148,7 +176,7 @@ export function ArtistTable({ artists, currentUserId }: { artists: AdminArtist[]
                     </span>
                   </td>
                   <td className="md:px-4 md:py-3">
-                    <Actions artist={a} currentUserId={currentUserId} />
+                    <Actions artist={a} currentUserId={currentUserId} kind={kind} />
                   </td>
                 </tr>
               ))}
