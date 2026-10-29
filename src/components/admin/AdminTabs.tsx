@@ -44,6 +44,7 @@ export async function AdminTabs() {
           { href: "/admin/modpas", label: "🔑 Modpas", badge: resets },
           { href: "/admin/achiv", label: "🗄️ Achiv" },
           { href: "/admin/mesaj", label: "📣 Mesaj" },
+          { href: "/admin/sitasyon", label: "💬 Sitasyon" },
         ]}
       />
     </div>

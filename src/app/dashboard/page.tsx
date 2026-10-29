@@ -14,6 +14,8 @@ import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
 import { SongManager, type ManagedSong } from "@/components/dashboard/SongManager";
 import { PostComposer, type MyPost } from "@/components/social/PostComposer";
 import { StatusComposer } from "@/components/status/StatusComposer";
+import { DailyQuoteStudio } from "@/components/quotes/DailyQuoteStudio";
+import type { QuoteTemplate } from "@/lib/dailyQuotes";
 import { postImageUrl } from "@/lib/posts";
 import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { donateShareText } from "@/lib/shareMessages";
@@ -190,6 +192,21 @@ export default async function DashboardPage() {
 
   // Atis Pro: jiska 10 kolaboratè lè l ap modifye yon chante
   const isProArtist = (await supabase.rpc("is_pro", { p_user: user.id })).data === true;
+
+  // Mesaj jounen an: kat sitasyon jodi a (erè = migration an poko kouri → "ap vini byento")
+  const { data: quoteRows } = await supabase.rpc("my_daily_card");
+  const quoteRow = ((quoteRows ?? []) as { day: string; template: number; teks: string; kategori: string; etiket: string; sous: string | null }[])[0];
+  const dailyCard = quoteRow
+    ? {
+        day: quoteRow.day,
+        template: Math.min(6, Math.max(1, Number(quoteRow.template))) as QuoteTemplate,
+        quote: { teks: quoteRow.teks, kategori: quoteRow.kategori, etiket: quoteRow.etiket, sous: quoteRow.sous },
+      }
+    : null;
+  // Jan mizik prensipal atis la (pou ti liy "Atis Konpa · sou UpMizik" la)
+  const genreCount = new Map<string, number>();
+  for (const s of songs) if (s.genre) genreCount.set(s.genre, (genreCount.get(s.genre) ?? 0) + 1);
+  const mainGenre = Array.from(genreCount.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
   const managed: ManagedSong[] = songs.map((s) => ({
     id: s.id,
     title: s.title,
@@ -335,6 +352,13 @@ export default async function DashboardPage() {
           history={boostHistory}
         />
       )}
+
+      {/* ===== MESAJ JOUNEN AN: kat sitasyon pou pataje ===== */}
+      <DailyQuoteStudio
+        card={dailyCard}
+        artist={{ id: user.id, name: profile.display_name, avatarUrl: profile.avatar_url ?? null, genre: mainGenre }}
+        pro={isProArtist}
+      />
 
       {/* ===== STATI 24 È (atis Pro) ===== */}
       <StatusComposer
