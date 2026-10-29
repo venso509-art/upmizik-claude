@@ -54,7 +54,8 @@ const Logo = ({ size }: { size: number }) => (
 const Source = ({ sous, color, center }: { sous: string | null; color: string; center?: boolean }) =>
   sous ? <span style={{ fontFamily: GEIST, fontWeight: 600, fontSize: 28, color, textAlign: center ? "center" : "left" }}>— {sous}</span> : null;
 
-const subline = (genre: string | null, withSite = true) => `Atis${genre ? ` ${genre}` : ""}${withSite ? " · sou UpMizik" : ""}`;
+// Ti liy anba non atis la (menm jan pou tout atis yo, kèlkeswa jan mizik yo)
+const subline = () => "UpMizik - Artist";
 
 // ---------- 1. JÒN SOLÈY ----------
 function T1({ quote, artist, day }: Omit<Props, "template" | "format">) {
@@ -81,7 +82,7 @@ function T1({ quote, artist, day }: Omit<Props, "template" | "format">) {
           <Avatar src={artist.avatarUrl} name={artist.name} size={132} style={{ border: "6px solid #0B132B" }} fallbackBg="#0B132B" fallbackColor="#FFD700" />
           <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
             <span style={{ fontWeight: 800, fontSize: 46, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{shortName(artist.name)}</span>
-            <span style={{ fontWeight: 500, fontSize: 28, color: "rgba(11, 19, 43, 0.72)" }}>{subline(artist.genre)}</span>
+            <span style={{ fontWeight: 500, fontSize: 28, color: "rgba(11, 19, 43, 0.72)" }}>{subline()}</span>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 32, borderTop: "3px solid rgba(11, 19, 43, 0.15)" }}>
@@ -200,7 +201,7 @@ function T4({ quote, artist, day }: Omit<Props, "template" | "format">) {
           <Avatar src={artist.avatarUrl} name={artist.name} size={128} style={{ boxShadow: "0 0 0 6px #6EE7B7, 0 0 0 14px rgba(110, 231, 183, 0.25)" }} fallbackBg="#063821" fallbackColor="#A7F3D0" />
           <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
             <span style={{ fontWeight: 800, fontSize: 44, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{shortName(artist.name)}</span>
-            <span style={{ fontWeight: 500, fontSize: 26, color: "rgba(255, 255, 255, 0.75)" }}>{subline(artist.genre)}</span>
+            <span style={{ fontWeight: 500, fontSize: 26, color: "rgba(255, 255, 255, 0.75)" }}>{subline()}</span>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16, paddingTop: 30, borderTop: "2px solid rgba(167, 243, 208, 0.25)" }}>
@@ -281,7 +282,7 @@ function T6({ quote, artist, day }: Omit<Props, "template" | "format">) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, position: "relative", paddingTop: 32, borderTop: "2px solid rgba(255, 255, 255, 0.12)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
           <span style={{ fontWeight: 800, fontSize: 44, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>{shortName(artist.name)}</span>
-          <span style={{ fontWeight: 500, fontSize: 26, color: "rgba(255, 255, 255, 0.65)" }}>{subline(artist.genre, false)}</span>
+          <span style={{ fontWeight: 500, fontSize: 26, color: "rgba(255, 255, 255, 0.65)" }}>{subline()}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
           <Logo size={64} />
