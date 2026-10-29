@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toBlob } from "html-to-image";
 import { createClient } from "@/lib/supabase/client";
+import { Portal } from "@/components/Portal";
 import { createPost } from "@/app/sosyal/actions";
 import { DailyQuoteCard } from "@/components/quotes/DailyQuoteCard";
 import { FORMAT_SIZE, TEMPLATE_NAMES, categoryLabel, type DailyQuote, type QuoteFormat, type QuoteTemplate } from "@/lib/dailyQuotes";
@@ -23,6 +24,42 @@ const slug = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40) || "atis";
+
+// iPhone / iPad (tout navigatè sou iOS se Safari anba): yo bezwen tretman espesyal
+const isIOS = () =>
+  typeof navigator !== "undefined" &&
+  (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+const isWebKit = () => typeof navigator !== "undefined" && (isIOS() || (/Safari/.test(navigator.userAgent) && !/Chrome|Chromium|Android/.test(navigator.userAgent)));
+
+// Foto yo (avatar, logo) vin "data URL" anndan kat la: konsa Safari pa ka bliye yo lè l ap fè imaj la
+const inlined = new Map<string, string>();
+async function inlineImages(node: HTMLElement) {
+  const imgs = Array.from(node.querySelectorAll("img"));
+  await Promise.all(
+    imgs.map(async (img) => {
+      const src = img.getAttribute("src") ?? "";
+      if (!src || src.startsWith("data:")) return;
+      try {
+        let data = inlined.get(src);
+        if (!data) {
+          const res = await fetch(src, { mode: "cors", cache: "force-cache" });
+          const blob = await res.blob();
+          data = await new Promise<string>((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(String(fr.result));
+            fr.onerror = reject;
+            fr.readAsDataURL(blob);
+          });
+          inlined.set(src, data);
+        }
+        img.setAttribute("src", data);
+      } catch {
+        // foto a pa chaje: kat la ap fèt san li
+      }
+      await img.decode().catch(() => undefined);
+    }),
+  );
+}
 
 function downloadBlob(blob: Blob, name: string) {
   const a = document.createElement("a");
@@ -119,6 +156,7 @@ export function DailyQuoteStudio({ card, artist, pro }: { card: Card | null; art
   const [template, setTemplate] = useState<QuoteTemplate>(card?.template ?? 1);
   const [busy, setBusy] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [sheet, setSheet] = useState<{ url: string; file: File; label: string } | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const previewBox = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
@@ -143,9 +181,15 @@ export function DailyQuoteStudio({ card, artist, pro }: { card: Card | null; art
     const node = nodes.current[format]?.firstElementChild as HTMLElement | null | undefined;
     if (!node) throw new Error("Kat la poko pare.");
     await document.fonts.ready;
-    await Promise.all(Array.from(node.querySelectorAll("img")).map((img) => img.decode().catch(() => undefined)));
+    await inlineImages(node);
     const { w, h } = FORMAT_SIZE[format];
-    const blob = await toBlob(node, { width: w, height: h, pixelRatio: hd ? 2 : 1, cacheBust: true, type, quality: 0.92 });
+    const opts = { width: w, height: h, cacheBust: false, type, quality: 0.92 };
+    if (isWebKit()) {
+      // Safari: 2 premye imaj yo souvan soti san foto ni font; nou fè yo an ti gwosè epi nou jete yo
+      await toBlob(node, { ...opts, pixelRatio: 0.2 });
+      await toBlob(node, { ...opts, pixelRatio: 0.2 });
+    }
+    const blob = await toBlob(node, { ...opts, pixelRatio: hd ? 2 : 1 });
     if (!blob) throw new Error("Imaj la pa fèt. Eseye ankò.");
     return blob;
   }, []);
@@ -175,15 +219,27 @@ export function DailyQuoteStudio({ card, artist, pro }: { card: Card | null; art
     }
   }
 
+  // iPhone: imaj la pare → fenèt ak aperçu + bouton "Sove nan Foto" (meni pataj iPhone nan), oswa kenbe dwèt sou imaj la
+  const openIosSheet = (blob: Blob, format: QuoteFormat) => {
+    const file = new File([blob], fileName(format), { type: "image/png" });
+    setSheet((old) => {
+      if (old) URL.revokeObjectURL(old.url);
+      return { url: URL.createObjectURL(blob), file, label: FORMAT_SIZE[format].label };
+    });
+  };
+
   const download = (format: QuoteFormat) =>
     run(`dl-${format}`, async () => {
-      downloadBlob(await render(format, "image/png", true), fileName(format));
+      const blob = await render(format, "image/png", true);
+      if (isIOS()) return openIosSheet(blob, format);
+      downloadBlob(blob, fileName(format));
       flash(true, `✓ Imaj HD ${FORMAT_SIZE[format].label} la telechaje (${FORMAT_SIZE[format].w * 2}×${FORMAT_SIZE[format].h * 2}).`);
     });
 
   const share = () =>
     run("share", async () => {
       const blob = await render("feed", "image/png", true);
+      if (isIOS()) return openIosSheet(blob, "feed");
       const file = new File([blob], fileName("feed"), { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         try {
@@ -212,6 +268,7 @@ export function DailyQuoteStudio({ card, artist, pro }: { card: Card | null; art
           // navigatè a pa kite kopye imaj: nou telechaje l pito
         }
       }
+      if (isIOS()) return openIosSheet(await png, "feed");
       downloadBlob(await png, fileName("feed"));
       flash(true, "✓ Telefòn ou pa kite kopye imaj: nou telechaje l pou ou.");
     });
@@ -352,6 +409,45 @@ export function DailyQuoteStudio({ card, artist, pro }: { card: Card | null; art
           )}
         </div>
       </div>
+
+      {/* iPhone: imaj la pare, moun nan sove l nan Foto li */}
+      {sheet && (
+        <Portal>
+          <div className="force-dark fixed inset-0 z-[90] flex items-end justify-center bg-black/85 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setSheet(null)}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="flex max-h-[94vh] w-full max-w-md flex-col gap-4 rounded-t-3xl bg-zinc-900 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-white sm:rounded-3xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Sove imaj la"
+            >
+              <p className="text-center text-sm font-black uppercase tracking-widest text-citron-300">✓ Imaj HD {sheet.label} la pare</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={sheet.url} alt="Kat Mesaj jounen an" className="mx-auto max-h-[52vh] w-auto rounded-2xl object-contain shadow-2xl" />
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.share({ files: [sheet.file] });
+                  } catch {
+                    // moun nan anile
+                  }
+                }}
+                className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#FFE34D] to-[#E6C000] px-5 py-4 text-base font-black text-[#0B132B] shadow-lg shadow-[#FFD700]/20 active:scale-[0.98]"
+              >
+                <Icon.download /> Sove nan Foto / Pataje
+              </button>
+              <p className="text-center text-xs text-zinc-400">
+                Nan meni ki louvri a, chwazi <strong className="text-white">« Sove imaj »</strong> (Save Image). Ou ka kenbe dwèt ou sou imaj la tou, epi chwazi{" "}
+                <strong className="text-white">« Ajoute nan Foto »</strong>.
+              </p>
+              <button type="button" onClick={() => setSheet(null)} className="rounded-xl py-2 text-sm font-semibold text-zinc-400">
+                Fèmen
+              </button>
+            </div>
+          </div>
+        </Portal>
+      )}
 
       {/* Kat yo nan gwosè reyèl la, kache deyò ekran an: se yo ki vin imaj yo */}
       <div aria-hidden style={{ position: "fixed", left: -20000, top: 0, pointerEvents: "none" }}>
