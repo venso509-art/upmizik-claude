@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DailyQuoteCard } from "@/components/quotes/DailyQuoteCard";
 import { ExportTest } from "./ExportTest";
 import { DailyQuoteStudio } from "@/components/quotes/DailyQuoteStudio";
+import { ArtistCockpit } from "@/components/dashboard/ArtistCockpit";
 import { TEMPLATE_NAMES, type QuoteFormat, type QuoteTemplate } from "@/lib/dailyQuotes";
 
 // Paj tès (devlopman sèlman): 6 desen × Feed/Story ak sitasyon ki pi long lan ak yon non long.
@@ -16,8 +17,36 @@ const SAMPLES = [
   { teks: "Dèyè mòn gen mòn.", sous: "Pwovèb ayisyen", name: "Rasin Kreyòl", genre: null },
 ];
 
-export default function DevQuotesPage({ searchParams }: { searchParams: { s?: string; f?: string; ekspo?: string; foto?: string; studio?: string; pro?: string } }) {
+export default function DevQuotesPage({ searchParams }: { searchParams: { s?: string; f?: string; ekspo?: string; foto?: string; studio?: string; pro?: string; kokpit?: string } }) {
   if (process.env.ENABLE_DEV_PAGES !== "1") notFound();
+  // ?kokpit=1&pro=1: tèt dashboard atis la ak done egzanp
+  if (searchParams.kokpit) {
+    const daily = Array.from({ length: 30 }, (_, i) => ({
+      day: new Date(Date.UTC(2026, 9, i + 1)).toISOString().slice(0, 10),
+      plays: Math.round(20 + 15 * Math.sin(i / 3) + i * 2.2),
+    }));
+    return (
+      <div style={{ maxWidth: 1150, margin: "0 auto", padding: 16 }}>
+        <ArtistCockpit
+          artistId="00000000-0000-0000-0000-000000000000"
+          name="Melodi Lakay"
+          avatarUrl={searchParams.foto ?? null}
+          verified
+          pro={searchParams.pro === "1"}
+          greeting="Bonjou"
+          totalPlays={2480}
+          songs={12}
+          comments={86}
+          followers={searchParams.pro === "1" ? 340 : null}
+          availableHtg={7250}
+          monthHtg={1450}
+          daily={daily}
+          memberCode="MELODI2026"
+          shareText="Sipòte m sou UpMizik"
+        />
+      </div>
+    );
+  }
   // ?studio=1&pro=1: espas "Mesaj jounen an" jan atis la wè l nan dashboard la
   if (searchParams.studio) {
     return (

@@ -8,16 +8,15 @@ import { AccountStatusNotice } from "@/components/AccountStatusNotice";
 import { DashboardTabs } from "@/components/dashboard/DashboardTabs";
 import { RegistrationPanel } from "@/components/registration/RegistrationPanel";
 import { LevelsCard } from "@/components/dashboard/LevelsCard";
-import { formatHTG } from "@/lib/donations";
 import { toBalance, type BalanceRow } from "@/lib/finance";
 import { BarChart, type BarDatum } from "@/components/dashboard/BarChart";
 import { SongManager, type ManagedSong } from "@/components/dashboard/SongManager";
 import { PostComposer, type MyPost } from "@/components/social/PostComposer";
 import { StatusComposer } from "@/components/status/StatusComposer";
 import { DailyQuoteStudio } from "@/components/quotes/DailyQuoteStudio";
+import { ArtistCockpit } from "@/components/dashboard/ArtistCockpit";
 import type { QuoteTemplate } from "@/lib/dailyQuotes";
 import { postImageUrl } from "@/lib/posts";
-import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { donateShareText } from "@/lib/shareMessages";
 import { BoostBox, type BoostHistoryItem } from "@/components/boost/BoostBox";
 import { isBoostActive, type BoostPlan, type BoostStatus, type BoostType } from "@/lib/boost";
@@ -29,19 +28,6 @@ function greeting() {
   if (hour < 12) return "Bonjou";
   if (hour < 18) return "Bon apremidi";
   return "Bonswa";
-}
-
-function StatTile({ icon, label, value, hint }: { icon: string; label: string; value: number; hint?: string }) {
-  return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">{icon}</span>
-        <p className="text-sm font-medium text-zinc-400">{label}</p>
-      </div>
-      <p className="mt-4 text-4xl font-extrabold tracking-tight text-white">{value.toLocaleString("fr-HT")}</p>
-      <p className="mt-1 truncate text-xs text-zinc-500">{hint ?? " "}</p>
-    </div>
-  );
 }
 
 function Panel({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
@@ -128,7 +114,6 @@ export default async function DashboardPage() {
   const commentCount = (s: (typeof songs)[number]) => s.comments?.[0]?.count ?? 0;
   const totalPlays = songs.reduce((sum, s) => sum + s.play_count, 0);
   const totalComments = songs.reduce((sum, s) => sum + commentCount(s), 0);
-  const top = [...songs].sort((a, b) => b.play_count - a.play_count)[0];
 
   const [extras, balanceRes, { data: myPosts }] = await Promise.all([
     getSongExtras(supabase, songs.map((s) => s.id), user.id),
@@ -193,6 +178,13 @@ export default async function DashboardPage() {
   // Atis Pro: jiska 10 kolaboratè lè l ap modifye yon chante
   const isProArtist = (await supabase.rpc("is_pro", { p_user: user.id })).data === true;
 
+  // Kòkpit la: ekout chak jou (30 jou) + kantite abone (atis Pro)
+  const [{ data: dailyRows }, { data: followerCount }] = await Promise.all([
+    supabase.rpc("play_stats_daily", { p_days: 30, p_artist_id: user.id }),
+    isProArtist ? supabase.rpc("follower_count", { p_artist: user.id }) : Promise.resolve({ data: null }),
+  ]);
+  const daily30 = ((dailyRows ?? []) as { day: string; real_plays: number }[]).map((d) => ({ day: String(d.day).slice(0, 10), plays: Number(d.real_plays) }));
+
   // Mesaj jounen an: kat sitasyon jodi a (erè = migration an poko kouri → "ap vini byento")
   const { data: quoteRows } = await supabase.rpc("my_daily_card");
   const quoteRow = ((quoteRows ?? []) as { day: string; template: number; teks: string; kategori: string; etiket: string; sous: string | null }[])[0];
@@ -244,102 +236,24 @@ export default async function DashboardPage() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <DashboardTabs />
 
-      {/* ===== AKÈY ===== */}
-      <section className="relative overflow-hidden rounded-3xl border border-fuchsia-500/20 bg-gradient-to-br from-fuchsia-900/50 via-violet-950/60 to-zinc-950 p-8 sm:p-10">
-        <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-widest text-fuchsia-300">🎤 Dashboard atis</p>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              {greeting()}, {profile.display_name}! 👋
-            </h1>
-            <p className="mt-2 text-zinc-300">Men kijan mizik ou ap mache sou UpMizik.</p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-            <Link
-              href="/upload"
-              className="flex items-center justify-center gap-2 rounded-2xl btn-primary px-8 py-4 text-lg font-bold shadow-xl transition hover:scale-[1.02] hover:opacity-95"
-            >
-              <span className="text-2xl leading-none">+</span> Pibliye yon nouvo chante
-            </Link>
-            <Link
-              href={`/atis/${user.id}`}
-              className="rounded-2xl border border-zinc-700 px-8 py-3 text-center font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-white"
-            >
-              Wè paj piblik mwen →
-            </Link>
-            <Link
-              href="/pwofil"
-              className="rounded-2xl border border-zinc-700 px-8 py-3 text-center font-semibold text-zinc-200 transition hover:border-zinc-500 hover:text-white"
-            >
-              ✏️ Modifye pwofil
-            </Link>
-            <ShareLinkButton path={`/don/${user.id}`} label="🔗 Pataje lyen don mwen" title={`Sipòte ${profile.display_name} sou UpMizik`} text={donateShareText(profile.display_name, true)} />
-          </div>
-        </div>
-      </section>
-
-      {/* ===== REZIME ===== */}
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile icon="🎵" label="Total Chante" value={songs.length} />
-        <StatTile
-          icon="🎧"
-          label="Total Koute"
-          value={totalPlays}
-          hint={top && top.play_count > 0 ? `🏆 Pi popilè: ${top.title}` : undefined}
-        />
-        <StatTile icon="💬" label="Total Kòmantè" value={totalComments} />
-        <Link
-          href="/dashboard/finans"
-          className="group rounded-2xl border border-fuchsia-500/30 bg-gradient-to-br from-fuchsia-900/30 to-violet-950/30 p-6 transition hover:border-fuchsia-500/60"
-        >
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">💵</span>
-            <p className="text-sm font-medium text-zinc-400">Balans disponib</p>
-          </div>
-          <p className="mt-4 text-3xl font-extrabold tracking-tight text-white">{formatHTG(balance.availableHtg)}</p>
-          <p className="mt-1 text-xs text-fuchsia-300 group-hover:underline">Mande retrè →</p>
-        </Link>
-      </section>
-
-      {/* ===== LIVE (atis Pro) ===== */}
-      <section className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl border border-red-500/30 bg-gradient-to-r from-red-600/15 to-transparent p-5">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-2xl" aria-hidden>
-          🔴
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-bold text-white">Fè yon live {isProArtist ? "" : "(atis Pro)"}</p>
-          <p className="text-sm text-zinc-400">Pale ak fanatik ou yo an dirèk, resevwa kado (60% pou ou), epi envite lòt atis monte sou sèn nan.</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/revni-live" className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-zinc-500">
-            📊 Revni live
-          </Link>
-          <Link href={isProArtist ? "/live/nouvo" : "/pwofil"} className="rounded-full bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-500">
-            {isProArtist ? "🔴 Kòmanse" : "⭐ Vin Pro"}
-          </Link>
-        </div>
-      </section>
-
-      {/* ===== ESPAS MANM (atis ki manm afilye tou) ===== */}
-      {memberRow?.status === "approved" && (
-        <Link
-          href="/manm/dashboard"
-          className="mt-6 flex items-center gap-4 rounded-2xl border border-[#FFD700]/30 bg-gradient-to-r from-[#FFD700]/15 to-transparent p-4 transition hover:border-[#FFD700]/60"
-        >
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFD700] text-2xl" aria-hidden>
-            🤝
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-bold text-white">Espas manm afilye ou</span>
-            <span className="block text-sm text-zinc-300">Pseudo {memberRow.pseudo_referral} · objektif, atis ou fè enskri, kòb ou</span>
-          </span>
-          <span className="text-zinc-400" aria-hidden>
-            →
-          </span>
-        </Link>
-      )}
+      {/* ===== KÒKPIT: akèy, grafik 30 jou, chif yo, balans, objektif, bouton rapid ===== */}
+      <ArtistCockpit
+        artistId={user.id}
+        name={profile.display_name}
+        avatarUrl={profile.avatar_url ?? null}
+        verified={profile.is_verified}
+        pro={isProArtist}
+        greeting={greeting()}
+        totalPlays={totalPlays}
+        songs={songs.length}
+        comments={totalComments}
+        followers={isProArtist ? Number(followerCount ?? 0) : null}
+        availableHtg={balance.availableHtg}
+        monthHtg={balance.currentMonthHtg}
+        daily={daily30}
+        memberCode={memberRow?.status === "approved" ? (memberRow.pseudo_referral ?? null) : null}
+        shareText={donateShareText(profile.display_name, true)}
+      />
 
       {/* ===== BOOST (piblisite peye) ===== */}
       {(boostPlans ?? []).length > 0 && (
@@ -354,6 +268,7 @@ export default async function DashboardPage() {
       )}
 
       {/* ===== MESAJ JOUNEN AN: kat sitasyon pou pataje ===== */}
+      <div id="mesaj" className="scroll-mt-24" />
       <DailyQuoteStudio
         card={dailyCard}
         artist={{ id: user.id, name: profile.display_name, avatarUrl: profile.avatar_url ?? null, genre: mainGenre }}
@@ -374,6 +289,7 @@ export default async function DashboardPage() {
       />
 
       {/* ===== NIVO YO ===== */}
+      <div id="nivo" className="scroll-mt-24" />
       <LevelsCard artistId={user.id} verified={profile.is_verified} />
 
       {songs.length === 0 ? (
@@ -401,7 +317,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* ===== CHANTE YO ===== */}
-          <div className="mt-6">
+          <div id="chante" className="mt-6 scroll-mt-24">
             <Panel title="Chante ou yo" subtitle={`${songs.length} chante sou platfòm lan`}>
               <SongManager songs={managed} artistId={user.id} pro={isProArtist} />
             </Panel>
