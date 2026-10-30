@@ -84,7 +84,7 @@ function PlayButton({ size }: { size: "md" | "lg" }) {
 
 // Ba lektè sou TELEFÒN: CD k ap woule, non chante a, ⏪10 ▶ 10⏩, ak yon ba pou glise. Tape l = gwo ekran.
 export function MobilePlayerBar() {
-  const { current, isPlaying, isLoading, error, currentTime, duration, seek, close } = usePlayer();
+  const { current, isPlaying, isLoading, error, currentTime, duration, seek, close, promoted } = usePlayer();
   const [open, setOpen] = useState(false);
   if (!current) return null;
   const skip = (d: number) => seek(Math.min(Math.max(0, currentTime + d), duration || currentTime + d));
@@ -98,7 +98,7 @@ export function MobilePlayerBar() {
             <VinylDisc coverUrl={current.coverUrl} spinning={isPlaying} className="h-12 w-12" />
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold text-white">{current.title}</span>
-              <span className={`block truncate text-xs ${error ? "text-red-400" : "text-zinc-400"}`}>{error ?? (isLoading ? "Ap chaje…" : current.artistName)}</span>
+              <span className={`block truncate text-xs ${error ? "text-red-400" : "text-zinc-400"}`}>{error ?? (isLoading ? "Ap chaje…" : `${promoted ? "🔥 Rekòmande · " : ""}${current.artistName}`)}</span>
             </span>
           </button>
           <button type="button" onClick={() => skip(-10)} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-200 active:scale-90" aria-label="Rekile 10 segonn">

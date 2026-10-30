@@ -15,7 +15,7 @@ const iconButton =
   "flex h-10 w-10 items-center justify-center rounded-full text-zinc-300 transition hover:text-white disabled:opacity-30 disabled:hover:text-zinc-300";
 
 export function PlayerBar() {
-  const { current, isPlaying, isLoading, error, currentTime, duration, volume, hasNext, toggle, next, prev, seek, setVolume, repeatMode, cycleRepeat, shuffle, toggleShuffle, close } =
+  const { current, isPlaying, isLoading, error, currentTime, duration, volume, hasNext, toggle, next, prev, seek, setVolume, repeatMode, cycleRepeat, shuffle, toggleShuffle, close, promoted } =
     usePlayer();
 
   if (!current) return null;
@@ -43,7 +43,7 @@ export function PlayerBar() {
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-white">{current.title}</p>
             <p className={`truncate text-xs ${error ? "text-red-400" : "text-zinc-400"}`}>
-              {error ?? (isLoading ? "Ap chaje..." : current.artistName)}
+              {error ?? (isLoading ? "Ap chaje..." : `${promoted ? "🔥 Rekòmande · " : ""}${current.artistName}`)}
             </p>
           </div>
         </div>

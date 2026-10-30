@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { OFFLINE_EVENT, listOffline, offlineObjectUrl } from "@/lib/offline";
+import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 
 export type Track = {
   id: string;
@@ -43,6 +44,7 @@ type PlayerState = {
   shuffle: boolean;
   toggleShuffle: () => void;
   close: () => void; // kanpe mizik la epi kache ba lektè a
+  promoted: boolean; // chante k ap jwe a se yon chante boost lektè a mete otomatikman
 };
 
 const PlayerContext = createContext<PlayerState | null>(null);
@@ -116,6 +118,33 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("off");
   const [shuffle, setShuffle] = useState(false);
   const [shuffledIds, setShuffledIds] = useState<string[]>([]);
+  // Chante boost aktif yo: youn jwe otomatikman apre chak chante ki fini
+  const [boosted, setBoosted] = useState<Track[]>([]);
+  const [resume, setResume] = useState<Track | null>(null); // chante pou n retounen sou li apre chante boost la
+  const [promoted, setPromoted] = useState(false);
+  const boostTurn = useRef(Math.floor(Math.random() * 1000));
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadBoosted = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("songs")
+        .select(SONG_SELECT)
+        .eq("is_boosted", true)
+        .gt("boost_expires_at", new Date().toISOString())
+        .is("archived_at", null)
+        .limit(30)
+        .returns<SongRow[]>();
+      if (!cancelled) setBoosted((data ?? []).map((row) => toTrack(supabase, row)));
+    };
+    void loadBoosted();
+    const t = setInterval(loadBoosted, 20 * 60_000); // lis la rafrechi chak 20 minit
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, []);
 
   // Sonje chwa moun nan (bouk / melanje) sou aparèy la
   useEffect(() => {
@@ -145,14 +174,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const order = useMemo(() => (shuffle && shuffledIds.length === queue.length ? shuffledIds : queue.map((t) => t.id)), [shuffle, shuffledIds, queue]);
   const byId = useMemo(() => new Map(queue.map((t) => [t.id, t])), [queue]);
   const pos = current ? order.indexOf(current.id) : -1;
-  const nextTrack = pos < 0 ? null : (byId.get(order[pos + 1]) ?? (repeatMode === "all" && order.length > 0 ? byId.get(order[0]) : undefined)) ?? null;
+  const nextTrack = pos < 0 ? resume : (byId.get(order[pos + 1]) ?? (repeatMode === "all" && order.length > 0 ? byId.get(order[0]) : undefined)) ?? null;
   const prevTrack = pos < 0 ? null : (byId.get(order[pos - 1]) ?? (repeatMode === "all" && order.length > 0 ? byId.get(order[order.length - 1]) : undefined)) ?? null;
   const hasNext = !!nextTrack;
   const hasPrev = !!prevTrack;
 
-  const load = useCallback((track: Track) => {
+  const load = useCallback((track: Track, isPromo = false) => {
     const audio = audioRef.current;
     if (!audio) return;
+    setPromoted(isPromo);
+    if (!isPromo) setResume(null);
     setCurrent(track);
     playRef.current = newSession(track.id);
     setError(null);
@@ -207,6 +238,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.load();
     }
     playRef.current = newSession(null);
+    setPromoted(false);
+    setResume(null);
     setCurrent(null);
     setQueue([]);
     setIsPlaying(false);
@@ -237,6 +270,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.currentTime = 0;
       audio.play().catch(() => {});
       return;
+    }
+    // Apre yon chante nòmal: yon chante boost jwe touswit dèyè l (pa menm chante a, pa 2 boost youn dèyè lòt)
+    if (!promoted && current) {
+      const pool = boosted.filter((t) => t.id !== current.id && t.id !== nextTrack?.id);
+      if (pool.length) {
+        const promo = pool[boostTurn.current++ % pool.length];
+        setResume(nextTrack);
+        load(promo, true);
+        return;
+      }
     }
     if (nextTrack) load(nextTrack);
     else setIsPlaying(false);
@@ -323,6 +366,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         shuffle,
         toggleShuffle,
         close,
+        promoted,
       }}
     >
       {children}

@@ -63,7 +63,9 @@ function readShown(): Set<string> {
 export function BoostPopup() {
   const pathname = usePathname();
   const router = useRouter();
-  const { playTrack } = usePlayer();
+  const { playTrack, isPlaying } = usePlayer();
+  const playingRef = useRef(isPlaying);
+  playingRef.current = isPlaying;
   const [queue, setQueue] = useState<Pick[] | null>(null);
   const [pick, setPick] = useState<Pick | null>(null);
   const [line, setLine] = useState("");
@@ -155,9 +157,27 @@ export function BoostPopup() {
     const t = setTimeout(() => {
       lastClosed.current = Date.now();
       setVisible(false);
+      if (!playingRef.current && pick) void autoPlay(pick);
     }, AUTO_HIDE_MS);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, isGift]);
+
+  // Jwe mizik boost la (oswa chante atis boost la ki pi koute a) nan ba anba a, san chanje paj
+  async function autoPlay(p: Pick) {
+    if (p.kind === "song") return playTrack(p.track, [p.track]);
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("songs")
+      .select(SONG_SELECT)
+      .eq("artist_id", p.id)
+      .is("archived_at", null)
+      .order("play_count", { ascending: false })
+      .limit(5)
+      .returns<SongRow[]>();
+    const tracks = (data ?? []).map((row) => toTrack(supabase, row));
+    if (tracks.length && !playingRef.current) playTrack(tracks[0], tracks);
+  }
 
   if (!visible || !pick || skip) return null;
 
