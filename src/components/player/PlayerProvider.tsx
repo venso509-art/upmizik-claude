@@ -72,6 +72,21 @@ function streamSessionId(): string | null {
   }
 }
 
+// ID VIZITÈ a: rete sou aparèy la (menm apre moun nan fèmen sit la), pou ekout moun ki pa konekte yo ka konte
+// (1 ekout pa vizitè pa chante, menm règ ak kont yo). Baz done a ignore l lè moun nan konekte.
+function visitorId(): string | null {
+  try {
+    let id = localStorage.getItem("upmizik-visitor");
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+      id = crypto.randomUUID();
+      localStorage.setItem("upmizik-visitor", id);
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 type PlaySession = {
   trackId: string | null;
   playId: Promise<string | null> | null; // ID start_play la retounen
@@ -302,7 +317,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     // Nou itilize playRef (pa "current"): onPlay ka rive anvan React fin mete current ajou
     const play = playRef.current;
     if (!play.trackId || play.playId) return;
-    play.playId = Promise.resolve(createClient().rpc("start_play", { p_song_id: play.trackId })).then(
+    play.playId = Promise.resolve(createClient().rpc("start_play", { p_song_id: play.trackId, p_visitor: visitorId() })).then(
       ({ data }) => (data as string | null) ?? null,
       () => null,
     );

@@ -131,7 +131,7 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
       </div>
 
       <section className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <Metric icon="▶" label="Ekout reyèl" value={daily.realPlays.toLocaleString("fr-HT")} hint="1 pa moun konekte, pa mizik" />
+        <Metric icon="▶" label="Ekout reyèl" value={daily.realPlays.toLocaleString("fr-HT")} hint="1 pa moun (kont oswa vizitè), pa mizik" />
         <Metric icon="👆" label="Kòmansman" value={daily.starts.toLocaleString("fr-HT")} hint="Fwa moun peze ▶" />
         <div className="col-span-2 lg:col-span-1">
           <Metric
