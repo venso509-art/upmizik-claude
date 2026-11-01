@@ -10,6 +10,7 @@ import { RankList } from "@/components/stats/RankList";
 import { RevenueReport } from "@/components/admin/RevenueReport";
 import { EMPTY_EXTRAS, fullDate, parsePeriod, type RevenueExtras, type RevenueRow } from "@/lib/revenue";
 import { ResetReportButton } from "@/components/admin/ResetReportButton";
+import { PeopleReport, type PersonArtist, type PersonMember } from "@/components/admin/PeopleReport";
 import Link from "next/link";
 
 export const metadata: Metadata = { title: "Admin: Rapò | UpMizik" };
@@ -60,7 +61,12 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
         `${period.to}T12:00:00Z`,
       ).toLocaleDateString("fr-HT", { day: "numeric", month: "long", year: "numeric" })}`;
 
-  const [songsRes, artistsRes, ledgerRes, extrasRes, dailyRes, topSongsRes, topArtistsRes] = await Promise.all([
+  // Limit peryòd la an lè egzak (pou kont pa moun yo): dat yo kòmanse/fini a minwi lè Ayiti
+  const nextDay = (iso: string) => new Date(Date.parse(`${iso}T12:00:00Z`) + 86400000).toISOString().slice(0, 10);
+  const t0 = aktyel ? since : `${period.from} 00:00:00 America/Port-au-Prince`;
+  const t1 = aktyel ? now : `${nextDay(period.to)} 00:00:00 America/Port-au-Prince`;
+
+  const [songsRes, artistsRes, ledgerRes, extrasRes, dailyRes, topSongsRes, topArtistsRes, peopleArtistsRes, peopleMembersRes] = await Promise.all([
     supabase.from("songs").select("play_count"),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "artist").eq("status", "approved"),
     // Tout lajan ki antre nan peryòd la (erè = migration rapò revni an poko kouri)
@@ -73,6 +79,9 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
     supabase.rpc("play_stats_daily", { p_days: days }),
     supabase.rpc("top_songs_period", { p_days: days, p_limit: 10 }),
     supabase.rpc("top_artists_period", { p_days: days, p_limit: 10 }),
+    // Kont pa moun: atis yo ak manm afilye yo (erè = migration an poko kouri)
+    supabase.rpc("admin_people_artists", { p_t0: t0, p_t1: t1 }),
+    supabase.rpc("admin_people_members", { p_t0: t0, p_t1: t1 }),
   ]);
 
   // ===== Total pou tout tan =====
@@ -115,6 +124,13 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
           />
         )}
       </div>
+
+      {/* ===== KONT PA MOUN: sa chak atis / manm touche, sa ki deja peye, sa ki rete pou peye ===== */}
+      <PeopleReport
+        artists={(peopleArtistsRes.data ?? []) as PersonArtist[]}
+        members={(peopleMembersRes.data ?? []) as PersonMember[]}
+        error={!!peopleArtistsRes.error}
+      />
 
       {/* ===== MIZIK ===== */}
       <h2 className="mt-14 text-2xl font-extrabold tracking-tight text-white">🎧 Mizik & ekout</h2>
