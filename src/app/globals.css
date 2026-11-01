@@ -73,6 +73,19 @@ html.light .amb-dark {
 html.light .amb-waves {
   opacity: 0.28;
 }
+/* Konkou Nwèl: nèj k ap tonbe */
+@keyframes snow-fall {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(14px, 55vh, 0);
+  }
+  100% {
+    transform: translate3d(-6px, 115vh, 0);
+  }
+}
+
 /* ===== Animasyon dous lè w peze yon bouton ===== */
 @media (prefers-reduced-motion: no-preference) {
   /* Paj w ap kite a fonn dousman pandan pwochen an ap chaje (PageTransition.tsx).

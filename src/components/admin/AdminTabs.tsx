@@ -45,6 +45,7 @@ export async function AdminTabs() {
           { href: "/admin/achiv", label: "🗄️ Achiv" },
           { href: "/admin/mesaj", label: "📣 Mesaj" },
           { href: "/admin/sitasyon", label: "💬 Sitasyon" },
+          { href: "/admin/konkou", label: "🎄 Konkou" },
         ]}
       />
     </div>
