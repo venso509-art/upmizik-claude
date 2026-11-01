@@ -22,7 +22,7 @@ export function PlayerBar() {
 
   return (
     // data-offline-ok: chante ki deja chaje a ka kontinye jwe/kanpe san entènèt
-    <div data-offline-ok className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 transform-gpu border-t border-zinc-800 bg-zinc-950/95 backdrop-blur md:bottom-0 md:z-50">
+    <div data-offline-ok className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 transform-gpu border-t border-zinc-800 bg-zinc-950/95 backdrop-blur md:bottom-0 md:z-50 lg:left-[76px]">
       {/* TELEFÒN: CD k ap woule, ⏪10 ▶ 10⏩, ba pou glise, epi gwo ekran "Kounye a ap jwe" */}
       <div className="sm:hidden">
         <MobilePlayerBar />

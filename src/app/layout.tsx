@@ -82,7 +82,7 @@ export default async function RootLayout({
         <SettingsProvider settings={settings}>
           <PlayerProvider>
             {/* Anvlòp kontni an: anpeche paj la glise sou kote, SAN touche ba fixed yo anba a */}
-            <div className="up-page relative isolate">
+            <div className="up-page relative isolate lg:pl-[76px]">
               {/* Fon premium (degradasyon + limyè) ki kouvri tout longè paj la */}
               <AmbientBackground />
               <Header />
