@@ -188,7 +188,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
               <span className="bg-gradient-to-r from-citron-300 to-citron-500 bg-clip-text text-transparent">{slogan.hl}</span>
             </h1>
             <p style={{ animationDelay: "200ms" }} className="mt-6 max-w-lg motion-safe:animate-fade-up text-lg text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]">
-              Platfòm difizyon kote fanatik sipòte atis dirèk pa MonCash ak NatCash. Atis la resevwa 85% chak don, dirèkteman sou kont li.
+              Premye platfòm difizyon ayisyen ki konekte atis yo ak fanatik yo dirèkteman. Koute, pataje, epi sipòte atis ou renmen yo.
             </p>
             <div style={{ animationDelay: "300ms" }} className="mt-8 flex flex-wrap gap-3 motion-safe:animate-fade-up">
               <a
