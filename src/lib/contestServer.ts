@@ -4,6 +4,12 @@ import { CONTEST_SLUG, type Contest, type ContestMember, type ContestTeam } from
 import type { Track } from "@/components/player/PlayerProvider";
 
 // votes = vòt faz kounye a; v1/v2/v3 = vòt chak faz; eligible = ka patisipe nan faz kounye a
+// Konkou a vizib sou sit la? (admin nan limen switch « Montre konkou a »). Erè = migration an poko kouri → non.
+export async function contestPublished(): Promise<boolean> {
+  const { data } = await createClient().from("contests").select("published").eq("slug", CONTEST_SLUG).maybeSingle();
+  return data?.published === true;
+}
+
 export type TeamView = ContestTeam & {
   members: ContestMember[];
   votes: number;

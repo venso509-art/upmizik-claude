@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/footer/Footer";
 import { SettingsProvider } from "@/components/SettingsProvider";
 import { BottomNav } from "@/components/BottomNav";
+import { contestPublished } from "@/lib/contestServer";
 import { ListenerAuthPrompt } from "@/components/auth/ListenerAuthPrompt";
 import { SplashScreen } from "@/components/SplashScreen";
 import { NoZoom } from "@/components/NoZoom";
@@ -65,6 +66,8 @@ export default async function RootLayout({
 }>) {
   // Paramèt peman yo (to, nimewo MonCash/NatCash, frè...) pou tout konpozan navigatè yo
   const settings = await getSettings();
+  // 🎄 Konkou Nwèl limen? (bouton Nwèl nan ba anba a)
+  const contestOn = await contestPublished().catch(() => false);
 
   return (
     // suppressHydrationWarning: script splash la ka ajoute yon klas sou <html> anvan React chaje
@@ -95,7 +98,7 @@ export default async function RootLayout({
             {/* Ti ba jòn anlè a pandan pwochen paj la ap chaje */}
             <TopLoader />
             <PlayerBar />
-            <BottomNav />
+            <BottomNav contest={contestOn} />
             <ListenerAuthPrompt />
             <OfflineNotification />
             <InstallAppPrompt />

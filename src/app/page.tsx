@@ -223,7 +223,7 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
       <Reveal>
         <ArtistBubbles title={bubblesTitle} artists={bubbles} statuses={bubbleStatuses} lives={liveMap} />
         {/* 🎄 Konkou Nwèl: ekip lekòl yo (parèt sèlman lè gen ekip sou sit la) */}
-        {contestData && <ContestBubbles teams={contestData.teams} phase={contestData.contest.phase} />}
+        {contestData?.contest.published && <ContestBubbles teams={contestData.teams} phase={contestData.contest.phase} />}
       </Reveal>
 
       {/* ===== RPA: ATIS POU DEKOUVRI ===== */}

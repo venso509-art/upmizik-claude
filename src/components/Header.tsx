@@ -6,6 +6,7 @@ import { BecomeArtistPrompt } from "@/components/registration/BecomeArtistPrompt
 import { HeaderSearch } from "@/components/search/HeaderSearch";
 import { NotificationListener } from "@/components/inbox/NotificationListener";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { contestPublished } from "@/lib/contestServer";
 import { SideRail, type RailItem } from "@/components/SideRail";
 
 function Bell({ unread }: { unread: number }) {
@@ -42,6 +43,8 @@ export async function Header() {
   // Manm afilye apwouve: lyen "Espas manm" nan meni an (erè = migration manm yo poko kouri)
   const { data: member } = user ? await supabase.from("members").select("status").eq("user_id", user.id).maybeSingle() : { data: null };
   const isArtist = profile?.role === "artist";
+  // 🎄 Konkou Nwèl limen? (lyen yo parèt nan meni yo)
+  const contestOn = await contestPublished().catch(() => false);
   const canUpload = isArtist && profile?.status === "approved";
   const displayName = profile?.display_name ?? user?.email ?? null;
 
@@ -50,7 +53,7 @@ export async function Header() {
     ...(canUpload ? [{ href: "/upload", label: "Pibliye yon chante", icon: "upload" as const, tone: "primary" as const }] : []),
     ...(user && !isArtist ? [{ href: "/vin-atis", label: "Vin atis: pibliye mizik ou", icon: "mic" as const, tone: "primary" as const }] : []),
     ...(isArtist ? [{ href: "/dashboard", label: "Dashboard", icon: "grid" as const, hint: "Statistik, revni" }] : []),
-    { href: "/konkou", label: "Konkou Nwèl 🎄", icon: "gift" as const, hint: "Vote pou lekòl ou" },
+    ...(contestOn ? [{ href: "/konkou", label: "Konkou Nwèl 🎄", icon: "gift" as const, hint: "Vote pou lekòl ou" }] : []),
     { href: "/live", label: "Live yo", icon: "live" as const, hint: "An dirèk kounye a", tone: "live" as const },
     ...(isArtist ? [{ href: "/live/nouvo", label: "Fè yon live", icon: "mic" as const, hint: "Atis Pro" }] : []),
     { href: "/mesaj", label: "Mesaj", icon: "bell" as const, hint: "Notifikasyon", badge: unread ? String(unread > 99 ? "99+" : unread) : undefined },
@@ -74,7 +77,7 @@ export async function Header() {
         { href: "/", label: "Akèy", icon: "home", hint: "Nouvo mizik" },
         { href: "/atis", label: "Atis", icon: "mic", hint: "Tout atis yo" },
         { href: "/sosyal", label: "Sosyal", icon: "chat", hint: "Nouvèl atis yo" },
-        { href: "/konkou", label: "Konkou Nwèl", icon: "gift", hint: "Vote pou lekòl ou 🎄" },
+        ...(contestOn ? [{ href: "/konkou", label: "Konkou Nwèl", icon: "gift" as const, hint: "Vote pou lekòl ou 🎄" }] : []),
         { href: "/live", label: "Live", icon: "live", hint: "An dirèk kounye a", tone: "live" },
         { href: "/telechaje", label: "Mizik offline", icon: "download", hint: "San entènèt" },
       ],

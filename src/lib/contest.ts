@@ -16,6 +16,7 @@ export type Contest = {
   phase2_goal: number; // objektif faz 2
   finalists: number; // kantite ekip ki ale nan final la
   phase3_goal: number; // objektif final la: yon chanpyon solid rive la (1 000 vòt)
+  published: boolean; // admin nan limen l: bouton Nwèl, lyen yo, seksyon paj akèy la
 };
 
 export type ContestMember = { id: string; team_id: string; display_name: string; role: string | null; bio: string | null; photo_url: string | null; sort: number };

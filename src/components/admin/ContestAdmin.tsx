@@ -85,6 +85,7 @@ export function ContestSettings({ contest }: { contest: Contest }) {
     goal1: contest.phase1_goal,
     goal2: contest.phase2_goal,
     goal3: contest.phase3_goal,
+    published: contest.published,
     finalists: contest.finalists,
   });
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
@@ -184,7 +185,16 @@ export function ContestSettings({ contest }: { contest: Contest }) {
           <input type="datetime-local" value={f.endsAt} onChange={(e) => setF({ ...f, endsAt: e.target.value })} className={input} />
         </label>
       </div>
-      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/10">
+      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-[#FFD700]/[0.07] p-3 ring-1 ring-[#FFD700]/30">
+        <input type="checkbox" checked={f.published} onChange={(e) => setF({ ...f, published: e.target.checked })} className="h-5 w-5 accent-[#FFD700]" />
+        <span>
+          <span className="block font-bold text-white">📣 Montre konkou a sou sit la</span>
+          <span className="block text-xs text-zinc-400">
+            Limen: bouton 🎄 Nwèl la ranplase Sosyal anba a, lyen yo parèt nan meni yo, epi ekip yo parèt sou paj akèy la. Etenn: tout sa kache (paj /konkou a toujou louvri pou ou).
+          </span>
+        </span>
+      </label>
+      <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/10">
         <input type="checkbox" checked={f.open} onChange={(e) => setF({ ...f, open: e.target.checked })} className="h-5 w-5 accent-[#FFD700]" />
         <span>
           <span className="block font-bold text-white">🗳️ Vòt yo louvri</span>

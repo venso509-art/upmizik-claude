@@ -34,16 +34,28 @@ function TreeIcon({ active }: { active: boolean }) {
   );
 }
 
+function ChatIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.9} strokeLinejoin="round" aria-hidden>
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.6 3.8a.5.5 0 0 1-.8-.4V16.0A2.5 2.5 0 0 1 4 14V5.5Z" />
+      {!active && <path d="M8 8.5h8M8 11.5h5" strokeLinecap="round" />}
+    </svg>
+  );
+}
+
+const SOSYAL = { href: "/sosyal", label: "Sosyal", Icon: ChatIcon, match: (p: string) => p.startsWith("/sosyal") };
+const NWEL = { href: "/konkou", label: "Nwèl", Icon: TreeIcon, match: (p: string) => p.startsWith("/konkou") };
+
 const ITEMS = [
   { href: "/", label: "Akèy", Icon: HomeIcon, match: (p: string) => p === "/" },
   { href: "/atis", label: "Atis", Icon: MicIcon, match: (p: string) => p === "/atis" || p.startsWith("/atis/") },
-  // 🎄 Konkou Nwèl nan plas Sosyal (Sosyal toujou nan meni ☰ a)
-  { href: "/konkou", label: "Nwèl", Icon: TreeIcon, match: (p: string) => p.startsWith("/konkou") },
 ];
 
 // Ba navigasyon anba ekran an (telefòn sèlman)
-export function BottomNav() {
+// contest = konkou Nwèl la limen: bouton 🎄 Nwèl la pran plas Sosyal (Sosyal toujou nan meni ☰ a)
+export function BottomNav({ contest = false }: { contest?: boolean }) {
   const pathname = usePathname();
+  const items = [...ITEMS, contest ? NWEL : SOSYAL];
 
   return (
     <nav
@@ -51,7 +63,7 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 transform-gpu border-t border-white/5 bg-zinc-950/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
     >
       <ul className="mx-auto grid h-16 max-w-md grid-cols-3">
-        {ITEMS.map(({ href, label, Icon, match }) => {
+        {items.map(({ href, label, Icon, match }) => {
           const active = match(pathname);
           return (
             <li key={href}>

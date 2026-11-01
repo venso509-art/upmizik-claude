@@ -14,7 +14,7 @@ const clip = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
 
 export async function saveContest(
   id: string,
-  input: { title: string; subtitle: string; description: string; price: number; open: boolean; endsAt: string; goal1: number; goal2: number; goal3: number; finalists: number },
+  input: { title: string; subtitle: string; description: string; price: number; open: boolean; endsAt: string; goal1: number; goal2: number; goal3: number; finalists: number; published: boolean },
 ): Promise<Result> {
   if (!(input.price >= 1)) return { error: "Pri yon vòt la pa valid." };
   if (!(input.goal1 >= 1 && input.goal2 >= 1 && input.goal3 >= 1 && input.finalists >= 1)) return { error: "Objektif yo pa valid." };
@@ -26,6 +26,7 @@ export async function saveContest(
       description: clip(input.description, 2000) || null,
       vote_price_htg: Math.round(input.price),
       voting_open: input.open,
+      published: input.published,
       phase1_goal: Math.round(input.goal1),
       phase2_goal: Math.round(input.goal2),
       phase3_goal: Math.round(input.goal3),
