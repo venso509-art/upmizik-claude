@@ -43,6 +43,10 @@ export default async function ContestPage() {
   const max = Math.max(1, ...teams.map((t) => t.votes));
   const total = teams.reduce((s, t) => s + t.votes, 0);
   const winners = contest.phase === 3 ? teams.filter((t) => t.final_rank && t.final_rank <= 3) : [];
+  const finished = winners.length > 0;
+  // Objektif faz kounye a (faz 1: kalifye, faz 2: objektif), pa gen objektif nan final la
+  const goal = contest.phase === 1 ? contest.phase1_goal : contest.phase === 2 ? contest.phase2_goal : contest.phase3_goal;
+  const barPct = (v: number) => Math.max(2, Math.min(100, (v / (goal ?? max)) * 100));
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-10">
@@ -90,7 +94,7 @@ export default async function ContestPage() {
             })}
           </ol>
 
-          {contest.phase_ends_at && contest.phase < 3 && (
+          {contest.phase_ends_at && !finished && (
             <div className="mt-6">
               <p className="mb-2 text-xs font-bold uppercase tracking-widest text-white/60">Tan ki rete pou vote</p>
               <Countdown until={contest.phase_ends_at} />
@@ -98,8 +102,8 @@ export default async function ContestPage() {
           )}
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <a href={contest.phase === 3 ? "#gayan" : "#ekip"} className="rounded-full bg-[#FFD700] px-7 py-3.5 font-black text-[#0B132B] shadow-lg shadow-[#FFD700]/30 transition hover:-translate-y-0.5">
-              {contest.phase === 3 ? "🏆 Wè gayan yo" : contest.voting_open ? "🗳️ Vote kounye a" : "🏫 Wè ekip yo"}
+            <a href={finished ? "#gayan" : "#ekip"} className="rounded-full bg-[#FFD700] px-7 py-3.5 font-black text-[#0B132B] shadow-lg shadow-[#FFD700]/30 transition hover:-translate-y-0.5">
+              {finished ? "🏆 Wè gayan yo" : contest.voting_open ? "🗳️ Vote kounye a" : "🏫 Wè ekip yo"}
             </a>
             <ShareLinkButton
               path="/konkou"
@@ -112,8 +116,28 @@ export default async function ContestPage() {
         </div>
       </section>
 
+      {/* ===== OBJEKTIF CHAK FAZ ===== */}
+      {!finished && (
+        <section className="mt-6 grid gap-3 sm:grid-cols-3">
+          {[
+            [1, "🗳️", `Faz 1: ${contest.phase1_goal} vòt`, "Chak ekip ki rive la kalifye pou demi-final la."],
+            [2, "🎙️", `Faz 2: objektif ${contest.phase2_goal} vòt`, `Chante yo sou UpMizik. Se ${contest.finalists} premye yo ki ale nan final la.`],
+            [3, "🏆", `Final: ${contest.phase3_goal} vòt`, `${contest.finalists} finalis yo. Yon vrè chanpyon depase ${contest.phase3_goal} vòt pou 1ye, 2yèm ak 3yèm pri.`],
+          ].map(([n, icon, t, d]) => (
+            <div
+              key={String(n)}
+              className={`rounded-2xl p-4 ring-1 ${n === contest.phase ? "bg-[#FFD700]/10 ring-[#FFD700]/50" : "bg-white/[0.03] ring-white/10"}`}
+            >
+              <p className="text-2xl">{icon}</p>
+              <p className={`mt-1 font-black ${n === contest.phase ? "text-[#FFD700]" : "text-white"}`}>{t}</p>
+              <p className="text-sm text-zinc-400">{d}</p>
+            </div>
+          ))}
+        </section>
+      )}
+
       {/* ===== KIJAN POU VOTE ===== */}
-      {contest.phase < 3 && (
+      {!finished && (
         <section className="mt-6 grid gap-3 sm:grid-cols-3">
           {[
             ["1", "Chwazi ekip ou", "Woule anba a, peze « Vote » sou ekip lekòl ou pi renmen an."],
@@ -163,14 +187,22 @@ export default async function ContestPage() {
       {teams.length > 0 && (
         <section className="mt-10 rounded-3xl border border-white/10 bg-zinc-900/50 p-4 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-2">
-            <h2 className="text-2xl font-black text-white">{contest.phase === 3 ? "📊 Rezilta final yo" : "📊 Klasman an dirèk"}</h2>
+            <h2 className="text-2xl font-black text-white">{finished ? "📊 Rezilta final yo" : contest.phase === 3 ? "📊 Klasman final la" : "📊 Klasman an dirèk"}</h2>
             <p className="text-sm text-zinc-400">
-              {total.toLocaleString("fr-HT")} vòt · faz {Math.min(contest.phase, 2)}
+              {total.toLocaleString("fr-HT")} vòt · faz {contest.phase}
+              {goal ? ` · objektif ${goal} vòt` : ""}
             </p>
           </div>
           <ol className="mt-4 space-y-2">
             {teams.map((t, i) => (
-              <li key={t.id} className="flex items-center gap-3 rounded-2xl bg-white/[0.03] p-2.5 ring-1 ring-white/5">
+              <li key={t.id} className="contents">
+              {/* Faz 2: liy ki separe ekip ki ale nan final la */}
+              {contest.phase === 2 && i === contest.finalists && (
+                <p className="flex items-center gap-3 py-1 text-xs font-black uppercase tracking-widest text-[#FFD700]">
+                  <span className="h-px flex-1 bg-[#FFD700]/40" /> ▲ Top {contest.finalists}: final la <span className="h-px flex-1 bg-[#FFD700]/40" />
+                </p>
+              )}
+              <div className={`flex items-center gap-3 rounded-2xl p-2.5 ring-1 ${contest.phase === 2 && i < contest.finalists ? "bg-[#FFD700]/[0.06] ring-[#FFD700]/25" : "bg-white/[0.03] ring-white/5"}`}>
                 <span
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black ${
                     i === 0 ? "bg-[#FFD700] text-[#0B132B]" : i === 1 ? "bg-[#C0C7D1] text-[#0B132B]" : i === 2 ? "bg-[#D9925B] text-[#0B132B]" : "bg-white/10 text-white"
@@ -180,19 +212,23 @@ export default async function ContestPage() {
                 </span>
                 <TeamPhoto team={t} className="h-11 w-11 shrink-0 rounded-xl" />
                 <Link href={`/konkou/${t.id}`} className="min-w-0 flex-1">
-                  <span className="block truncate font-bold text-white hover:underline">{t.team_name}</span>
+                  <span className="flex items-center gap-2 truncate font-bold text-white hover:underline">
+                    {t.team_name}
+                    {contest.phase === 1 && t.v1 >= contest.phase1_goal && <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-black text-emerald-300">✅ Kalifye</span>}
+                  </span>
                   <span className="block truncate text-xs text-zinc-500">🏫 {t.school_name}</span>
                   <span className="mt-1 block h-2 overflow-hidden rounded-full bg-white/10">
                     <span
-                      className="block h-full origin-left rounded-full bg-gradient-to-r from-[#7A0E1F] via-[#E6C000] to-[#FFE34D] motion-safe:animate-bar-grow"
-                      style={{ width: `${Math.max(2, (t.votes / max) * 100)}%`, animationDelay: `${i * 0.06}s` }}
+                      className={`block h-full origin-left rounded-full motion-safe:animate-bar-grow ${goal && t.votes >= goal ? "bg-gradient-to-r from-emerald-500 to-emerald-300" : "bg-gradient-to-r from-[#7A0E1F] via-[#E6C000] to-[#FFE34D]"}`}
+                      style={{ width: `${barPct(t.votes)}%`, animationDelay: `${i * 0.06}s` }}
                     />
                   </span>
                 </Link>
-                <span className="w-16 shrink-0 text-right">
+                <span className="w-20 shrink-0 text-right">
                   <span className="block text-lg font-black tabular-nums text-[#FFD700]">{t.votes.toLocaleString("fr-HT")}</span>
-                  <span className="block text-[10px] font-bold uppercase text-zinc-500">vòt</span>
+                  <span className="block text-[10px] font-bold uppercase text-zinc-500">{goal ? `/ ${goal} vòt` : "vòt"}</span>
                 </span>
+              </div>
               </li>
             ))}
           </ol>
@@ -216,7 +252,13 @@ export default async function ContestPage() {
                 <Link href={`/konkou/${t.id}`} className="relative block">
                   <TeamPhoto team={t} className="aspect-[4/3] w-full transition duration-500 group-hover:scale-105" />
                   <span className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" aria-hidden />
-                  {contest.phase < 3 && i < 3 && t.votes > 0 && (
+                  {contest.phase === 1 && t.v1 >= contest.phase1_goal && (
+                    <span className="absolute right-3 top-3 rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-black text-white shadow-lg">✅ Kalifye</span>
+                  )}
+                  {contest.phase === 2 && i < contest.finalists && t.votes > 0 && (
+                    <span className="absolute right-3 top-3 rounded-full bg-[#FFD700] px-2.5 py-1 text-xs font-black text-[#0B132B] shadow-lg">🏆 Top {contest.finalists}</span>
+                  )}
+                  {!finished && i < 3 && t.votes > 0 && (
                     <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-black text-white backdrop-blur">{["🥇", "🥈", "🥉"][i]} #{i + 1}</span>
                   )}
                   {t.final_rank && MEDALS[t.final_rank] && <span className="absolute left-3 top-3 text-3xl">{MEDALS[t.final_rank].icon}</span>}
@@ -247,13 +289,13 @@ export default async function ContestPage() {
                   <div className="mt-auto flex items-center justify-between gap-2 pt-4">
                     <span>
                       <span className="block text-2xl font-black tabular-nums text-[#FFD700]">{t.votes.toLocaleString("fr-HT")}</span>
-                      <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">vòt</span>
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500">{goal ? `/ ${goal} vòt` : "vòt"}</span>
                     </span>
                     <span className="flex items-center gap-2">
                       <Link href={`/konkou/${t.id}`} className="rounded-full px-3 py-2 text-sm font-semibold text-zinc-300 hover:text-white">
                         Wè ekip la
                       </Link>
-                      {contest.phase < 3 && <VoteButton teamId={t.id} teamName={t.team_name} schoolName={t.school_name} price={contest.vote_price_htg} open={contest.voting_open} />}
+                      {!finished && <VoteButton teamId={t.id} teamName={t.team_name} schoolName={t.school_name} price={contest.vote_price_htg} open={contest.voting_open} />}
                     </span>
                   </div>
                 </div>

@@ -12,6 +12,10 @@ export type Contest = {
   vote_price_htg: number;
   voting_open: boolean;
   phase_ends_at: string | null;
+  phase1_goal: number; // vòt pou kalifye (faz 1)
+  phase2_goal: number; // objektif faz 2
+  finalists: number; // kantite ekip ki ale nan final la
+  phase3_goal: number; // objektif final la: yon chanpyon solid rive la (1 000 vòt)
 };
 
 export type ContestMember = { id: string; team_id: string; display_name: string; role: string | null; bio: string | null; photo_url: string | null; sort: number };
@@ -26,6 +30,7 @@ export type ContestTeam = {
   photo_url: string | null;
   song_id: string | null;
   qualified: boolean;
+  finalist: boolean;
   final_rank: number | null;
   sort: number;
   active: boolean;
@@ -34,8 +39,8 @@ export type ContestTeam = {
 
 export const PHASES = [
   { n: 1, label: "Kalifikasyon", icon: "🗳️", text: "Vote pou ekip lekòl ou pi renmen an" },
-  { n: 2, label: "Final", icon: "🎙️", text: "Koute chante Nwèl yo epi vote ankò" },
-  { n: 3, label: "Gayan yo", icon: "🏆", text: "Twofe yo ak selebrasyon an" },
+  { n: 2, label: "Demi-final", icon: "🎙️", text: "Koute chante Nwèl yo epi vote ankò" },
+  { n: 3, label: "Final", icon: "🏆", text: "5 finalis yo: 1ye, 2yèm, 3yèm pri" },
 ] as const;
 
 export const MEDALS: Record<number, { icon: string; label: string; color: string }> = {

@@ -25,11 +25,11 @@ function MicIcon({ active }: { active: boolean }) {
   );
 }
 
-function ChatIcon({ active }: { active: boolean }) {
+function TreeIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.9} strokeLinejoin="round" aria-hidden>
-      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.6 3.8a.5.5 0 0 1-.8-.4V16.0A2.5 2.5 0 0 1 4 14V5.5Z" />
-      {!active && <path d="M8 8.5h8M8 11.5h5" strokeLinecap="round" />}
+      <path d="M12 2.5 7.5 9h2.5L6 14.5h3.5L5 20.5h14l-4.5-6H18L14 9h2.5L12 2.5Z" />
+      <path d="M12 20.5V22" strokeLinecap="round" />
     </svg>
   );
 }
@@ -37,7 +37,8 @@ function ChatIcon({ active }: { active: boolean }) {
 const ITEMS = [
   { href: "/", label: "Akèy", Icon: HomeIcon, match: (p: string) => p === "/" },
   { href: "/atis", label: "Atis", Icon: MicIcon, match: (p: string) => p === "/atis" || p.startsWith("/atis/") },
-  { href: "/sosyal", label: "Sosyal", Icon: ChatIcon, match: (p: string) => p.startsWith("/sosyal") },
+  // 🎄 Konkou Nwèl nan plas Sosyal (Sosyal toujou nan meni ☰ a)
+  { href: "/konkou", label: "Nwèl", Icon: TreeIcon, match: (p: string) => p.startsWith("/konkou") },
 ];
 
 // Ba navigasyon anba ekran an (telefòn sèlman)

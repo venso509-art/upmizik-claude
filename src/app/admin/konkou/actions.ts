@@ -12,21 +12,43 @@ const done = () => {
 };
 const clip = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
 
-export async function saveContest(id: string, input: { title: string; subtitle: string; description: string; phase: number; price: number; open: boolean; endsAt: string }): Promise<Result> {
-  if (![1, 2, 3].includes(input.phase)) return { error: "Faz la pa valid." };
+export async function saveContest(
+  id: string,
+  input: { title: string; subtitle: string; description: string; price: number; open: boolean; endsAt: string; goal1: number; goal2: number; goal3: number; finalists: number },
+): Promise<Result> {
   if (!(input.price >= 1)) return { error: "Pri yon vòt la pa valid." };
+  if (!(input.goal1 >= 1 && input.goal2 >= 1 && input.goal3 >= 1 && input.finalists >= 1)) return { error: "Objektif yo pa valid." };
   const { error } = await createClient()
     .from("contests")
     .update({
       title: clip(input.title, 120),
       subtitle: clip(input.subtitle, 200) || null,
       description: clip(input.description, 2000) || null,
-      phase: input.phase,
       vote_price_htg: Math.round(input.price),
-      voting_open: input.phase < 3 && input.open,
+      voting_open: input.open,
+      phase1_goal: Math.round(input.goal1),
+      phase2_goal: Math.round(input.goal2),
+      phase3_goal: Math.round(input.goal3),
+      finalists: Math.round(input.finalists),
       phase_ends_at: input.endsAt ? new Date(input.endsAt).toISOString() : null,
     })
     .eq("id", id);
+  if (error) return { error: error.message };
+  done();
+  return {};
+}
+
+// Pase nan yon lòt faz (1 → 2: kalifye otomatik; 2 → 3: 5 premye yo vin finalis)
+export async function setPhase(contestId: string, phase: number): Promise<Result> {
+  const { error } = await createClient().rpc("contest_set_phase", { p_contest: contestId, p_phase: phase });
+  if (error) return { error: error.message };
+  done();
+  return {};
+}
+
+// Pibliye 🥇🥈🥉 (3 premye yo nan vòt final la) epi fèmen vòt yo
+export async function publishWinners(contestId: string): Promise<Result> {
+  const { error } = await createClient().rpc("contest_publish_winners", { p_contest: contestId });
   if (error) return { error: error.message };
   done();
   return {};

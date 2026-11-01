@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/compressImage";
-import { deleteTeam, reviewVote, saveContest, saveMembers, saveTeam, type MemberInput, type TeamInput } from "@/app/admin/konkou/actions";
+import { deleteTeam, publishWinners, reviewVote, saveContest, saveMembers, saveTeam, setPhase, type MemberInput, type TeamInput } from "@/app/admin/konkou/actions";
 import { PHASES, type Contest, type ContestTeam } from "@/lib/contest";
 import { formatHTG } from "@/lib/donations";
 
@@ -73,43 +73,96 @@ function PhotoPick({ url, onChange, round }: { url: string | null; onChange: (u:
   );
 }
 
-// ===== Paramèt konkou a: faz, vòt louvri/fèmen, dat fen, pri yon vòt =====
+// ===== Paramèt konkou a: faz, objektif, vòt louvri/fèmen, dat fen, pri yon vòt =====
 export function ContestSettings({ contest }: { contest: Contest }) {
   const [f, setF] = useState({
     title: contest.title,
     subtitle: contest.subtitle ?? "",
     description: contest.description ?? "",
-    phase: contest.phase,
     price: contest.vote_price_htg,
     open: contest.voting_open,
     endsAt: contest.phase_ends_at ? new Date(contest.phase_ends_at).toISOString().slice(0, 16) : "",
+    goal1: contest.phase1_goal,
+    goal2: contest.phase2_goal,
+    goal3: contest.phase3_goal,
+    finalists: contest.finalists,
   });
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
   const [pending, start] = useTransition();
 
+  const changePhase = (n: number) => {
+    if (n === contest.phase) return;
+    const warn =
+      n === 2
+        ? `Pase nan FAZ 2?\n\nEkip ki gen ${contest.phase1_goal} vòt oswa plis yo ap kalifye otomatikman. Vòt yo rekòmanse a zewo pou faz 2.`
+        : n === 3
+          ? `Pase nan FINAL la (faz 3)?\n\n${contest.finalists} premye ekip yo nan vòt faz 2 a ap vin finalis. Vòt yo rekòmanse a zewo pou final la.`
+          : "Retounen nan faz 1?";
+    if (!confirm(warn)) return;
+    start(async () => {
+      const res = await setPhase(contest.id, n);
+      setMsg(res.error ? { ok: false, text: res.error } : { ok: true, text: `✓ Konkou a nan faz ${n} kounye a.` });
+    });
+  };
+
   return (
     <section className="rounded-3xl border border-citron-400/30 bg-gradient-to-br from-red-900/20 via-zinc-900/60 to-[#0A5C36]/20 p-5 sm:p-6">
       <h2 className="text-lg font-black text-white">⚙️ Paramèt konkou a</h2>
-      {/* Faz yo */}
+      {/* Faz yo: peze youn pou pase ladan l */}
       <div className="mt-4 grid grid-cols-3 gap-2">
         {PHASES.map((p) => (
           <button
             key={p.n}
             type="button"
-            onClick={() => setF({ ...f, phase: p.n, open: p.n === 3 ? false : f.open })}
-            className={`rounded-2xl px-3 py-3 text-left transition ${f.phase === p.n ? "bg-citron-400 text-zinc-950" : "bg-white/[0.04] text-white ring-1 ring-white/10 hover:bg-white/[0.08]"}`}
+            disabled={pending}
+            onClick={() => changePhase(p.n)}
+            className={`rounded-2xl px-3 py-3 text-left transition ${contest.phase === p.n ? "bg-citron-400 text-zinc-950" : "bg-white/[0.04] text-white ring-1 ring-white/10 hover:bg-white/[0.08]"}`}
           >
             <span className="block text-lg">{p.icon}</span>
             <span className="block text-sm font-black">
               Faz {p.n}: {p.label}
             </span>
+            <span className={`block text-[11px] ${contest.phase === p.n ? "text-zinc-950/70" : "text-zinc-500"}`}>{contest.phase === p.n ? "● Kounye a" : "Peze pou pase ladan l"}</span>
           </button>
         ))}
       </div>
-      {f.phase === 2 && <p className="mt-2 text-xs text-amber-200">Faz 2: sèlman ekip ki make « Kalifye » yo parèt pou vòt, epi vòt yo rekòmanse a zewo.</p>}
-      {f.phase === 3 && <p className="mt-2 text-xs text-amber-200">Faz 3: vòt yo fèmen; mete « Plas final » (1, 2, 3) sou ekip gayan yo.</p>}
+      {contest.phase === 3 && (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            if (!confirm("Pibliye gayan yo?\n\n3 premye ekip yo nan vòt final la ap resevwa 🥇🥈🥉, epi vòt yo ap fèmen.")) return;
+            start(async () => {
+              const res = await publishWinners(contest.id);
+              setMsg(res.error ? { ok: false, text: res.error } : { ok: true, text: "🏆 Gayan yo pibliye!" });
+            });
+          }}
+          className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#FFE34D] to-[#E6C000] px-4 py-3 font-black text-[#0B132B] shadow-lg shadow-[#FFD700]/20"
+        >
+          🏆 Pibliye gayan yo (🥇🥈🥉)
+        </button>
+      )}
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+        <label className="block">
+          <span className={label}>Vòt pou kalifye (faz 1)</span>
+          <input type="number" min={1} value={f.goal1} onChange={(e) => setF({ ...f, goal1: Number(e.target.value) })} className={input} />
+        </label>
+        <label className="block">
+          <span className={label}>Objektif faz 2</span>
+          <input type="number" min={1} value={f.goal2} onChange={(e) => setF({ ...f, goal2: Number(e.target.value) })} className={input} />
+        </label>
+        <label className="block">
+          <span className={label}>Objektif final (faz 3)</span>
+          <input type="number" min={1} value={f.goal3} onChange={(e) => setF({ ...f, goal3: Number(e.target.value) })} className={input} />
+        </label>
+        <label className="block">
+          <span className={label}>Ekip nan final la</span>
+          <input type="number" min={1} value={f.finalists} onChange={(e) => setF({ ...f, finalists: Number(e.target.value) })} className={input} />
+        </label>
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="block sm:col-span-2">
           <span className={label}>Tit</span>
           <input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={input} />
@@ -132,7 +185,7 @@ export function ContestSettings({ contest }: { contest: Contest }) {
         </label>
       </div>
       <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/10">
-        <input type="checkbox" checked={f.open} disabled={f.phase === 3} onChange={(e) => setF({ ...f, open: e.target.checked })} className="h-5 w-5 accent-[#FFD700]" />
+        <input type="checkbox" checked={f.open} onChange={(e) => setF({ ...f, open: e.target.checked })} className="h-5 w-5 accent-[#FFD700]" />
         <span>
           <span className="block font-bold text-white">🗳️ Vòt yo louvri</span>
           <span className="block text-xs text-zinc-400">Lè sa etenn, moun yo wè ekip yo men yo pa ka vote.</span>
@@ -329,7 +382,7 @@ export function TeamList({ contestId, teams, standings }: { contestId: string; t
                     {t.team_name} {t.final_rank ? ["", "🥇", "🥈", "🥉"][t.final_rank] ?? "" : ""}
                   </span>
                   <span className="block truncate text-xs text-zinc-400">
-                    {t.school_name} · {t.members?.length ?? 0} elèv {t.qualified && "· ✅ Kalifye"} {!t.active && "· 🙈 Kache"}
+                    {t.school_name} · {t.members?.length ?? 0} elèv {t.qualified && "· ✅ Kalifye"} {t.finalist && "· 🏆 Finalis"} {!t.active && "· 🙈 Kache"}
                   </span>
                 </span>
                 <span className="text-right text-sm">

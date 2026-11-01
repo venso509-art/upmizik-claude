@@ -45,7 +45,7 @@ export default async function AdminContestPage() {
 
   const teams = (teamRows ?? []).map((t) => ({ ...t, members: (memberRows ?? []).filter((m) => m.team_id === t.id) }));
   const teamById = new Map(teams.map((t) => [t.id, t]));
-  const phaseNow = Math.min(contest.phase, 2);
+  const phaseNow = contest.phase;
 
   // Total vòt valide (faz kounye a) + lajan (tout faz) pa ekip
   const standings: Record<string, { votes: number; money: number }> = {};

@@ -18,6 +18,8 @@ import { SocialStrip } from "@/components/social/SocialStrip";
 import { GradientWaves } from "@/components/GradientWaves";
 import { withImageUrls, type FeedPost } from "@/lib/posts";
 import { sloganForNow } from "@/lib/heroSlogans";
+import { loadContest } from "@/lib/contestServer";
+import { ContestBubbles } from "@/components/contest/ContestBubbles";
 
 // SEO paj akèy la (ak aperçu lè yon moun pataje lyen an)
 const HOME_DESCRIPTION =
@@ -48,6 +50,8 @@ const bars = [
 export default async function Home({ searchParams }: { searchParams: { jan?: string } }) {
   // Gwo fraz anlè a: yon lòt chak 6 èdtan
   const slogan = sloganForNow();
+  // 🎄 Konkou Nwèl (null si migration an poko kouri)
+  const contestData = await loadContest().catch(() => null);
   // ?jan=Konpa → montre sèlman chante jan sa a (jiska 24); san jan → 8 dènye chante yo
   // Jan nan lis la OSWA yon jan atis yo ekri yo menm (egz: ?jan=Dancehall)
   const genre = normalizeGenre(searchParams.jan) ?? null;
@@ -218,6 +222,8 @@ export default async function Home({ searchParams }: { searchParams: { jan?: str
       {/* ===== SÈK ATIS YO (tankou estati WhatsApp), anba hero a ===== */}
       <Reveal>
         <ArtistBubbles title={bubblesTitle} artists={bubbles} statuses={bubbleStatuses} lives={liveMap} />
+        {/* 🎄 Konkou Nwèl: ekip lekòl yo (parèt sèlman lè gen ekip sou sit la) */}
+        {contestData && <ContestBubbles teams={contestData.teams} phase={contestData.contest.phase} />}
       </Reveal>
 
       {/* ===== RPA: ATIS POU DEKOUVRI ===== */}

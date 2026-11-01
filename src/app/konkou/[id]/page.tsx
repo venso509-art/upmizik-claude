@@ -40,6 +40,8 @@ export default async function ContestTeamPage({ params }: Props) {
   if (index < 0) notFound();
   const t = teams[index];
   const medal = t.final_rank ? MEDALS[t.final_rank] : null;
+  const finished = teams.some((x) => x.final_rank);
+  const goal = contest.phase === 1 ? contest.phase1_goal : contest.phase === 2 ? contest.phase2_goal : contest.phase3_goal;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:py-10">
@@ -66,7 +68,9 @@ export default async function ContestTeamPage({ params }: Props) {
             <div className="mt-5 flex items-end gap-4">
               <span>
                 <span className="block text-5xl font-black tabular-nums text-[#FFD700]">{t.votes.toLocaleString("fr-HT")}</span>
-                <span className="block text-xs font-bold uppercase tracking-wider text-white/60">vòt · faz {Math.min(contest.phase, 2)}</span>
+                <span className="block text-xs font-bold uppercase tracking-wider text-white/60">
+                  {goal ? `/ ${goal} vòt` : "vòt"} · faz {contest.phase}
+                </span>
               </span>
               <span className="rounded-2xl bg-white/10 px-3 py-2 text-center ring-1 ring-white/15">
                 <span className="block text-2xl font-black">{medal ? medal.icon : `#${index + 1}`}</span>
@@ -74,7 +78,7 @@ export default async function ContestTeamPage({ params }: Props) {
               </span>
             </div>
             <div className="mt-auto flex flex-wrap gap-2 pt-6">
-              {contest.phase < 3 && <VoteButton big teamId={t.id} teamName={t.team_name} schoolName={t.school_name} price={contest.vote_price_htg} open={contest.voting_open} />}
+              {!finished && <VoteButton big teamId={t.id} teamName={t.team_name} schoolName={t.school_name} price={contest.vote_price_htg} open={contest.voting_open} />}
               <ShareLinkButton
                 path={`/konkou/${t.id}`}
                 label="📤 Pataje"
