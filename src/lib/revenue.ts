@@ -36,7 +36,7 @@ export const KINDS: Record<RevenueKind, { label: string; icon: string; color: st
   enskripsyon: { label: "Enskripsyon", icon: "🎤", color: "#A78BFA", note: "Pou sit la, mwens pa manm ki fè atis la enskri a" },
   pro: { label: "Pwofil Pro", icon: "⭐", color: "#FFD700", note: "100 % pou sit la" },
   boost: { label: "Boost", icon: "🔥", color: "#FB923C", note: "100 % pou sit la" },
-  kredi: { label: "Kredi live", icon: "🪙", color: "#38BDF8", note: "Separe lè moun yo voye kado nan live" },
+  kredi: { label: "Kredi", icon: "🪙", color: "#38BDF8", note: "Separe lè moun yo voye kado (nan live oswa sou mizik)" },
 };
 export const KIND_ORDER: RevenueKind[] = ["don", "enskripsyon", "pro", "boost", "kredi"];
 
@@ -89,13 +89,13 @@ export function summarize(rows: RevenueRow[], x: RevenueExtras) {
     { label: "Enskripsyon atis", value: k.enskripsyon.site },
     { label: "Pwofil Pro", value: k.pro.site },
     { label: "Boost", value: k.boost.site },
-    { label: "Kado live (pa sit la)", value: Number(x.live_platform_htg) },
+    { label: "Kado live + mizik (pa sit la)", value: Number(x.live_platform_htg) },
     { label: "Frè lojistik atis (0,99 $/mwa)", value: Number(x.fee_htg) },
   ];
   // Pou pataje: sa ki pou atis yo, featuring/kolaboratè, ak manm yo
   const sharedParts = [
     { label: "Atis yo (don, ak featuring)", value: k.don.shared - Number(x.fee_htg) },
-    { label: "Atis yo (kado live)", value: Number(x.live_artist_htg) },
+    { label: "Atis yo (kado live + mizik)", value: Number(x.live_artist_htg) },
     { label: "Manm yo (enskripsyon)", value: memberShare },
   ];
   const site = siteParts.reduce((s, p) => s + p.value, 0);

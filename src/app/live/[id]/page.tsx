@@ -24,7 +24,8 @@ export default async function LivePage({ params }: Props) {
   const [{ data: live }, { data: { user } }, { data: gifts }] = await Promise.all([
     supabase.from("lives").select(LIVE_COLUMNS).eq("id", params.id).maybeSingle<LiveRow>(),
     supabase.auth.getUser(),
-    supabase.from("live_gift_types").select("id, name, emoji, credits, sort").eq("active", true).order("sort").returns<GiftType[]>(),
+    // Kado mizik yo (scope "song") pa parèt nan live la
+    supabase.from("live_gift_types").select("id, name, emoji, credits, sort").eq("active", true).in("scope", ["all", "live"]).order("sort").returns<GiftType[]>(),
   ]);
   if (!live) notFound();
 

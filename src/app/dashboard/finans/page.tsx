@@ -21,6 +21,20 @@ import { monthlyFeeHtg } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "Revni & Finans | UpMizik" };
 
+// Kado fanatik yo voye sou mizik la ak kredi (my_song_gifts)
+type GiftRow = {
+  id: string;
+  sender_name: string;
+  message: string | null;
+  song_title: string;
+  gift_label: string;
+  quantity: number;
+  amount_htg: number;
+  my_share_htg: number;
+  collab_share_htg: number;
+  received_at: string;
+};
+
 type DonationRow = {
   id: string;
   donor_name: string | null;
@@ -88,6 +102,8 @@ export default async function FinancePage() {
     supabase.rpc("my_private_info"),
     getSettings(),
   ]);
+  // Erè = migration kado mizik la poko kouri → lis vid
+  const gifts = ((await supabase.rpc("my_song_gifts")).data ?? []) as GiftRow[];
 
   const balance = toBalance((balanceRes.data as BalanceRow[] | null)?.[0]);
   const donations = (donationsRes.data ?? []) as DonationRow[];
@@ -190,7 +206,7 @@ export default async function FinancePage() {
       </div>
 
       {/* ===== ISTWA DON ===== */}
-      <div className="mt-6">
+      <div className="mt-6 space-y-6">
         <Panel title="Istwa don ou resevwa" subtitle="Sèlman don ekip UpMizik la deja valide.">
           {donations.length === 0 ? (
             <div className="py-10 text-center">
@@ -227,6 +243,50 @@ export default async function FinancePage() {
                         {Number(d.collab_share_htg) > 0 ? formatHTG(Number(d.collab_share_htg)) : "—"}
                       </td>
                       <td className="py-3 text-right font-semibold tabular-nums text-emerald-300">{formatHTG(Number(d.my_share_htg))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+
+        <Panel title="🎁 Kado sou mizik ou" subtitle="Fanatik yo voye yo ak kredi pandan y ap koute. Pa w la deja nan balans ou.">
+          {gifts.length === 0 ? (
+            <div className="py-10 text-center">
+              <p className="text-4xl">🎁</p>
+              <p className="mt-3 text-sm text-zinc-400">Ou poko resevwa kado sou mizik ou. Fanatik ki konekte yo ka voye 🌹 🦁 👑 💎 sou chak chante.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="text-xs uppercase tracking-wider text-zinc-500">
+                  <tr className="border-b border-zinc-800">
+                    <th className="py-2 pr-3 font-medium">Dat</th>
+                    <th className="py-2 pr-3 font-medium">Fanatik</th>
+                    <th className="py-2 pr-3 font-medium">Chante</th>
+                    <th className="py-2 pr-3 text-right font-medium">Kado</th>
+                    <th className="py-2 pr-3 text-right font-medium">Kolaboratè</th>
+                    <th className="py-2 text-right font-medium">Pa w</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/70">
+                  {gifts.map((g) => (
+                    <tr key={g.id} className="align-top">
+                      <td className="py-3 pr-3 text-zinc-400">{formatDate(g.received_at)}</td>
+                      <td className="py-3 pr-3">
+                        <p className="text-white">{g.sender_name}</p>
+                        {g.message && <p className="mt-0.5 max-w-xs text-xs italic text-zinc-500">« {g.message} »</p>}
+                      </td>
+                      <td className="py-3 pr-3 text-zinc-300">{g.song_title}</td>
+                      <td className="py-3 pr-3 text-right tabular-nums text-zinc-300">
+                        {g.gift_label} x{g.quantity}
+                        <span className="block text-xs text-zinc-500">{formatHTG(Number(g.amount_htg))}</span>
+                      </td>
+                      <td className="py-3 pr-3 text-right tabular-nums text-zinc-400">
+                        {Number(g.collab_share_htg) > 0 ? formatHTG(Number(g.collab_share_htg)) : "—"}
+                      </td>
+                      <td className="py-3 text-right font-semibold tabular-nums text-emerald-300">{formatHTG(Number(g.my_share_htg))}</td>
                     </tr>
                   ))}
                 </tbody>

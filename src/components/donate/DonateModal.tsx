@@ -17,6 +17,7 @@ import {
 } from "@/lib/donations";
 import { FormMessage, inputClass } from "@/components/auth/ui";
 import { DonateIcon } from "./DonateButton";
+import { SongGiftPanel } from "./SongGiftPanel";
 import { Portal } from "@/components/Portal";
 import { useSettings } from "@/components/SettingsProvider";
 import { methodNumber, usdToHtg } from "@/lib/settings";
@@ -42,6 +43,9 @@ export function DonateModal({
 }) {
   const settings = useSettings();
   const [step, setStep] = useState<Step>(1);
+  // Sou yon chante: lajan (MonCash/NatCash) oswa kado ak kredi (koutè ki konekte sèlman)
+  const [mode, setMode] = useState<"cash" | "gift">("cash");
+  const [giftSent, setGiftSent] = useState(false);
   const [preset, setPreset] = useState<number | null>(10);
   const [custom, setCustom] = useState("");
   const [method, setMethod] = useState<DonationMethod>("moncash");
@@ -171,7 +175,7 @@ export function DonateModal({
               {songTitle && <p className="truncate text-sm text-fuchsia-100">pou « {songTitle} »</p>}
             </div>
           </div>
-          {step < 4 && (
+          {step < 4 && mode === "cash" && (
             <div className="mt-5 flex gap-1.5">
               {[1, 2, 3].map((n) => (
                 <span key={n} className={`h-1 flex-1 rounded-full ${n <= step ? "bg-white" : "bg-white/25"}`} />
@@ -181,8 +185,49 @@ export function DonateModal({
         </div>
 
         <div className="p-6">
+          {songId && step === 1 && !giftSent && (
+            <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-zinc-950 p-1" role="tablist">
+              {([
+                ["cash", "💵 Lajan", "MonCash · NatCash"],
+                ["gift", "🎁 Kado", "Ak kredi ou yo"],
+              ] as const).map(([k, title, hint]) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === k}
+                  onClick={() => setMode(k)}
+                  className={`rounded-xl px-3 py-2 text-center transition ${mode === k ? "bg-fuchsia-500/20 ring-1 ring-fuchsia-500" : "hover:bg-white/5"}`}
+                >
+                  <span className="block text-sm font-bold text-white">{title}</span>
+                  <span className="block text-[10px] text-zinc-500">{hint}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ===== KADO AK KREDI ===== */}
+          {songId && mode === "gift" && !giftSent && <SongGiftPanel songId={songId} artistName={artistName} onSent={() => setGiftSent(true)} />}
+          {giftSent && (
+            <div className="space-y-5 py-2 text-center">
+              <p className="text-6xl">🎁</p>
+              <h3 className="text-2xl font-extrabold text-white">Kado a rive!</h3>
+              <p className="text-zinc-300">
+                <span className="font-semibold text-white">{artistName}</span> resevwa kado w la {forWhat}. Mèsi paske w sipòte mizik li!
+              </p>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setGiftSent(false)} className="flex-1 rounded-xl border border-zinc-700 px-4 py-3 font-medium text-zinc-200 hover:border-zinc-500">
+                  Voye yon lòt
+                </button>
+                <button type="button" onClick={onClose} className="flex-1 rounded-xl btn-primary px-4 py-3 font-semibold">
+                  Fèmen
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* ===== ETAP 1: MONTAN ===== */}
-          {step === 1 && (
+          {mode === "cash" && step === 1 && (
             <div className="space-y-5">
               <p className="font-semibold text-white">Konbyen ou vle bay?</p>
               <div className="grid grid-cols-3 gap-2">
