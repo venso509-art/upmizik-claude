@@ -25,7 +25,7 @@ function refresh(artistId: string, songId: string) {
 // Admin modifye tit, jan, lyen YouTube, ak (si l vle) pochèt yon chante
 export async function adminUpdateSong(
   songId: string,
-  input: { title: string; genre: string; youtubeUrl: string; coverPath: string | null },
+  input: { title: string; genre: string; youtubeUrl: string; coverPath: string | null; featNames?: string[] },
 ): Promise<Result> {
   const supabase = await adminClient();
   if (!supabase) return { error: "Se sèlman admin ki ka fè sa." };
@@ -41,7 +41,15 @@ export async function adminUpdateSong(
   if (!song) return { error: "Chante sa a pa jwenn." };
   if (input.coverPath && !input.coverPath.startsWith(`${song.artist_id}/`)) return { error: "Pochèt la pa valid." };
 
-  const update: Record<string, string | null> = { title, genre, youtube_url: youtubeUrl };
+  const update: Record<string, string | string[] | null> = { title, genre, youtube_url: youtubeUrl };
+  // Non feat yo (menm si yo pa sou UpMizik), migration 20270101000015
+  if (input.featNames) {
+    const seen = new Set<string>();
+    update.feat_names = input.featNames
+      .map((n) => n.replace(/\s+/g, " ").trim().slice(0, 60))
+      .filter((n) => n && !seen.has(n.toLowerCase()) && seen.add(n.toLowerCase()))
+      .slice(0, 6);
+  }
   if (input.coverPath) update.cover_path = input.coverPath;
 
   const { data, error } = await supabase.from("songs").update(update).eq("id", songId).select("id");

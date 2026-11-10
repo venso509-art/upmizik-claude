@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import { GenreSelect } from "@/components/GenreSelect";
 import { IMAGE_TYPES, fileExtension } from "@/lib/upload";
 import { formatDuration } from "@/lib/songs";
+import { FeatNamesInput } from "@/components/upload/FeatNamesInput";
 
 export type AdminSong = {
   track: Track;
@@ -53,6 +54,16 @@ function EditSong({ song, onClose }: { song: AdminSong; onClose: () => void }) {
   const [cover, setCover] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [error, setError] = useState<string>();
+  // Non feat yo (null = poko chaje)
+  const [featNames, setFeatNames] = useState<string[] | null>(null);
+  useEffect(() => {
+    void createClient()
+      .from("songs")
+      .select("feat_names")
+      .eq("id", t.id)
+      .maybeSingle()
+      .then(({ data }) => setFeatNames((data as { feat_names?: string[] } | null)?.feat_names ?? []));
+  }, [t.id]);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -82,7 +93,7 @@ function EditSong({ song, onClose }: { song: AdminSong; onClose: () => void }) {
         const { error: upErr } = await supabase.storage.from("covers").upload(coverPath, cover, { contentType: IMAGE_TYPES[ext] });
         if (upErr) return setError(`Pochèt la pa monte: ${upErr.message}`);
       }
-      const res = await adminUpdateSong(t.id, { title, genre, youtubeUrl: youtube, coverPath });
+      const res = await adminUpdateSong(t.id, { title, genre, youtubeUrl: youtube, coverPath, ...(featNames ? { featNames } : {}) });
       if (res.error) {
         if (coverPath) await supabase.storage.from("covers").remove([coverPath]);
         return setError(res.error);
@@ -121,6 +132,11 @@ function EditSong({ song, onClose }: { song: AdminSong; onClose: () => void }) {
         <Field label="Lyen YouTube (si genyen)">
           <input value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="https://youtube.com/watch?v=..." className={inputClass} />
         </Field>
+        {featNames ? (
+          <FeatNamesInput value={featNames} onChange={setFeatNames} disabled={pending} />
+        ) : (
+          <p className="text-xs text-zinc-500">Ap chaje non feat yo…</p>
+        )}
         <FormMessage error={error} />
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-zinc-300 hover:text-white">

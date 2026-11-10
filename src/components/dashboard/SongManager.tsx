@@ -125,8 +125,9 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
     setEditing(song);
     setSplits(null);
     setFeaturing(null);
-    getSongSplits(song.id).then(setSplits);
-    getSongFeaturing(song.id).then(setFeaturing);
+    // Si youn pa chaje (rezo, nouvo vèsyon sit la), nou kòmanse ak yon lis vid olye pou n bloke fòm nan
+    getSongSplits(song.id).then(setSplits, () => setSplits([]));
+    getSongFeaturing(song.id).then(setFeaturing, () => setFeaturing([]));
     // Non feat yo (vid si migration feat_names la poko kouri)
     setFeatNames([]);
     setPrice("");
@@ -398,11 +399,11 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
             <Field label="▶ Lyen YouTube (opsyonèl)">
               <input name="youtube_url" defaultValue={editing.youtubeUrl ?? ""} placeholder="Lyen videyo klip la" className={inputClass} />
             </Field>
+            <FeatNamesInput value={featNames} onChange={setFeatNames} disabled={pending} />
+            {priceLoaded && <SalePriceInput value={price} onChange={setPrice} disabled={pending} />}
             {splits && featuring ? (
               <>
                 <ReleasePicker artistId={artistId} value={release} onChange={setRelease} disabled={pending} />
-                <FeatNamesInput value={featNames} onChange={setFeatNames} disabled={pending} />
-                {priceLoaded && <SalePriceInput value={price} onChange={setPrice} disabled={pending} />}
                 <FeaturingEditor value={featuring} onChange={setFeaturing} otherTotal={splitsTotal(splits)} disabled={pending} />
                 <SplitsEditor splits={splits} onChange={setSplits} disabled={pending} reserved={featuringTotal(featuring)} max={maxSplits(pro)} />
               </>
