@@ -15,6 +15,7 @@ import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { formatDuration } from "@/lib/songs";
 import { Field, FormMessage, inputClass } from "@/components/auth/ui";
 import { Portal } from "@/components/Portal";
+import type { ReleaseKind } from "@/lib/releases";
 
 export type ManagedSong = {
   id: string;
@@ -28,7 +29,7 @@ export type ManagedSong = {
   createdAt: string;
   archived?: boolean; // admin nan achive l: li pa parèt sou sit la
   releaseId?: string | null;
-  releaseKind?: "ep" | "mixtape" | "album" | null;
+  releaseKind?: ReleaseKind | null;
   trackNumber?: number | null;
 };
 

@@ -3,12 +3,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AuthCard } from "@/components/auth/ui";
-import { UploadForm } from "@/components/upload/UploadForm";
+import { UploadTabs } from "@/components/upload/UploadTabs";
 import { AccountStatusNotice } from "@/components/AccountStatusNotice";
 
 export const metadata: Metadata = { title: "Upload | UpMizik" };
 
-export default async function UploadPage() {
+export default async function UploadPage({ searchParams }: { searchParams: { mode?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/konekte");
@@ -44,8 +44,8 @@ export default async function UploadPage() {
   const { data: pro } = await supabase.rpc("is_pro", { p_user: user.id });
 
   return (
-    <AuthCard title="Pibliye yon chante" subtitle="Pataje mizik ou ak tout kominote UpMizik la.">
-      <UploadForm userId={user.id} pro={pro === true} />
+    <AuthCard title="Pibliye mizik" subtitle="Yon chante, oswa tout yon pwojè (Album, EP, Mixtape, Demo) yon sèl kou.">
+      <UploadTabs userId={user.id} pro={pro === true} initial={searchParams.mode === "pwoje" ? "project" : "single"} />
     </AuthCard>
   );
 }

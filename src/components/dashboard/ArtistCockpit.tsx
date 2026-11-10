@@ -228,7 +228,7 @@ export function ArtistCockpit(p: Props) {
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0B132B] text-[#FFD700] transition group-hover:rotate-90">{I.plus}</span>
               <span className="min-w-0">
                 <span className="block leading-tight">Pibliye yon nouvo chante</span>
-                <span className="block text-xs font-bold opacity-70">Fanatik ou yo ap tann</span>
+                <span className="block text-xs font-bold opacity-70">Yon chante, oswa tout yon album yon sèl kou</span>
               </span>
               <span className="ml-auto text-xl transition group-hover:translate-x-1" aria-hidden>
                 →

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import { normalizeGenre } from "@/lib/genres";
 import { normalizeUrl } from "@/lib/links";
+import { removeCoverIfUnused } from "@/lib/covers";
 
 type Result = { error?: string };
 
@@ -49,7 +50,7 @@ export async function adminUpdateSong(
 
   // Ansyen pochèt la pa sèvi ankò
   if (input.coverPath && song.cover_path && song.cover_path !== input.coverPath) {
-    await supabase.storage.from("covers").remove([song.cover_path]);
+    await removeCoverIfUnused(supabase, song.cover_path);
   }
   refresh(song.artist_id, songId);
   return {};
@@ -66,7 +67,7 @@ export async function adminDeleteSong(songId: string): Promise<Result> {
   if (!song) return { error: "Efasman an pa pase. Èske migration admin_songs la kouri?" };
 
   await supabase.storage.from("audio").remove([song.audio_path]);
-  if (song.cover_path) await supabase.storage.from("covers").remove([song.cover_path]);
+  if (song.cover_path) await removeCoverIfUnused(supabase, song.cover_path);
   refresh(song.artist_id, songId);
   return {};
 }

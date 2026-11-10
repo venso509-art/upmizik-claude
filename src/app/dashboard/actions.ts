@@ -6,6 +6,8 @@ import { normalizeGenre } from "@/lib/genres";
 import { normalizeUrl } from "@/lib/links";
 import { MAX_SPLITS, validateSplits, type Split } from "@/lib/splits";
 import { PRO_MAX_SPLITS } from "@/lib/pro";
+import type { ReleaseChoice } from "@/lib/releases";
+import { removeCoverIfUnused } from "@/lib/covers";
 
 export type SongActionResult = { error?: string };
 
@@ -71,7 +73,7 @@ export async function updateSong(
     youtubeUrl: string;
     splits: Split[];
     featuring?: FeaturingInput[];
-    release?: { kind: "single" | "ep" | "mixtape" | "album"; releaseId: string | null; newTitle: string; trackNumber: number | null };
+    release?: { kind: ReleaseChoice; releaseId: string | null; newTitle: string; trackNumber: number | null };
     // Nouvo fichye (deja monte nan folder atis la): afich ak/oswa odyo
     media?: { coverPath?: string | null; audioPath?: string | null; durationSeconds?: number | null };
   },
@@ -111,7 +113,7 @@ export async function updateSong(
   if (error) return { error: friendlyDbError("Modifikasyon an echwe", error) };
 
   // Efase ansyen fichye yo (yo pa sèvi ankò)
-  if (media.coverPath && song.cover_path && song.cover_path !== media.coverPath) await supabase.storage.from("covers").remove([song.cover_path]);
+  if (media.coverPath && song.cover_path && song.cover_path !== media.coverPath) await removeCoverIfUnused(supabase, song.cover_path);
   if (media.audioPath && song.audio_path !== media.audioPath) await supabase.storage.from("audio").remove([song.audio_path]);
 
   if (input.featuring) {
@@ -200,7 +202,7 @@ export async function deleteSong(songId: string): Promise<SongActionResult> {
 
   // Efase fichye yo nan depo a tou, pou yo pa pran plas pou granmesi
   await supabase.storage.from("audio").remove([song.audio_path]);
-  if (song.cover_path) await supabase.storage.from("covers").remove([song.cover_path]);
+  if (song.cover_path) await removeCoverIfUnused(supabase, song.cover_path);
 
   refresh(user.id);
   return {};

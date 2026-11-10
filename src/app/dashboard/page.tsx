@@ -20,6 +20,7 @@ import { postImageUrl } from "@/lib/posts";
 import { donateShareText } from "@/lib/shareMessages";
 import { BoostBox, type BoostHistoryItem } from "@/components/boost/BoostBox";
 import { isBoostActive, type BoostPlan, type BoostStatus, type BoostType } from "@/lib/boost";
+import type { ReleaseKind } from "@/lib/releases";
 
 export const metadata: Metadata = { title: "Dashboard | UpMizik" };
 
@@ -90,7 +91,7 @@ export default async function DashboardPage() {
     );
   }
 
-  type RelRef = { kind: "ep" | "mixtape" | "album" };
+  type RelRef = { kind: ReleaseKind };
   type DashboardSong = SongRow & {
     created_at: string;
     archived_at?: string | null;
