@@ -207,6 +207,25 @@ function GenreChips({ onPick }: { onPick: () => void }) {
   );
 }
 
+// iPhone: lè klavye a louvri, Safari deplase paj la epi yon ekran "fixed" monte anlè.
+// Nou swiv pati ki vizib la (visualViewport) pou ekran rechèch la toujou rete byen anplas.
+function useVisualViewportBox(active: boolean) {
+  const [box, setBox] = useState<{ top: number; height: number } | null>(null);
+  useEffect(() => {
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!active || !vv) return setBox(null);
+    const update = () => setBox({ top: vv.offsetTop, height: vv.height });
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, [active]);
+  return box;
+}
+
 const inputBase =
   "w-full bg-transparent text-[15px] text-white placeholder:text-zinc-500 focus:outline-none [&::-webkit-search-cancel-button]:hidden";
 
@@ -221,6 +240,7 @@ export function HeaderSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { data, loading, ready } = useSuggestions(query);
   const items = itemsFor(data, query);
+  const vvBox = useVisualViewportBox(mobileOpen);
 
   // Fèmen tout lè paj la chanje
   useEffect(() => {
@@ -256,12 +276,16 @@ export function HeaderSearch() {
   // Bloke paj la dèyè ekran rechèch telefòn nan
   useEffect(() => {
     if (!mobileOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const body = document.body.style;
+    const prev = { overflow: body.overflow, position: body.position, top: body.top, width: body.width };
+    const y = window.scrollY;
+    // Sou Safari iPhone, se sèlman "position: fixed" ki anpeche paj la deplase dèyè ekran an
+    Object.assign(body, { overflow: "hidden", position: "fixed", top: `-${y}px`, width: "100%" });
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
+      Object.assign(body, prev);
+      window.scrollTo(0, y);
       document.removeEventListener("keydown", onKey);
     };
   }, [mobileOpen]);
@@ -369,9 +393,15 @@ export function HeaderSearch() {
 
       {mobileOpen && (
         <Portal>
-          <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-zinc-950 motion-safe:animate-fade-up md:hidden" role="dialog" aria-modal aria-label="Chache">
+          <div
+            className="fixed inset-x-0 top-0 z-[70] flex h-[100dvh] flex-col overflow-hidden overscroll-contain bg-zinc-950 md:hidden"
+            style={vvBox ? { top: vvBox.top, height: vvBox.height } : undefined}
+            role="dialog"
+            aria-modal
+            aria-label="Chache"
+          >
             <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[500px] -translate-x-1/2 rounded-full bg-fuchsia-600/20 blur-3xl" />
-            <form onSubmit={submit} role="search" className="relative flex items-center gap-2 border-b border-zinc-800/80 px-3 py-3">
+            <form onSubmit={submit} role="search" className="relative flex shrink-0 items-center gap-2 border-b border-zinc-800/80 px-3 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
@@ -390,7 +420,7 @@ export function HeaderSearch() {
                   aria-label="Chache"
                   autoComplete="off"
                   enterKeyHint="search"
-                  className={inputBase}
+                  className={`${inputBase} !text-base`}
                 />
                 {query && (
                   <button type="button" onClick={() => setQuery("")} className="text-sm text-zinc-400" aria-label="Efase">
@@ -399,7 +429,7 @@ export function HeaderSearch() {
                 )}
               </div>
             </form>
-            <div className="relative flex-1 overflow-y-auto p-2">
+            <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
               {ready ? (
                 <Results query={query} data={data} loading={loading} active={-1} onPick={close} onHover={() => {}} />
               ) : (

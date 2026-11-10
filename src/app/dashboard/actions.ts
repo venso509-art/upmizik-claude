@@ -73,6 +73,7 @@ export async function updateSong(
     youtubeUrl: string;
     splits: Split[];
     featuring?: FeaturingInput[];
+    featNames?: string[]; // non feat yo (menm si yo pa sou UpMizik)
     release?: { kind: ReleaseChoice; releaseId: string | null; newTitle: string; trackNumber: number | null };
     // Nouvo fichye (deja monte nan folder atis la): afich ak/oswa odyo
     media?: { coverPath?: string | null; audioPath?: string | null; durationSeconds?: number | null };
@@ -144,6 +145,16 @@ export async function updateSong(
       await supabase.rpc("set_song_artists", { p_song_id: songId, p_artists: toRpc(previous) });
       return { error: friendlyDbError("Featuring yo pa sove", featErr) };
     }
+  }
+
+  if (input.featNames) {
+    const seen = new Set<string>();
+    const names = input.featNames
+      .map((n) => n.replace(/\s+/g, " ").trim().slice(0, 60))
+      .filter((n) => n && !seen.has(n.toLowerCase()) && seen.add(n.toLowerCase()))
+      .slice(0, 6);
+    const { error: featNameErr } = await supabase.from("songs").update({ feat_names: names }).eq("id", songId);
+    if (featNameErr) return { error: friendlyDbError("Non feat yo pa sove", featNameErr) };
   }
 
   // Piblikasyon: Single (okenn), oswa yon EP / Mixtape / Album (ki egziste deja oswa nouvo)

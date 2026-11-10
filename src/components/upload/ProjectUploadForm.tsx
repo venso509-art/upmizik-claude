@@ -11,6 +11,7 @@ import { Field, FormMessage, inputClass } from "@/components/auth/ui";
 import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
 import { RELEASE_LABELS, type ReleaseKind } from "@/lib/releases";
+import { FeatNamesInput, cleanFeatNames } from "@/components/upload/FeatNamesInput";
 import { normalizeUrl } from "@/lib/links";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 import { maxAudioBytes, maxSplits } from "@/lib/pro";
@@ -30,6 +31,7 @@ type Track = {
   audio: File | null;
   youtube: string;
   featuring: Featuring[];
+  featNames: string[]; // non feat yo (menm si yo pa sou UpMizik)
   splits: Split[];
   open: boolean; // seksyon featuring/royalties la louvri
   status: TrackStatus;
@@ -43,6 +45,7 @@ const newTrack = (audio: File | null = null): Track => ({
   audio,
   youtube: "",
   featuring: [],
+  featNames: [],
   splits: [],
   open: false,
   status: "waiting",
@@ -233,6 +236,7 @@ export function ProjectUploadForm({ userId, pro = false }: { userId: string; pro
               audio_path: audioPath,
               cover_path: made.current.coverPath,
               duration_seconds: duration,
+              ...(t.featNames.length ? { feat_names: cleanFeatNames(t.featNames) } : {}),
               release_id: releaseId,
               track_number: i + 1,
             })
@@ -469,10 +473,16 @@ export function ProjectUploadForm({ userId, pro = false }: { userId: string; pro
                     onClick={() => patch(t.key, { open: !t.open })}
                     className="mt-2 text-xs font-semibold text-zinc-400 hover:text-white"
                   >
-                    {t.open ? "▾" : "▸"} Featuring, royalties, YouTube
-                    {(t.featuring.length > 0 || t.splits.length > 0 || t.youtube) && (
+                    {t.open ? "▾" : "▸"} Feat, royalties, YouTube
+                    {(t.featNames.length > 0 || t.featuring.length > 0 || t.splits.length > 0 || t.youtube) && (
                       <span className="ml-1 text-citron-300">
-                        ({[t.featuring.length && `${t.featuring.length} feat`, t.splits.length && `${t.splits.length} kolaboratè`, t.youtube && "YouTube"].filter(Boolean).join(" · ")})
+                        ({[
+                          (t.featNames.length || t.featuring.length) && `${t.featNames.length + t.featuring.length} feat`,
+                          t.splits.length && `${t.splits.length} kolaboratè`,
+                          t.youtube && "YouTube",
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")})
                       </span>
                     )}
                   </button>
@@ -485,6 +495,7 @@ export function ProjectUploadForm({ userId, pro = false }: { userId: string; pro
                         placeholder="▶ Lyen YouTube (opsyonèl)"
                         className={inputClass}
                       />
+                      <FeatNamesInput value={t.featNames} onChange={(v) => patch(t.key, { featNames: v })} disabled={busy} />
                       <FeaturingEditor value={t.featuring} onChange={(v) => patch(t.key, { featuring: v })} otherTotal={splitsTotal(t.splits)} disabled={busy} />
                       <SplitsEditor splits={t.splits} onChange={(v) => patch(t.key, { splits: v })} disabled={busy} reserved={featuringTotal(t.featuring)} max={maxSplits(pro)} />
                       {shares > 100 && <p className="text-xs text-red-300">⛔ Total pousantaj yo depase 100%.</p>}

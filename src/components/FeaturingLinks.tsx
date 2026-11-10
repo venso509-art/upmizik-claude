@@ -8,11 +8,15 @@ export function FeaturingLinks({ artists, className = "" }: { artists: FeaturedA
     <span className={className}>
       {" feat. "}
       {artists.map((a, i) => (
-        <span key={a.id}>
+        <span key={a.id ?? `${a.name}-${i}`}>
           {i > 0 && (i === artists.length - 1 ? " & " : ", ")}
-          <Link href={`/atis/${a.id}`} className="hover:text-white hover:underline">
-            {a.name}
-          </Link>
+          {a.id ? (
+            <Link href={`/atis/${a.id}`} className="hover:text-white hover:underline">
+              {a.name}
+            </Link>
+          ) : (
+            a.name
+          )}
         </span>
       ))}
     </span>

@@ -17,6 +17,7 @@ import { Field, FormMessage, inputClass } from "@/components/auth/ui";
 import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
 import { EMPTY_RELEASE, ReleasePicker, type ReleaseValue } from "@/components/upload/ReleasePicker";
+import { FeatNamesInput, cleanFeatNames } from "@/components/upload/FeatNamesInput";
 import { RELEASE_LABELS } from "@/lib/releases";
 import { normalizeUrl } from "@/lib/links";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
@@ -59,6 +60,7 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
   const [error, setError] = useState<string>();
   const [splits, setSplits] = useState<Split[]>([]);
   const [featuring, setFeaturing] = useState<Featuring[]>([]);
+  const [featNames, setFeatNames] = useState<string[]>([]);
   const [release, setRelease] = useState<ReleaseValue>(EMPTY_RELEASE);
   // Featuring + kolaboratè pa ka depase 100% (owner a jwenn sa ki rete a)
   const sharesOver = featuringTotal(featuring) + splitsTotal(splits) > 100;
@@ -187,6 +189,7 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
           audio_path: audioPath,
           cover_path: coverPath,
           duration_seconds: duration,
+          ...(featNames.length ? { feat_names: cleanFeatNames(featNames) } : {}),
           ...(releaseId ? { release_id: releaseId, track_number: release.trackNumber ? Number(release.trackNumber) : null } : {}),
         })
         .select("id")
@@ -244,6 +247,7 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
               setCover(null);
               setSplits([]);
               setFeaturing([]);
+              setFeatNames([]);
               setRelease(EMPTY_RELEASE);
             }}
             className="rounded-lg border border-zinc-700 px-4 py-2.5 text-zinc-200 hover:border-zinc-500"
@@ -332,6 +336,8 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
       <Field label="▶ Lyen YouTube (opsyonèl)">
         <input name="youtube_url" disabled={busy} placeholder="Egz: lyen videyo klip la sou YouTube" className={inputClass} />
       </Field>
+
+      <FeatNamesInput value={featNames} onChange={setFeatNames} disabled={busy} />
 
       <ReleasePicker artistId={userId} value={release} onChange={setRelease} disabled={busy} />
 

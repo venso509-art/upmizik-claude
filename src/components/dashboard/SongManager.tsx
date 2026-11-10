@@ -8,6 +8,7 @@ import { ImageCropper } from "@/components/media/ImageCropper";
 import { deleteSong, getSongFeaturing, getSongSplits, updateSong } from "@/app/dashboard/actions";
 import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
 import { EMPTY_RELEASE, ReleasePicker, type ReleaseValue } from "@/components/upload/ReleasePicker";
+import { FeatNamesInput } from "@/components/upload/FeatNamesInput";
 import { GenreSelect } from "@/components/GenreSelect";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 import { maxAudioBytes, maxSplits } from "@/lib/pro";
@@ -69,6 +70,7 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
   const [error, setError] = useState<string>();
   const [splits, setSplits] = useState<Split[] | null>(null);
   const [featuring, setFeaturing] = useState<Featuring[] | null>(null);
+  const [featNames, setFeatNames] = useState<string[]>([]);
   const [release, setRelease] = useState<ReleaseValue>(EMPTY_RELEASE);
   const sharesOver = !!splits && !!featuring && featuringTotal(featuring) + splitsTotal(splits) > 100;
   const [pending, startTransition] = useTransition();
@@ -122,6 +124,14 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
     setFeaturing(null);
     getSongSplits(song.id).then(setSplits);
     getSongFeaturing(song.id).then(setFeaturing);
+    // Non feat yo (vid si migration feat_names la poko kouri)
+    setFeatNames([]);
+    void createClient()
+      .from("songs")
+      .select("feat_names")
+      .eq("id", song.id)
+      .maybeSingle()
+      .then(({ data }) => setFeatNames((data as { feat_names?: string[] } | null)?.feat_names ?? []));
     // Piblikasyon chante a kounye a (Single si li pa nan okenn album)
     setRelease(
       song.releaseId && song.releaseKind
@@ -187,6 +197,7 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
         youtubeUrl: String(form.get("youtube_url") ?? ""),
         splits,
         featuring: featuring.map((f) => ({ artistId: f.artistId, percentage: f.percentage })),
+        featNames,
         release: { kind: release.kind, releaseId: release.releaseId, newTitle: release.newTitle, trackNumber: release.trackNumber ? Number(release.trackNumber) : null },
         media,
       });
@@ -371,6 +382,7 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
             {splits && featuring ? (
               <>
                 <ReleasePicker artistId={artistId} value={release} onChange={setRelease} disabled={pending} />
+                <FeatNamesInput value={featNames} onChange={setFeatNames} disabled={pending} />
                 <FeaturingEditor value={featuring} onChange={setFeaturing} otherTotal={splitsTotal(splits)} disabled={pending} />
                 <SplitsEditor splits={splits} onChange={setSplits} disabled={pending} reserved={featuringTotal(featuring)} max={maxSplits(pro)} />
               </>

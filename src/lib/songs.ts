@@ -38,7 +38,8 @@ export function toTrack(supabase: SupabaseClient, s: SongRow): Track {
   };
 }
 
-export type FeaturedArtist = { id: string; name: string; verified: boolean };
+// id = null: atis ki pa sou UpMizik (non an sèlman, san lyen)
+export type FeaturedArtist = { id: string | null; name: string; verified: boolean };
 
 export type SongExtras = {
   likeCount: number;
@@ -65,7 +66,7 @@ export async function getSongExtras(
   );
   if (songIds.length === 0) return result;
 
-  const [likes, comments, links, mine, feat, shares] = await Promise.all([
+  const [likes, comments, links, mine, feat, shares, featNames] = await Promise.all([
     supabase.from("songs").select("id, song_likes(count)").in("id", songIds),
     supabase.from("songs").select("id, comments(count)").in("id", songIds),
     supabase.from("songs").select("id, youtube_url, profiles!songs_artist_id_fkey(youtube_url)").in("id", songIds),
@@ -75,6 +76,8 @@ export async function getSongExtras(
     supabase.rpc("song_featuring", { p_song_ids: songIds }),
     // Kantite pataj (si migration kontè pataj la poko kouri, li rete 0)
     supabase.from("songs").select("id, share_count").in("id", songIds),
+    // Non feat atis la tape yo (menm si yo pa sou UpMizik), migration 20270101000015
+    supabase.rpc("song_feat_names", { p_song_ids: songIds }),
   ]);
 
   for (const row of (shares.data ?? []) as { id: string; share_count: number }[]) {
@@ -83,6 +86,10 @@ export async function getSongExtras(
 
   for (const row of (feat.data ?? []) as { song_id: string; artist_id: string; display_name: string; is_verified: boolean }[]) {
     result[row.song_id]?.featuring.push({ id: row.artist_id, name: row.display_name, verified: row.is_verified });
+  }
+  for (const row of (featNames.data ?? []) as { song_id: string; name: string }[]) {
+    const list = result[row.song_id]?.featuring;
+    if (list && !list.some((f) => f.name.toLowerCase() === row.name.toLowerCase())) list.push({ id: null, name: row.name, verified: false });
   }
 
   for (const row of (likes.data ?? []) as { id: string; song_likes: { count: number }[] }[]) {
