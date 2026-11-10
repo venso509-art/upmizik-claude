@@ -112,18 +112,14 @@ export function SongActions({
         <Link href={`/chante/${songId}#komante`} className={pill} aria-label="Kòmante">
           💬 <span className="tabular-nums">{extras.commentCount}</span>
         </Link>
-        <span className="relative inline-flex">
-          {/* Sèk limyè ki gaye pou atire je moun nan */}
-          <span className="pointer-events-none absolute inset-0 rounded-full bg-citron-400 motion-safe:animate-donate-glow" aria-hidden />
-          <DonateButton
-            artistId={artistId}
-            artistName={artistName}
-            songId={songId}
-            songTitle={title}
-            label="Sipòte"
-            className={`btn-primary relative inline-flex items-center rounded-full motion-safe:animate-heartbeat ${compact ? "gap-1 px-2.5 py-1 text-xs md:gap-1.5 md:px-3.5 md:py-1.5 md:text-sm" : "gap-1.5 px-3.5 py-1.5 text-sm"}`}
-          />
-        </span>
+        <DonateButton
+          artistId={artistId}
+          artistName={artistName}
+          songId={songId}
+          songTitle={title}
+          label="Sipòte"
+          className={`btn-support inline-flex items-center rounded-full ${compact ? "gap-1 px-2.5 py-1 text-xs md:gap-1.5 md:px-3.5 md:py-1.5 md:text-sm" : "gap-1.5 px-3.5 py-1.5 text-sm"}`}
+        />
       </div>
     );
   }

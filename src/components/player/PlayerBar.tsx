@@ -2,7 +2,7 @@
 
 import { usePlayer } from "./PlayerProvider";
 import { MobilePlayerBar } from "./MobilePlayer";
-import { RepeatIcon, ShuffleIcon } from "./PlayerIcons";
+import { NextIcon, PauseIcon, PlayIcon, PrevIcon, RepeatIcon, ShuffleIcon } from "./PlayerIcons";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -61,17 +61,17 @@ export function PlayerBar() {
               <ShuffleIcon className="h-4 w-4" />
             </button>
             <button onClick={prev} className={iconButton} aria-label="Chante anvan">
-              ⏮
+              <PrevIcon className="h-4 w-4" />
             </button>
             <button
               onClick={toggle}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg text-zinc-950 transition hover:scale-105"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-zinc-950 shadow-lg shadow-black/30 transition duration-300 hover:scale-105 active:scale-95"
               aria-label={isPlaying ? "Poz" : "Jwe"}
             >
-              {isPlaying ? "⏸" : "▶"}
+              {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="ml-0.5 h-5 w-5" />}
             </button>
             <button onClick={next} disabled={!hasNext} className={iconButton} aria-label="Pwochen chante">
-              ⏭
+              <NextIcon className="h-4 w-4" />
             </button>
             <button
               onClick={cycleRepeat}

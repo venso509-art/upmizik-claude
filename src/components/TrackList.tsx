@@ -1,38 +1,64 @@
 "use client";
 
 import { usePlayer, type Track } from "@/components/player/PlayerProvider";
+import { PauseIcon, PlayIcon } from "@/components/player/PlayerIcons";
+import { BuyButton } from "@/components/sales/BuyButton";
 import { formatDuration } from "@/lib/songs";
+import type { SaleInfo } from "@/lib/sales";
 
-export function PlayAllButton({ tracks, label = "▶ Jwe tout" }: { tracks: Track[]; label?: string }) {
-  const { current, isPlaying, playTrack, toggle } = usePlayer();
-  const playingThisList = isPlaying && tracks.some((t) => t.id === current?.id);
+// Gwo bouton Jwe / Poz: yon wonn nwa ak vrè ikòn, nan yon pilil jòn
+export function PlayAllButton({ tracks, label = "Jwe tout" }: { tracks: Track[]; label?: string }) {
+  const { current, isPlaying, isLoading, playTrack, toggle } = usePlayer();
+  const thisList = tracks.some((t) => t.id === current?.id);
+  const playingThisList = isPlaying && thisList;
+  const text = label.replace(/^▶\s*/, "");
 
   return (
     <button
       type="button"
-      onClick={() => (playingThisList ? toggle() : playTrack(tracks[0], tracks))}
-      className="rounded-full btn-primary px-6 py-3 font-semibold shadow-lg transition"
+      onClick={() => (thisList ? toggle() : playTrack(tracks[0], tracks))}
+      aria-label={playingThisList ? "Poz" : text}
+      className="group inline-flex items-center gap-3 rounded-full bg-citron-400 py-1.5 pl-1.5 pr-6 font-bold text-zinc-950 shadow-lg shadow-citron-400/20 transition duration-300 hover:-translate-y-0.5 hover:bg-citron-300 hover:shadow-citron-400/35 active:scale-95"
     >
-      {playingThisList ? "⏸ Poz" : label}
+      <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-zinc-950 text-citron-300 transition duration-300 group-hover:scale-105">
+        {playingThisList && <span className="absolute -inset-1 rounded-full ring-2 ring-zinc-950/30 motion-safe:animate-pulse" aria-hidden />}
+        {thisList && isLoading ? (
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-citron-300/40 border-t-citron-300" />
+        ) : playingThisList ? (
+          <PauseIcon className="h-4 w-4" />
+        ) : (
+          <PlayIcon className="ml-0.5 h-4 w-4" />
+        )}
+      </span>
+      {playingThisList ? "Poz" : text}
     </button>
   );
 }
 
-export function TrackList({ tracks, plays }: { tracks: Track[]; plays: Record<string, number> }) {
+export function TrackList({
+  tracks,
+  plays,
+  sales,
+  loggedIn = false,
+}: {
+  tracks: Track[];
+  plays: Record<string, number>;
+  sales?: Record<string, SaleInfo>; // chante an vant: bouton 🧺 akote yo
+  loggedIn?: boolean;
+}) {
   const { current, isPlaying, playTrack } = usePlayer();
 
   return (
     <ol className="divide-y divide-zinc-800/60">
       {tracks.map((t, i) => {
         const isCurrent = current?.id === t.id;
+        const sale = sales?.[t.id];
         return (
-          <li key={t.id}>
+          <li key={t.id} className={`flex items-center gap-2 rounded-lg pr-2 transition ${isCurrent ? "bg-zinc-800/80" : "hover:bg-zinc-900"}`}>
             <button
               type="button"
               onClick={() => playTrack(t, tracks)}
-              className={`group grid w-full grid-cols-[2rem_3rem_1fr_auto] items-center gap-3 rounded-lg px-2 py-2 text-left transition sm:grid-cols-[2rem_3rem_1fr_6rem_4rem] ${
-                isCurrent ? "bg-zinc-800/80" : "hover:bg-zinc-900"
-              }`}
+              className="group grid min-w-0 flex-1 grid-cols-[2rem_3rem_1fr_auto] items-center gap-3 rounded-lg px-2 py-2 text-left sm:grid-cols-[2rem_3rem_1fr_6rem_4rem]"
             >
               <span className="text-center text-sm tabular-nums text-zinc-500">
                 {isCurrent && isPlaying ? (
@@ -44,7 +70,7 @@ export function TrackList({ tracks, plays }: { tracks: Track[]; plays: Record<st
                 ) : (
                   <>
                     <span className="group-hover:hidden">{i + 1}</span>
-                    <span className="hidden text-white group-hover:inline">▶</span>
+                    <PlayIcon className="mx-auto hidden h-4 w-4 text-white group-hover:block" />
                   </>
                 )}
               </span>
@@ -72,6 +98,9 @@ export function TrackList({ tracks, plays }: { tracks: Track[]; plays: Record<st
               </span>
               <span className="text-right text-sm tabular-nums text-zinc-500">{formatDuration(t.durationSeconds)}</span>
             </button>
+            {sale && (
+              <BuyButton kind="song" size="sm" id={t.id} price={sale.price} title={t.title} artistName={t.artistName} owned={sale.owned} loggedIn={loggedIn} />
+            )}
           </li>
         );
       })}

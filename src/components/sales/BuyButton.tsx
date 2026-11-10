@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Portal } from "@/components/Portal";
 import { FormMessage } from "@/components/auth/ui";
+import { BasketIcon, DownloadIcon } from "@/components/sales/SaleIcons";
 
 // 🛒 Achte yon chante oswa tout yon pwojè ak kredi (migration 20270101000016_music_sales.sql).
 // Koute a rete gratis; se telechajman fichye a ki peye. Mizik la ale nan "Acha mwen yo" (paj offline la).
@@ -18,6 +19,7 @@ export function BuyButton({
   owned,
   loggedIn,
   className = "",
+  size = "md",
 }: {
   kind: "song" | "release";
   id: string;
@@ -27,6 +29,7 @@ export function BuyButton({
   owned: boolean;
   loggedIn: boolean;
   className?: string;
+  size?: "md" | "sm"; // sm: ti bouton akote chak chante nan yon lis
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -66,13 +69,19 @@ export function BuyButton({
   const what = kind === "song" ? "chante sa a" : "tout pwojè a";
   const downloadHref = kind === "song" ? `/api/acha/telechaje/${id}` : "/telechaje#acha";
 
+  const sm = size === "sm";
+
   if (have && !open) {
     return (
       <a
         href={downloadHref}
-        className={`inline-flex items-center gap-2 rounded-full bg-emerald-500/15 px-5 py-2.5 text-sm font-bold text-emerald-300 ring-1 ring-emerald-500/40 transition hover:bg-emerald-500/25 ${className}`}
+        title="Ou achte l: telechaje l"
+        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-500/15 font-bold text-emerald-300 ring-1 ring-emerald-500/40 transition hover:bg-emerald-500/25 ${
+          sm ? "px-2.5 py-1.5 text-xs" : "px-5 py-2.5 text-sm"
+        } ${className}`}
       >
-        ⬇️ {kind === "song" ? "Telechaje" : "Wè nan Acha mwen yo"}
+        <DownloadIcon className={sm ? "h-3.5 w-3.5" : "h-4 w-4"} />
+        {sm ? "Pa w" : kind === "song" ? "Telechaje" : "Wè nan Acha mwen yo"}
       </a>
     );
   }
@@ -84,9 +93,14 @@ export function BuyButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FFE34D] to-[#E6C000] px-5 py-2.5 text-sm font-black text-[#0B132B] shadow-lg shadow-[#FFD700]/20 transition hover:-translate-y-0.5 ${className}`}
+        title={`Achte ${what} · ${price} kredi`}
+        className={`group inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-b from-[#FFE97A] to-[#E6C000] font-black text-[#0B132B] shadow-md shadow-[#FFD700]/25 ring-1 ring-inset ring-white/40 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#FFD700]/35 active:scale-95 ${
+          sm ? "px-2.5 py-1.5 text-xs" : "px-5 py-2.5 text-sm"
+        } ${className}`}
       >
-        🛒 {kind === "song" ? "Achte" : "Achte tout pwojè a"} · 🪙 {price.toLocaleString("fr-HT")}
+        <BasketIcon className={`transition duration-300 group-hover:-rotate-6 ${sm ? "h-3.5 w-3.5" : "h-4 w-4"}`} />
+        {!sm && (kind === "song" ? "Achte" : "Achte tout pwojè a")}
+        <span className={sm ? "tabular-nums" : "rounded-full bg-[#0B132B]/10 px-2 py-0.5 tabular-nums"}>🪙 {price.toLocaleString("fr-HT")}</span>
       </button>
 
       {open && (
@@ -105,8 +119,8 @@ export function BuyButton({
                   <p className="text-sm text-zinc-300">
                     « {title} » nan <span className="font-semibold text-white">Acha mwen yo</span> (paj 📥 Offline). Ou ka telechaje l nenpòt lè, menm si w pèdi l.
                   </p>
-                  <a href={downloadHref} className="block w-full rounded-xl btn-primary px-4 py-3 font-semibold">
-                    ⬇️ {kind === "song" ? "Telechaje kounye a" : "Ale nan Acha mwen yo"}
+                  <a href={downloadHref} className="flex w-full items-center justify-center gap-2 rounded-xl btn-primary px-4 py-3 font-semibold">
+                    <DownloadIcon /> {kind === "song" ? "Telechaje kounye a" : "Ale nan Acha mwen yo"}
                   </a>
                   <button type="button" onClick={() => setOpen(false)} className="text-sm text-zinc-400 hover:text-white">
                     Fèmen
@@ -115,7 +129,9 @@ export function BuyButton({
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-[#FFD700]">🛒 Achte {what}</p>
+                    <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#FFD700]">
+                      <BasketIcon className="h-3.5 w-3.5" /> Achte {what}
+                    </p>
                     <h2 className="mt-1 text-xl font-extrabold text-white">{title}</h2>
                     <p className="text-sm text-zinc-400">{artistName}</p>
                   </div>

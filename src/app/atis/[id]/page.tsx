@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SONG_SELECT, toTrack, type SongRow } from "@/lib/songs";
 import { PlayAllButton, TrackList } from "@/components/TrackList";
 import { DonateButton } from "@/components/donate/DonateButton";
+import { loadSaleMap } from "@/lib/sales";
 import { SafeImage } from "@/components/SafeImage";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { VerifiedCorner } from "@/components/VerifiedCorner";
@@ -173,6 +174,8 @@ export default async function ArtistPage({ params }: Props) {
   const songs = rows ?? [];
   const tracks = songs.map((s) => toTrack(supabase, s));
   const plays = Object.fromEntries(songs.map((s) => [s.id, s.play_count]));
+  // 🧺 Chante an vant: bouton Achte akote yo (pa pou atis la li menm)
+  const sales = user?.id === artist.id ? {} : await loadSaleMap(supabase, songs.map((s) => s.id), user?.id ?? null);
   const totalPlays = songs.reduce((sum, s) => sum + s.play_count, 0);
   // POPILÈ: 5 chante ki pi koute yo
   const popular = [...songs]
@@ -376,7 +379,7 @@ export default async function ArtistPage({ params }: Props) {
                       {formatPlays(plays[featured.id] ?? 0)} ekout{featured.genre ? ` · ${featured.genre}` : ""}
                     </p>
                     <div className="mt-4 flex flex-wrap justify-center gap-3 sm:justify-start">
-                      <PlayAllButton tracks={[featured, ...tracks.filter((t) => t.id !== featured.id)]} label="▶ Jwe l" />
+                      <PlayAllButton tracks={[featured, ...tracks.filter((t) => t.id !== featured.id)]} label="Jwe l" />
                       <Link
                         href={`/chante/${featured.id}`}
                         className="inline-flex items-center rounded-full border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:border-citron-400 hover:text-white"
@@ -394,7 +397,7 @@ export default async function ArtistPage({ params }: Props) {
               <h2 className="text-2xl font-extrabold tracking-tight text-white">🔥 Popilè</h2>
               <div className="mt-4">
                 {popular.length > 0 ? (
-                  <TrackList tracks={popular} plays={plays} />
+                  <TrackList tracks={popular} plays={plays} sales={sales} loggedIn={!!user} />
                 ) : (
                   <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-10 text-center">
                     {isOwner ? (
@@ -414,7 +417,7 @@ export default async function ArtistPage({ params }: Props) {
                     <span className="hidden group-open:inline">Kache ↑</span>
                   </summary>
                   <div className="mt-3">
-                    <TrackList tracks={tracks} plays={plays} />
+                    <TrackList tracks={tracks} plays={plays} sales={sales} loggedIn={!!user} />
                   </div>
                 </details>
               )}
@@ -537,7 +540,7 @@ export default async function ArtistPage({ params }: Props) {
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm italic text-zinc-400">Premye trofe a tou pre. Sipòte l pou l ka rive!</p>
-                  <DonateButton artistId={artist.id} artistName={name} label={`Sipòte ${name}`} className="btn-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm" />
+                  <DonateButton artistId={artist.id} artistName={name} label={`Sipòte ${name}`} className="btn-support inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm" />
                 </div>
               )}
             </SideCard>

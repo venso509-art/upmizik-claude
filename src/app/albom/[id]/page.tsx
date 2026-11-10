@@ -10,6 +10,7 @@ import { releaseShareText } from "@/lib/shareMessages";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { RELEASE_LABELS, type ReleaseKind } from "@/lib/releases";
 import { BuyButton } from "@/components/sales/BuyButton";
+import { loadSaleMap } from "@/lib/sales";
 
 type Props = { params: { id: string } };
 
@@ -48,7 +49,8 @@ async function getRelease(id: string) {
   const { data: bought } = user
     ? await supabase.from("music_purchases").select("id").eq("buyer_id", user.id).eq("release_id", id).maybeSingle()
     : { data: null };
-  return { release, artist, sale, userId: user?.id ?? null, owned: !!bought, songs: rows ?? [], tracks: (rows ?? []).map((s) => toTrack(supabase, s)) };
+  const songSales = user?.id === release.artist_id ? {} : await loadSaleMap(supabase, (rows ?? []).map((s) => s.id), user?.id ?? null);
+  return { release, artist, sale, songSales, userId: user?.id ?? null, owned: !!bought, songs: rows ?? [], tracks: (rows ?? []).map((s) => toTrack(supabase, s)) };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -64,7 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ReleasePage({ params }: Props) {
   const data = await getRelease(params.id);
   if (!data) notFound();
-  const { release, artist, songs, tracks, sale, userId, owned } = data;
+  const { release, artist, songs, tracks, sale, songSales, userId, owned } = data;
   const label = RELEASE_LABELS[release.kind];
   const cover = tracks.find((t) => t.coverUrl)?.coverUrl ?? null;
   const plays = Object.fromEntries(songs.map((s) => [s.id, s.play_count]));
@@ -99,7 +101,7 @@ export default async function ReleasePage({ params }: Props) {
             {totalSeconds > 0 && ` · ${Math.round(totalSeconds / 60)} min`} · 🎧 {totalPlays.toLocaleString("fr-HT")}
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-            {tracks.length > 0 && <PlayAllButton tracks={tracks} label="▶ Jwe tout" />}
+            {tracks.length > 0 && <PlayAllButton tracks={tracks} label="Jwe tout" />}
             <ShareLinkButton
               path={`/albom/${release.id}`}
               label="🔗 Pataje"
@@ -120,7 +122,7 @@ export default async function ReleasePage({ params }: Props) {
 
       <section className="mt-10">
         {tracks.length > 0 ? (
-          <TrackList tracks={tracks} plays={plays} />
+          <TrackList tracks={tracks} plays={plays} sales={songSales} loggedIn={!!userId} />
         ) : (
           <p className="rounded-2xl border border-dashed border-zinc-800 p-10 text-center text-zinc-400">
             {label.icon} Pa gen chante nan {label.label} sa a pou kounye a.

@@ -75,7 +75,7 @@ export default async function DonatePage({ params }: Props) {
             artistName={artist.display_name}
             label={`Fè yon don bay ${artist.display_name}`}
             defaultOpen
-            className="btn-primary inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg"
+            className="btn-support inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg"
           />
           <div className="flex flex-wrap justify-center gap-2">
             <ShareLinkButton path={`/don/${artist.id}`} title={`Sipòte ${artist.display_name} sou UpMizik`} text={donateShareText(artist.display_name, false)} />

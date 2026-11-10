@@ -300,3 +300,63 @@ html.up-splash-seen .up-splash {
     text-wrap: balance;
   }
 }
+
+/* ===== BOUTON SIPÒTE: degrade dous, limyè ki pase dousman, kè ki bat tou dousman ===== */
+.btn-support {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff7ab6 0%, #e14eea 48%, #8b5cf6 100%);
+  box-shadow: 0 8px 22px -10px rgba(225, 78, 234, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.45s ease, filter 0.45s ease;
+}
+.btn-support:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.08) brightness(1.05);
+  box-shadow: 0 14px 30px -10px rgba(225, 78, 234, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.btn-support:active {
+  transform: translateY(0) scale(0.97);
+}
+.btn-support:focus-visible {
+  outline: 2px solid #f0abfc;
+  outline-offset: 2px;
+}
+.btn-support::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.38) 50%, transparent 70%);
+  transform: translateX(-130%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn-support {
+    animation: support-breathe 3.6s ease-in-out infinite;
+  }
+  .btn-support::after {
+    animation: support-shine 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  .btn-support svg {
+    animation: support-heart 2.8s ease-in-out infinite;
+    transform-origin: center;
+  }
+}
+@keyframes support-breathe {
+  0%, 100% { box-shadow: 0 8px 22px -10px rgba(225, 78, 234, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+  50% { box-shadow: 0 10px 30px -8px rgba(255, 122, 182, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+}
+@keyframes support-shine {
+  0%, 55% { transform: translateX(-130%); }
+  85%, 100% { transform: translateX(130%); }
+}
+@keyframes support-heart {
+  0%, 100% { transform: scale(1); }
+  12% { transform: scale(1.12); }
+  24% { transform: scale(1); }
+  36% { transform: scale(1.07); }
+  48% { transform: scale(1); }
+}
