@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { GiftType } from "@/lib/live";
 import { FormMessage } from "@/components/auth/ui";
+import { GiftArt, TIER_FRAME } from "@/components/gifts/GiftArt";
 
 type SongGift = GiftType & { tier: number };
 
@@ -121,20 +122,28 @@ export function SongGiftPanel({ songId, artistName, onSent }: { songId: string; 
       </div>
 
       <div className={`grid gap-2 ${tier === 0 ? "grid-cols-4 sm:grid-cols-5" : "grid-cols-2"}`}>
-        {gifts.filter((g) => g.tier === tier).map((g) => (
-          <button
-            key={g.id}
-            type="button"
-            onClick={() => setPick(g)}
-            className={`flex flex-col items-center rounded-xl border px-1 py-2 transition ${
-              pick?.id === g.id ? "border-fuchsia-500 bg-fuchsia-500/15 shadow-lg shadow-fuchsia-500/20" : g.credits > balance ? "border-zinc-800 opacity-50" : "border-zinc-700 hover:border-zinc-500"
-            }`}
-          >
-            <span className={tier === 0 ? "text-2xl" : "text-4xl"}>{g.emoji}</span>
-            <span className={`mt-0.5 w-full truncate ${tier === 0 ? "text-[11px]" : "text-sm font-semibold"} text-zinc-300`}>{g.name}</span>
-            <span className={`${tier === 0 ? "text-[10px]" : "text-xs"} font-bold text-sky-300`}>🪙 {g.credits.toLocaleString("fr-HT")}</span>
-          </button>
-        ))}
+        {gifts.filter((g) => g.tier === tier).map((g) => {
+          const f = TIER_FRAME[g.tier] ?? TIER_FRAME[0];
+          const selected = pick?.id === g.id;
+          return (
+            <button
+              key={g.id}
+              type="button"
+              onClick={() => setPick(g)}
+              className={`group relative flex flex-col items-center overflow-hidden rounded-2xl ring-1 transition active:scale-95 ${tier === 0 ? "px-1 py-2" : "px-2 pb-3 pt-4"} ${f.card} ${
+                selected ? "!ring-2 !ring-fuchsia-400 shadow-lg shadow-fuchsia-500/30" : g.credits > balance ? "opacity-45" : "hover:-translate-y-0.5"
+              }`}
+            >
+              {/* Limyè dèyè imaj la */}
+              {f.glow && <span className={`pointer-events-none absolute left-1/2 top-3 h-16 w-16 -translate-x-1/2 rounded-full blur-2xl ${f.glow}`} aria-hidden />}
+              <GiftArt id={g.id} emoji={g.emoji} className={`relative transition group-hover:scale-110 ${tier === 0 ? "h-10 w-10" : "h-20 w-20"}`} />
+              <span className={`relative mt-1 w-full truncate text-center ${tier === 0 ? "text-[11px] text-zinc-300" : `text-sm font-bold ${f.label}`}`}>{g.name}</span>
+              <span className={`relative ${tier === 0 ? "text-[10px]" : "mt-0.5 rounded-full bg-black/40 px-2 py-0.5 text-xs"} font-bold text-sky-300`}>
+                🪙 {g.credits.toLocaleString("fr-HT")}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {pick && (
@@ -174,7 +183,7 @@ export function SongGiftPanel({ songId, artistName, onSent }: { songId: string; 
           onClick={send}
           className="w-full rounded-xl btn-primary px-4 py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {busy ? "Ap voye…" : pick ? `Voye ${pick.emoji} ${pick.name} x${qty} · 🪙 ${cost.toLocaleString("fr-HT")}` : "Chwazi yon kado"}
+          {busy ? "Ap voye…" : pick ? `Voye ${pick.name} x${qty} · 🪙 ${cost.toLocaleString("fr-HT")}` : "Chwazi yon kado"}
         </button>
       )}
     </div>

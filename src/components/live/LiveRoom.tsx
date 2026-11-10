@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { GiftArt } from "@/components/gifts/GiftArt";
 import { ConnectionState, Room, RoomEvent, Track, VideoPresets, type LocalVideoTrack, type Participant } from "livekit-client";
 import { CamIcon, CamOffIcon, CloseIcon, EyeIcon, FlipIcon, GiftIcon, HandIcon, HeartIcon, MicIcon, MicOffIcon, MoreIcon, PowerIcon, SendIcon, ShareIcon, UserPlusIcon, UsersIcon } from "./LiveIcons";
 import { createClient } from "@/lib/supabase/client";
@@ -1358,7 +1359,7 @@ export function LiveRoom({
                     disabled={g.credits * qty > balance}
                     className="flex flex-col items-center rounded-2xl p-2 transition hover:bg-white/10 active:scale-95 disabled:opacity-35"
                   >
-                    <span className="text-3xl drop-shadow">{g.emoji}</span>
+                    <GiftArt id={g.id} emoji={g.emoji} className="h-10 w-10" />
                     <span className="mt-1 text-[11px] text-white/80">{g.name}</span>
                     <span className="text-[11px] font-bold text-citron-300">🪙 {g.credits * qty}</span>
                   </button>
