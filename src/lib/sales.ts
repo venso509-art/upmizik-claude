@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // Pri ak "deja achte" pou yon lis chante (pou bouton 🧺 akote chak chante).
 // Chante yon pwojè ki vann an antye sèlman pa parèt isit la (yo achte sou paj pwojè a).
 // Si migration vant lan poko kouri, map la vid.
-export type SaleInfo = { price: number; owned: boolean };
+export type SaleInfo = { price: number; owned: boolean; mine?: boolean }; // mine: atis la sou pwòp paj li (etikèt, pa bouton)
 
 export async function loadSaleMap(supabase: SupabaseClient, songIds: string[], userId: string | null): Promise<Record<string, SaleInfo>> {
   if (songIds.length === 0) return {};

@@ -3,6 +3,7 @@
 import { usePlayer, type Track } from "@/components/player/PlayerProvider";
 import { PauseIcon, PlayIcon } from "@/components/player/PlayerIcons";
 import { BuyButton } from "@/components/sales/BuyButton";
+import { BasketIcon } from "@/components/sales/SaleIcons";
 import { formatDuration } from "@/lib/songs";
 import type { SaleInfo } from "@/lib/sales";
 
@@ -98,7 +99,15 @@ export function TrackList({
               </span>
               <span className="text-right text-sm tabular-nums text-zinc-500">{formatDuration(t.durationSeconds)}</span>
             </button>
-            {sale && (
+            {sale?.mine ? (
+              <span
+                title="Chante sa a an vant (se ou ki atis la)"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#FFD700]/10 px-2.5 py-1.5 text-xs font-bold text-[#FFE34D] ring-1 ring-[#FFD700]/40"
+              >
+                <BasketIcon className="h-3.5 w-3.5" /> 🪙 {sale.price.toLocaleString("fr-HT")}
+                <span className="hidden font-medium text-[#FFE34D]/70 sm:inline">· an vant</span>
+              </span>
+            ) : sale && (
               <BuyButton kind="song" size="sm" id={t.id} price={sale.price} title={t.title} artistName={t.artistName} owned={sale.owned} loggedIn={loggedIn} />
             )}
           </li>

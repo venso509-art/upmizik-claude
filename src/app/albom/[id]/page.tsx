@@ -49,7 +49,9 @@ async function getRelease(id: string) {
   const { data: bought } = user
     ? await supabase.from("music_purchases").select("id").eq("buyer_id", user.id).eq("release_id", id).maybeSingle()
     : { data: null };
-  const songSales = user?.id === release.artist_id ? {} : await loadSaleMap(supabase, (rows ?? []).map((s) => s.id), user?.id ?? null);
+  const ownerView = user?.id === release.artist_id;
+  const saleMap = await loadSaleMap(supabase, (rows ?? []).map((s) => s.id), ownerView ? null : user?.id ?? null);
+  const songSales = ownerView ? Object.fromEntries(Object.entries(saleMap).map(([k, v]) => [k, { ...v, mine: true }])) : saleMap;
   return { release, artist, sale, songSales, userId: user?.id ?? null, owned: !!bought, songs: rows ?? [], tracks: (rows ?? []).map((s) => toTrack(supabase, s)) };
 }
 

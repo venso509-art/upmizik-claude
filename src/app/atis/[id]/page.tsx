@@ -174,8 +174,11 @@ export default async function ArtistPage({ params }: Props) {
   const songs = rows ?? [];
   const tracks = songs.map((s) => toTrack(supabase, s));
   const plays = Object.fromEntries(songs.map((s) => [s.id, s.play_count]));
+  const isOwnerView = user?.id === artist.id;
   // 🧺 Chante an vant: bouton Achte akote yo (pa pou atis la li menm)
-  const sales = user?.id === artist.id ? {} : await loadSaleMap(supabase, songs.map((s) => s.id), user?.id ?? null);
+  const saleMap = await loadSaleMap(supabase, songs.map((s) => s.id), isOwnerView ? null : user?.id ?? null);
+  // Sou pwòp pwofil li, atis la wè yon etikèt « an vant » (li pa ka achte pwòp mizik li)
+  const sales = isOwnerView ? Object.fromEntries(Object.entries(saleMap).map(([k, v]) => [k, { ...v, mine: true }])) : saleMap;
   const totalPlays = songs.reduce((sum, s) => sum + s.play_count, 0);
   // POPILÈ: 5 chante ki pi koute yo
   const popular = [...songs]
