@@ -185,7 +185,7 @@ export function DonateModal({
         </div>
 
         <div className="p-6">
-          {songId && step === 1 && !giftSent && (
+          {step === 1 && !giftSent && (
             <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-zinc-950 p-1" role="tablist">
               {([
                 ["cash", "💵 Lajan", "MonCash · NatCash"],
@@ -207,7 +207,7 @@ export function DonateModal({
           )}
 
           {/* ===== KADO AK KREDI ===== */}
-          {songId && mode === "gift" && !giftSent && <SongGiftPanel songId={songId} artistName={artistName} onSent={() => setGiftSent(true)} />}
+          {mode === "gift" && !giftSent && <SongGiftPanel songId={songId} artistId={artistId} artistName={artistName} onSent={() => setGiftSent(true)} />}
           {giftSent && (
             <div className="space-y-5 py-2 text-center">
               <p className="text-6xl">🎁</p>

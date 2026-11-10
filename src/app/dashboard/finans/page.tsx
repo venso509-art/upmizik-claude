@@ -26,7 +26,7 @@ type GiftRow = {
   id: string;
   sender_name: string;
   message: string | null;
-  song_title: string;
+  song_title: string | null; // null = kado sou pwofil la
   gift_label: string;
   quantity: number;
   amount_htg: number;
@@ -278,7 +278,7 @@ export default async function FinancePage() {
                         <p className="text-white">{g.sender_name}</p>
                         {g.message && <p className="mt-0.5 max-w-xs text-xs italic text-zinc-500">« {g.message} »</p>}
                       </td>
-                      <td className="py-3 pr-3 text-zinc-300">{g.song_title}</td>
+                      <td className="py-3 pr-3 text-zinc-300">{g.song_title ?? "Pwofil ou"}</td>
                       <td className="py-3 pr-3 text-right tabular-nums text-zinc-300">
                         {g.gift_label} x{g.quantity}
                         <span className="block text-xs text-zinc-500">{formatHTG(Number(g.amount_htg))}</span>

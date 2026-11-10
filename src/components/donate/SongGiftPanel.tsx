@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { GiftType } from "@/lib/live";
 import { FormMessage } from "@/components/auth/ui";
-import { GiftArt, TIER_FRAME } from "@/components/gifts/GiftArt";
+import { GiftArt, TIER_FRAME, giftPhoto } from "@/components/gifts/GiftArt";
 
 type SongGift = GiftType & { tier: number };
 
@@ -19,9 +19,19 @@ const TIERS: { tier: number; name: string; icon: string }[] = [
   { tier: 5, name: "Lejann", icon: "🏆" },
 ];
 
-// 🎁 Voye yon kado sou yon chante ak kredi (menm kado ak live yo). Sèlman pou moun ki konekte.
-// Pataj la menm jan ak yon don: 85 % pou atis yo, 15 % pou UpMizik (migration 20270101000012_song_gifts.sql).
-export function SongGiftPanel({ songId, artistName, onSent }: { songId: string; artistName: string; onSent: () => void }) {
+// 🎁 Voye yon kado ak kredi, sou yon chante (songId) oswa sou pwofil atis la. Sèlman pou moun ki konekte.
+// Pataj la menm jan ak yon don: 85 % pou atis yo, 15 % pou UpMizik (migrations 20270101000012 ak 0014).
+export function SongGiftPanel({
+  songId,
+  artistId,
+  artistName,
+  onSent,
+}: {
+  songId: string | null;
+  artistId: string;
+  artistName: string;
+  onSent: () => void;
+}) {
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const [gifts, setGifts] = useState<SongGift[]>([]);
@@ -57,12 +67,11 @@ export function SongGiftPanel({ songId, artistName, onSent }: { songId: string; 
     if (!pick) return;
     setBusy(true);
     setError(undefined);
-    const { data, error: err } = await createClient().rpc("send_song_gift", {
-      p_song: songId,
-      p_gift: pick.id,
-      p_quantity: qty,
-      p_message: message.trim() || null,
-    });
+    const common = { p_gift: pick.id, p_quantity: qty, p_message: message.trim() || null };
+    const supabase = createClient();
+    const { data, error: err } = songId
+      ? await supabase.rpc("send_song_gift", { p_song: songId, ...common })
+      : await supabase.rpc("send_artist_gift", { p_artist: artistId, ...common });
     setBusy(false);
     if (err) return setError(err.message.includes("ase kredi") ? "Ou pa gen ase kredi 🪙. Achte kredi sou paj Kredi a." : err.message);
     if (typeof data === "number") setBalance(data);
@@ -125,6 +134,30 @@ export function SongGiftPanel({ songId, artistName, onSent }: { songId: string; 
         {gifts.filter((g) => g.tier === tier).map((g) => {
           const f = TIER_FRAME[g.tier] ?? TIER_FRAME[0];
           const selected = pick?.id === g.id;
+          const photo = giftPhoto(g.id);
+          // Kado prestij yo: kat ak vrè foto
+          if (photo)
+            return (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => setPick(g)}
+                className={`group relative overflow-hidden rounded-2xl text-left ring-1 transition active:scale-95 ${f.card} ${
+                  selected ? "!ring-2 !ring-fuchsia-400 shadow-lg shadow-fuchsia-500/30" : g.credits > balance ? "opacity-45" : "hover:-translate-y-0.5"
+                }`}
+              >
+                <span className="relative block aspect-square overflow-hidden bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo.src} alt={g.name} loading="lazy" draggable={false} className={`h-full w-full transition duration-500 group-hover:scale-105 ${photo.contain ? "object-contain p-3 pb-7" : "object-cover"}`} />
+                  <span className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" aria-hidden />
+                  <span className="absolute bottom-2 left-2 rounded-full bg-black/55 px-2 py-0.5 text-xs font-bold text-sky-300 backdrop-blur">
+                    🪙 {g.credits.toLocaleString("fr-HT")}
+                  </span>
+                  {selected && <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-fuchsia-500 text-xs font-black text-white">✓</span>}
+                </span>
+                <span className={`block truncate px-2.5 py-2 text-sm font-bold ${f.label}`}>{g.name}</span>
+              </button>
+            );
           return (
             <button
               key={g.id}
@@ -145,6 +178,14 @@ export function SongGiftPanel({ songId, artistName, onSent }: { songId: string; 
           );
         })}
       </div>
+      {tier > 0 && (
+        <p className="text-center text-[10px] text-zinc-600">
+          Foto: Wikimedia Commons ·{" "}
+          <Link href="/kredi-imaj" className="underline hover:text-zinc-400">
+            kredi
+          </Link>
+        </p>
+      )}
 
       {pick && (
         <>

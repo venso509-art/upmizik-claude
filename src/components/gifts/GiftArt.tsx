@@ -1,13 +1,14 @@
-// Imaj 3D kado yo (Fluent Emoji © Microsoft, lisans MIT) nan public/gifts/<id>.png.
-// Si yon kado pa gen imaj (yon nouvo kado admin ajoute), nou montre emoji li.
-const WITH_ART = new Set([
-  "rose", "kafe", "konpa", "tanbou", "lyon", "kouwon", "avyon", "fize", "chato", "diaman",
-  "m_mikwo_lakou", "m_radyo_lakay", "m_kask_dj", "m_bal_lakou",
-  "m_gita_twoubadou", "m_klavye_konpa", "m_saks_kadans", "m_twonpet_rara",
-  "m_vyolon_lakay", "m_tanbou_asoto", "m_kon_lanbi", "m_akodeyon",
-  "m_pyano_wa", "m_tab_miksaj", "m_mikwo_estidyo", "m_gita_elektrik",
-  "m_sono_bal", "m_cha_kanaval", "m_disk_lo", "m_kouwon_lejann",
-]);
+import credits from "@/lib/giftPhotoCredits.json";
+
+// Ti kado live yo: imaj 3D (Fluent Emoji © Microsoft, lisans MIT) nan public/gifts/<id>.png.
+const WITH_ART = new Set(["rose", "kafe", "konpa", "tanbou", "lyon", "kouwon", "avyon", "fize", "chato", "diaman"]);
+
+// Kado mizik yo (nivo 1-5): vrè foto (Wikimedia Commons, lisans lib; kredi yo sou /kredi-imaj)
+// PNG yo se foto pwodwi sou fon blan: montre yo antye (contain); JPG yo ranpli kat la (cover)
+const PHOTOS: Record<string, { src: string; contain: boolean }> = Object.fromEntries(
+  credits.map((c) => [c.id, { src: `/gifts/foto/${c.file}`, contain: c.file.endsWith(".png") }]),
+);
+export const giftPhoto = (id: string): { src: string; contain: boolean } | undefined => PHOTOS[id];
 
 export function GiftArt({ id, emoji, className = "h-10 w-10" }: { id: string; emoji: string; className?: string }) {
   if (!WITH_ART.has(id)) {
