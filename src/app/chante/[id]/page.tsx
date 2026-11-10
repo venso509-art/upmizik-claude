@@ -11,6 +11,7 @@ import { Comments } from "@/components/Comments";
 import { loadComments } from "@/lib/comments";
 import { isAdmin } from "@/lib/admin";
 import { RELEASE_LABELS, type ReleaseKind } from "@/lib/releases";
+import { BuyButton } from "@/components/sales/BuyButton";
 
 type Props = { params: { id: string } };
 
@@ -49,6 +50,16 @@ export default async function SongPage({ params }: Props) {
     // EP / Mixtape / Album chante a fè pati (si migration piblikasyon an poko kouri, data = null)
     supabase.from("songs").select("track_number, streams, release:releases(id, title, kind)").eq("id", song.id).maybeSingle(),
   ]);
+  // 🛒 Vant: pri chante a, oswa pri pwojè a si atis la vann li an antye sèlman (null si migration vant lan poko kouri)
+  const [{ data: saleRow }, { data: canDl }] = await Promise.all([
+    supabase.from("songs").select("sale_price, release:releases(id, title, sale_price, sell_tracks)").eq("id", song.id).maybeSingle(),
+    supabase.rpc("can_download", { p_song: song.id }),
+  ]);
+  type SaleRel = { id: string; title: string; sale_price: number | null; sell_tracks: boolean };
+  const sale = saleRow as { sale_price: number | null; release: SaleRel | SaleRel[] | null } | null;
+  const saleRel = sale ? (Array.isArray(sale.release) ? sale.release[0] : sale.release) : null;
+  const projectOnly = !!saleRel?.sale_price && (!saleRel.sell_tracks || !sale?.sale_price);
+  const owned = canDl === true;
   type Rel = { id: string; title: string; kind: ReleaseKind };
   const relRow = rel as { track_number: number | null; streams?: number; release: Rel | Rel[] | null } | null;
   const release = relRow ? (Array.isArray(relRow.release) ? relRow.release[0] : relRow.release) : null;
@@ -98,7 +109,16 @@ export default async function SongPage({ params }: Props) {
               size="lg"
               track={track}
             />
+            {user?.id !== song.artist_id && sale?.sale_price && !projectOnly ? (
+              <BuyButton kind="song" id={song.id} price={sale.sale_price} title={track.title} artistName={track.artistName} owned={owned} loggedIn={!!user} />
+            ) : null}
+            {user?.id !== song.artist_id && saleRel?.sale_price ? (
+              <BuyButton kind="release" id={saleRel.id} price={saleRel.sale_price} title={saleRel.title} artistName={track.artistName} owned={owned && projectOnly} loggedIn={!!user} />
+            ) : null}
           </div>
+          {projectOnly && !owned && user?.id !== song.artist_id && (
+            <p className="mt-3 text-xs text-zinc-500">🔒 Atis la vann « {saleRel?.title} » an antye: chante sa a vini ak tout pwojè a.</p>
+          )}
         </div>
       </section>
 

@@ -226,7 +226,7 @@ export function RevenueReport({
       {s.credits > 0 && (
         <p className="mt-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
           🪙 <span className="font-semibold">{htg(s.credits)}</span> kredi live achte nan peryòd la. Yo separe sèlman lè moun yo voye kado nan live
-          (kado live + mizik: {htg(Number(extras.live_gifts_htg))} nan peryòd la). Kredi ki poko depanse jodi a: {htg(Number(extras.credits_unspent_htg))}.
+          (kado + acha mizik: {htg(Number(extras.live_gifts_htg))} nan peryòd la). Kredi ki poko depanse jodi a: {htg(Number(extras.credits_unspent_htg))}.
         </p>
       )}
 

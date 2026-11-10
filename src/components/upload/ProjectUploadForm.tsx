@@ -12,6 +12,7 @@ import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
 import { RELEASE_LABELS, type ReleaseKind } from "@/lib/releases";
 import { FeatNamesInput, cleanFeatNames } from "@/components/upload/FeatNamesInput";
+import { MAX_RELEASE_PRICE, SalePriceInput, parsePrice } from "@/components/sales/SalePriceInput";
 import { normalizeUrl } from "@/lib/links";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 import { maxAudioBytes, maxSplits } from "@/lib/pro";
@@ -32,6 +33,7 @@ type Track = {
   youtube: string;
   featuring: Featuring[];
   featNames: string[]; // non feat yo (menm si yo pa sou UpMizik)
+  price: string; // pri pa chante sa a ("" = pri tout chante yo)
   splits: Split[];
   open: boolean; // seksyon featuring/royalties la louvri
   status: TrackStatus;
@@ -46,6 +48,7 @@ const newTrack = (audio: File | null = null): Track => ({
   youtube: "",
   featuring: [],
   featNames: [],
+  price: "",
   splits: [],
   open: false,
   status: "waiting",
@@ -75,6 +78,10 @@ export function ProjectUploadForm({ userId, pro = false }: { userId: string; pro
   const [coverToCrop, setCoverToCrop] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [tracks, setTracks] = useState<Track[]>(() => [newTrack(), newTrack(), newTrack()]);
+  // 🛒 Vant: pri tout pwojè a, epi (si atis la vle) pri chak chante youn pa youn
+  const [projectPrice, setProjectPrice] = useState("");
+  const [sellTracks, setSellTracks] = useState(true);
+  const [trackPrice, setTrackPrice] = useState("");
   const [busy, setBusy] = useState(false);
   const [finished, setFinished] = useState(false);
   const [error, setError] = useState<string>();
@@ -162,11 +169,16 @@ export function ProjectUploadForm({ userId, pro = false }: { userId: string; pro
     if (genre === undefined) return setError("Jan mizik la pa valid (2 a 40 lèt).");
     if (!started && !cover) return setError(`Mete pochèt ${label.label} a. Se li ki ap parèt sou tout chante yo.`);
     if (list.length === 0) return setError("Ajoute omwen yon chante.");
+    const relPrice = parsePrice(projectPrice, MAX_RELEASE_PRICE);
+    if (relPrice === undefined) return setError("Pri tout pwojè a dwe ant 10 ak 100 000 kredi.");
+    const defaultTrackPrice = sellTracks ? parsePrice(trackPrice) : null;
+    if (defaultTrackPrice === undefined) return setError("Pri chak chante a dwe ant 10 ak 50 000 kredi.");
     for (const t of todo) {
       const n = list.indexOf(t) + 1;
       if (!t.title.trim()) return setError(`Chante #${n}: mete tit la.`);
       if (!t.audio) return setError(`Chante #${n} (« ${t.title.trim()} »): chwazi fichye odyo a.`);
       if (normalizeUrl(t.youtube) === undefined) return setError(`Chante #${n}: lyen YouTube la pa valid.`);
+      if (sellTracks && t.price && parsePrice(t.price) === undefined) return setError(`Chante #${n}: pri a dwe ant 10 ak 50 000 kredi.`);
       const splitsError = validateSplits(t.splits, maxSplits(pro));
       if (splitsError) return setError(`Chante #${n}: ${splitsError}`);
       if (featuringTotal(t.featuring) + splitsTotal(t.splits) > 100) return setError(`Chante #${n}: total pousantaj yo depase 100%.`);
@@ -206,6 +218,11 @@ export function ProjectUploadForm({ userId, pro = false }: { userId: string; pro
       }
       made.current.genre = genre;
       const releaseId = made.current.releaseId;
+      // Pri tout pwojè a (null = pa an vant an antye)
+      if (relPrice || !sellTracks) {
+        const { error: priceError } = await supabase.from("releases").update({ sale_price: relPrice, sell_tracks: sellTracks }).eq("id", releaseId);
+        if (priceError) throw new Error(`Pri pwojè a pa sove: ${priceError.message}`);
+      }
 
       // 3. Chante yo, youn apre lòt, nan lòd lis la
       for (let i = 0; i < list.length; i++) {
@@ -237,6 +254,7 @@ export function ProjectUploadForm({ userId, pro = false }: { userId: string; pro
               cover_path: made.current.coverPath,
               duration_seconds: duration,
               ...(t.featNames.length ? { feat_names: cleanFeatNames(t.featNames) } : {}),
+              ...(sellTracks && (parsePrice(t.price) || defaultTrackPrice) ? { sale_price: parsePrice(t.price) || defaultTrackPrice } : {}),
               release_id: releaseId,
               track_number: i + 1,
             })
@@ -372,6 +390,36 @@ export function ProjectUploadForm({ userId, pro = false }: { userId: string; pro
         </div>
       </div>
 
+      {/* 🛒 Vant */}
+      <div className="space-y-3">
+        <SalePriceInput
+          value={projectPrice}
+          onChange={setProjectPrice}
+          disabled={locked}
+          max={MAX_RELEASE_PRICE}
+          title={`💰 Vann tout ${label.label} a`}
+          hint="Yon sèl pri pou tout chante yo ansanm. Koute a rete gratis; moun ki achte a ka telechaje tout chante yo."
+        />
+        {projectPrice !== "" && (
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+            <input type="checkbox" checked={sellTracks} disabled={locked} onChange={(e) => setSellTracks(e.target.checked)} className="mt-1 h-5 w-5 accent-[#FFD700]" />
+            <span>
+              <span className="block font-semibold text-white">Moun ka achte chante yo youn pa youn tou</span>
+              <span className="block text-xs text-zinc-500">Si w retire l, se tout pwojè a sèlman moun ka achte.</span>
+            </span>
+          </label>
+        )}
+        {sellTracks && (
+          <SalePriceInput
+            value={trackPrice}
+            onChange={setTrackPrice}
+            disabled={busy}
+            title="💿 Vann chak chante youn pa youn"
+            hint="Pri pou chak chante (ou ka chanje pri yon chante nan ▸ opsyon li). Koute a rete gratis."
+          />
+        )}
+      </div>
+
       {/* Chante yo */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold text-white">
@@ -496,6 +544,20 @@ export function ProjectUploadForm({ userId, pro = false }: { userId: string; pro
                         className={inputClass}
                       />
                       <FeatNamesInput value={t.featNames} onChange={(v) => patch(t.key, { featNames: v })} disabled={busy} />
+                      {sellTracks && trackPrice !== "" && (
+                        <label className="flex items-center gap-2 text-sm text-zinc-400">
+                          🛒 Pri chante sa a
+                          <input
+                            inputMode="numeric"
+                            value={t.price}
+                            disabled={busy}
+                            onChange={(e) => patch(t.key, { price: e.target.value.replace(/\D/g, "").slice(0, 5) })}
+                            placeholder={trackPrice}
+                            className="w-24 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-base text-white outline-none focus:border-[#FFD700]"
+                          />
+                          kredi
+                        </label>
+                      )}
                       <FeaturingEditor value={t.featuring} onChange={(v) => patch(t.key, { featuring: v })} otherTotal={splitsTotal(t.splits)} disabled={busy} />
                       <SplitsEditor splits={t.splits} onChange={(v) => patch(t.key, { splits: v })} disabled={busy} reserved={featuringTotal(t.featuring)} max={maxSplits(pro)} />
                       {shares > 100 && <p className="text-xs text-red-300">⛔ Total pousantaj yo depase 100%.</p>}

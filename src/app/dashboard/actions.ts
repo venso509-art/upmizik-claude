@@ -74,6 +74,7 @@ export async function updateSong(
     splits: Split[];
     featuring?: FeaturingInput[];
     featNames?: string[]; // non feat yo (menm si yo pa sou UpMizik)
+    salePrice?: number | null; // 🛒 pri telechajman an (null = pa an vant)
     release?: { kind: ReleaseChoice; releaseId: string | null; newTitle: string; trackNumber: number | null };
     // Nouvo fichye (deja monte nan folder atis la): afich ak/oswa odyo
     media?: { coverPath?: string | null; audioPath?: string | null; durationSeconds?: number | null };
@@ -155,6 +156,13 @@ export async function updateSong(
       .slice(0, 6);
     const { error: featNameErr } = await supabase.from("songs").update({ feat_names: names }).eq("id", songId);
     if (featNameErr) return { error: friendlyDbError("Non feat yo pa sove", featNameErr) };
+  }
+
+  if (input.salePrice !== undefined) {
+    const p = input.salePrice;
+    if (p !== null && !(Number.isInteger(p) && p >= 10 && p <= 50000)) return { error: "Pri a dwe ant 10 ak 50 000 kredi." };
+    const { error: priceErr } = await supabase.from("songs").update({ sale_price: p }).eq("id", songId);
+    if (priceErr) return { error: friendlyDbError("Pri a pa sove", priceErr) };
   }
 
   // Piblikasyon: Single (okenn), oswa yon EP / Mixtape / Album (ki egziste deja oswa nouvo)

@@ -35,6 +35,18 @@ type GiftRow = {
   received_at: string;
 };
 
+type SaleRow = {
+  id: string;
+  item_title: string;
+  is_release: boolean;
+  buyer_name: string;
+  credits: number;
+  amount_htg: number;
+  my_share_htg: number;
+  collab_share_htg: number;
+  sold_at: string;
+};
+
 type DonationRow = {
   id: string;
   donor_name: string | null;
@@ -104,6 +116,8 @@ export default async function FinancePage() {
   ]);
   // Erè = migration kado mizik la poko kouri → lis vid
   const gifts = ((await supabase.rpc("my_song_gifts")).data ?? []) as GiftRow[];
+  // 🛒 Mizik atis la vann (vid si migration vant lan poko kouri)
+  const sales = ((await supabase.rpc("my_music_sales")).data ?? []) as SaleRow[];
 
   const balance = toBalance((balanceRes.data as BalanceRow[] | null)?.[0]);
   const donations = (donationsRes.data ?? []) as DonationRow[];
@@ -250,6 +264,45 @@ export default async function FinancePage() {
             </div>
           )}
         </Panel>
+
+        {sales.length > 0 && (
+          <Panel title="🛒 Mizik ou vann" subtitle="Fanatik yo achte yo ak kredi. Pa w la deja nan balans ou.">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead className="text-xs uppercase tracking-wider text-zinc-500">
+                  <tr className="border-b border-zinc-800">
+                    <th className="py-2 pr-3 font-medium">Dat</th>
+                    <th className="py-2 pr-3 font-medium">Achtè</th>
+                    <th className="py-2 pr-3 font-medium">Mizik</th>
+                    <th className="py-2 pr-3 text-right font-medium">Pri</th>
+                    <th className="py-2 pr-3 text-right font-medium">Kolaboratè</th>
+                    <th className="py-2 text-right font-medium">Pa w</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/70">
+                  {sales.map((s) => (
+                    <tr key={s.id} className="align-top">
+                      <td className="py-3 pr-3 text-zinc-400">{formatDate(s.sold_at)}</td>
+                      <td className="py-3 pr-3 text-white">{s.buyer_name}</td>
+                      <td className="py-3 pr-3 text-zinc-300">
+                        {s.is_release ? "💿 " : "🎵 "}
+                        {s.item_title}
+                      </td>
+                      <td className="py-3 pr-3 text-right tabular-nums text-zinc-300">
+                        🪙 {s.credits.toLocaleString("fr-HT")}
+                        <span className="block text-xs text-zinc-500">{formatHTG(Number(s.amount_htg))}</span>
+                      </td>
+                      <td className="py-3 pr-3 text-right tabular-nums text-zinc-400">
+                        {Number(s.collab_share_htg) > 0 ? formatHTG(Number(s.collab_share_htg)) : "—"}
+                      </td>
+                      <td className="py-3 text-right font-semibold tabular-nums text-emerald-300">{formatHTG(Number(s.my_share_htg))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+        )}
 
         <Panel title="🎁 Kado sou mizik ou" subtitle="Fanatik yo voye yo ak kredi pandan y ap koute. Pa w la deja nan balans ou.">
           {gifts.length === 0 ? (

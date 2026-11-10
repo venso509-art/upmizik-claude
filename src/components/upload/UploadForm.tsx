@@ -18,6 +18,7 @@ import { SplitsEditor } from "@/components/splits/SplitsEditor";
 import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
 import { EMPTY_RELEASE, ReleasePicker, type ReleaseValue } from "@/components/upload/ReleasePicker";
 import { FeatNamesInput, cleanFeatNames } from "@/components/upload/FeatNamesInput";
+import { SalePriceInput, parsePrice } from "@/components/sales/SalePriceInput";
 import { RELEASE_LABELS } from "@/lib/releases";
 import { normalizeUrl } from "@/lib/links";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
@@ -61,6 +62,7 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
   const [splits, setSplits] = useState<Split[]>([]);
   const [featuring, setFeaturing] = useState<Featuring[]>([]);
   const [featNames, setFeatNames] = useState<string[]>([]);
+  const [price, setPrice] = useState(""); // "" = pa an vant
   const [release, setRelease] = useState<ReleaseValue>(EMPTY_RELEASE);
   // Featuring + kolaboratè pa ka depase 100% (owner a jwenn sa ki rete a)
   const sharesOver = featuringTotal(featuring) + splitsTotal(splits) > 100;
@@ -106,6 +108,8 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
     const splitsError = validateSplits(splits, maxSplits(pro));
     if (splitsError) return setError(splitsError);
     if (sharesOver) return setError("Total pousantaj yo (featuring + kolaboratè) depase 100%.");
+    const salePrice = parsePrice(price);
+    if (salePrice === undefined) return setError("Pri a dwe ant 10 ak 50 000 kredi.");
     const releaseLabel = RELEASE_LABELS[release.kind].label;
     if (release.kind !== "single" && !release.releaseId && !release.newTitle.trim())
       return setError(`Mete non ${releaseLabel} a, oswa chwazi youn ou te deja kreye.`);
@@ -190,6 +194,7 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
           cover_path: coverPath,
           duration_seconds: duration,
           ...(featNames.length ? { feat_names: cleanFeatNames(featNames) } : {}),
+          ...(salePrice ? { sale_price: salePrice } : {}),
           ...(releaseId ? { release_id: releaseId, track_number: release.trackNumber ? Number(release.trackNumber) : null } : {}),
         })
         .select("id")
@@ -248,6 +253,7 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
               setSplits([]);
               setFeaturing([]);
               setFeatNames([]);
+              setPrice("");
               setRelease(EMPTY_RELEASE);
             }}
             className="rounded-lg border border-zinc-700 px-4 py-2.5 text-zinc-200 hover:border-zinc-500"
@@ -338,6 +344,8 @@ export function UploadForm({ userId, pro = false }: { userId: string; pro?: bool
       </Field>
 
       <FeatNamesInput value={featNames} onChange={setFeatNames} disabled={busy} />
+
+      <SalePriceInput value={price} onChange={setPrice} disabled={busy} />
 
       <ReleasePicker artistId={userId} value={release} onChange={setRelease} disabled={busy} />
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { OfflineLibrary } from "@/components/offline/OfflineLibrary";
+import { PurchasedSongs } from "@/components/sales/PurchasedSongs";
 
 export const metadata: Metadata = { title: "Mizik offline | UpMizik" };
 
@@ -11,6 +12,7 @@ export default function OfflinePage() {
       <h1 className="text-3xl font-extrabold tracking-tight text-white">📥 Mizik offline</h1>
       <p className="mt-1 text-zinc-400">Mizik ou sove sou aparèy sa a. Ou ka koute yo menm lè w pa gen entènèt.</p>
       <div className="mt-8">
+        <PurchasedSongs />
         <OfflineLibrary />
       </div>
     </div>

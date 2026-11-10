@@ -9,6 +9,7 @@ import { deleteSong, getSongFeaturing, getSongSplits, updateSong } from "@/app/d
 import { FeaturingEditor, featuringTotal, type Featuring } from "@/components/upload/FeaturingEditor";
 import { EMPTY_RELEASE, ReleasePicker, type ReleaseValue } from "@/components/upload/ReleasePicker";
 import { FeatNamesInput } from "@/components/upload/FeatNamesInput";
+import { SalePriceInput, parsePrice } from "@/components/sales/SalePriceInput";
 import { GenreSelect } from "@/components/GenreSelect";
 import { splitsTotal, validateSplits, type Split } from "@/lib/splits";
 import { maxAudioBytes, maxSplits } from "@/lib/pro";
@@ -71,6 +72,8 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
   const [splits, setSplits] = useState<Split[] | null>(null);
   const [featuring, setFeaturing] = useState<Featuring[] | null>(null);
   const [featNames, setFeatNames] = useState<string[]>([]);
+  const [price, setPrice] = useState("");
+  const [priceLoaded, setPriceLoaded] = useState(false);
   const [release, setRelease] = useState<ReleaseValue>(EMPTY_RELEASE);
   const sharesOver = !!splits && !!featuring && featuringTotal(featuring) + splitsTotal(splits) > 100;
   const [pending, startTransition] = useTransition();
@@ -126,12 +129,25 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
     getSongFeaturing(song.id).then(setFeaturing);
     // Non feat yo (vid si migration feat_names la poko kouri)
     setFeatNames([]);
+    setPrice("");
+    setPriceLoaded(false);
     void createClient()
       .from("songs")
       .select("feat_names")
       .eq("id", song.id)
       .maybeSingle()
       .then(({ data }) => setFeatNames((data as { feat_names?: string[] } | null)?.feat_names ?? []));
+    // Pri vant lan (si migration vant lan poko kouri, nou pa voye pri a)
+    void createClient()
+      .from("songs")
+      .select("sale_price")
+      .eq("id", song.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) return;
+        setPrice((data as { sale_price: number | null } | null)?.sale_price?.toString() ?? "");
+        setPriceLoaded(true);
+      });
     // Piblikasyon chante a kounye a (Single si li pa nan okenn album)
     setRelease(
       song.releaseId && song.releaseKind
@@ -147,6 +163,8 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
     const splitsError = validateSplits(splits, maxSplits(pro));
     if (splitsError) return setError(splitsError);
     if (sharesOver) return setError("Total pousantaj yo (featuring + kolaboratè) depase 100%.");
+    const salePrice = parsePrice(price);
+    if (priceLoaded && salePrice === undefined) return setError("Pri a dwe ant 10 ak 50 000 kredi.");
     startTransition(async () => {
       // 1. Monte nouvo fichye yo (si gen) nan folder atis la
       const supabase = createClient();
@@ -198,6 +216,7 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
         splits,
         featuring: featuring.map((f) => ({ artistId: f.artistId, percentage: f.percentage })),
         featNames,
+        ...(priceLoaded ? { salePrice: salePrice ?? null } : {}),
         release: { kind: release.kind, releaseId: release.releaseId, newTitle: release.newTitle, trackNumber: release.trackNumber ? Number(release.trackNumber) : null },
         media,
       });
@@ -383,6 +402,7 @@ export function SongManager({ songs, artistId, pro = false }: { songs: ManagedSo
               <>
                 <ReleasePicker artistId={artistId} value={release} onChange={setRelease} disabled={pending} />
                 <FeatNamesInput value={featNames} onChange={setFeatNames} disabled={pending} />
+                {priceLoaded && <SalePriceInput value={price} onChange={setPrice} disabled={pending} />}
                 <FeaturingEditor value={featuring} onChange={setFeaturing} otherTotal={splitsTotal(splits)} disabled={pending} />
                 <SplitsEditor splits={splits} onChange={setSplits} disabled={pending} reserved={featuringTotal(featuring)} max={maxSplits(pro)} />
               </>

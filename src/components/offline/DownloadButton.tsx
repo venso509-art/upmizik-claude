@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Track } from "@/components/player/PlayerProvider";
 import { OFFLINE_EVENT, isSavedOffline, removeOffline, saveOffline } from "@/lib/offline";
+import { createClient } from "@/lib/supabase/client";
 
 type State = "unknown" | "idle" | "saving" | "saved";
 
@@ -35,6 +36,13 @@ export function DownloadButton({
 
     if (state === "saved") {
       if (confirm(`Retire « ${track.title} » nan mizik offline ou yo?`)) await removeOffline(track);
+      return;
+    }
+
+    // Mizik an vant: fòk moun nan achte l anvan (erè = migration vant lan poko kouri → pa bloke)
+    const { data: allowed, error: checkError } = await createClient().rpc("can_download", { p_song: track.id });
+    if (!checkError && allowed === false) {
+      if (confirm(`🛒 « ${track.title} » an vant. Achte l pou w ka sove l epi telechaje l. Ale wè pri a?`)) router.push(`/chante/${track.id}`);
       return;
     }
 

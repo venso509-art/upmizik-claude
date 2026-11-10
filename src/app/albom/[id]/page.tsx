@@ -9,6 +9,7 @@ import { ShareLinkButton } from "@/components/donate/ShareLinkButton";
 import { releaseShareText } from "@/lib/shareMessages";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { RELEASE_LABELS, type ReleaseKind } from "@/lib/releases";
+import { BuyButton } from "@/components/sales/BuyButton";
 
 type Props = { params: { id: string } };
 
@@ -41,7 +42,13 @@ async function getRelease(id: string) {
     .order("created_at", { ascending: true })
     .returns<(SongRow & { track_number: number | null })[]>();
   const artist = Array.isArray(release.artist) ? release.artist[0] : release.artist;
-  return { release, artist, songs: rows ?? [], tracks: (rows ?? []).map((s) => toTrack(supabase, s)) };
+  // 🛒 Vant (null si migration vant lan poko kouri)
+  const { data: sale } = await supabase.from("releases").select("sale_price, sell_tracks").eq("id", id).maybeSingle<{ sale_price: number | null; sell_tracks: boolean }>();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: bought } = user
+    ? await supabase.from("music_purchases").select("id").eq("buyer_id", user.id).eq("release_id", id).maybeSingle()
+    : { data: null };
+  return { release, artist, sale, userId: user?.id ?? null, owned: !!bought, songs: rows ?? [], tracks: (rows ?? []).map((s) => toTrack(supabase, s)) };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -57,7 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ReleasePage({ params }: Props) {
   const data = await getRelease(params.id);
   if (!data) notFound();
-  const { release, artist, songs, tracks } = data;
+  const { release, artist, songs, tracks, sale, userId, owned } = data;
   const label = RELEASE_LABELS[release.kind];
   const cover = tracks.find((t) => t.coverUrl)?.coverUrl ?? null;
   const plays = Object.fromEntries(songs.map((s) => [s.id, s.play_count]));
@@ -99,7 +106,15 @@ export default async function ReleasePage({ params }: Props) {
               title={`${release.title} – ${artist?.display_name ?? ""} sou UpMizik`}
               text={releaseShareText(label.label, release.title, artist?.display_name ?? "atis la")}
             />
+            {sale?.sale_price && userId !== release.artist_id ? (
+              <BuyButton kind="release" id={release.id} price={sale.sale_price} title={release.title} artistName={artist?.display_name ?? "Atis"} owned={owned} loggedIn={!!userId} />
+            ) : null}
           </div>
+          {sale?.sale_price ? (
+            <p className="mt-3 text-xs text-zinc-500">
+              {sale.sell_tracks ? "🛒 Ou ka achte tout pwojè a, oswa chak chante youn pa youn sou paj chante a." : "🔒 Pwojè sa a vann an antye sèlman."}
+            </p>
+          ) : null}
         </div>
       </section>
 
